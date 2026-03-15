@@ -1,0 +1,120 @@
+import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { AuthProvider, useAuth } from "@/lib/auth";
+
+// Pages
+import Login from "@/pages/auth/Login";
+import BrowseTools from "@/pages/customer/BrowseTools";
+import ToolDetails from "@/pages/customer/ToolDetails";
+import MyRentals from "@/pages/customer/MyRentals";
+import ShopDashboard from "@/pages/shop/ShopDashboard";
+import ShopTools from "@/pages/shop/ShopTools";
+import QRScanner from "@/pages/worker/QRScanner";
+import AdminOverview from "@/pages/admin/AdminOverview";
+import NotFound from "@/pages/not-found";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: false,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+function ProtectedRoute({ component: Component, allowedRoles }: { component: any, allowedRoles?: string[] }) {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  
+  if (!isAuthenticated) {
+    return <Redirect to="/login" />;
+  }
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    // Redirect to their default dashboard if accessing wrong role path
+    switch (user.role) {
+      case "super_admin": return <Redirect to="/admin" />;
+      case "shop_owner": return <Redirect to="/shop" />;
+      case "worker": return <Redirect to="/worker" />;
+      case "customer": return <Redirect to="/browse" />;
+      default: return <Redirect to="/" />;
+    }
+  }
+
+  return <Component />;
+}
+
+function RootRedirect() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) return null;
+  if (!isAuthenticated) return <Redirect to="/login" />;
+  
+  switch (user?.role) {
+    case "super_admin": return <Redirect to="/admin" />;
+    case "shop_owner": return <Redirect to="/shop" />;
+    case "worker": return <Redirect to="/worker" />;
+    case "customer": return <Redirect to="/browse" />;
+    default: return <Redirect to="/login" />;
+  }
+}
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={RootRedirect} />
+      <Route path="/login" component={Login} />
+      
+      {/* Customer Routes */}
+      <Route path="/browse">
+        {() => <ProtectedRoute component={BrowseTools} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/tools/:id">
+        {() => <ProtectedRoute component={ToolDetails} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/my-rentals">
+        {() => <ProtectedRoute component={MyRentals} allowedRoles={['customer']} />}
+      </Route>
+
+      {/* Shop Owner Routes */}
+      <Route path="/shop">
+        {() => <ProtectedRoute component={ShopDashboard} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/tools">
+        {() => <ProtectedRoute component={ShopTools} allowedRoles={['shop_owner']} />}
+      </Route>
+
+      {/* Worker Routes */}
+      <Route path="/worker">
+        {() => <ProtectedRoute component={QRScanner} allowedRoles={['worker', 'shop_owner']} />}
+      </Route>
+
+      {/* Admin Routes */}
+      <Route path="/admin">
+        {() => <ProtectedRoute component={AdminOverview} allowedRoles={['super_admin']} />}
+      </Route>
+
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <AuthProvider>
+            <Router />
+          </AuthProvider>
+        </WouterRouter>
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
+
+export default App;

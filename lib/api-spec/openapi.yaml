@@ -1,22 +1,35 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Tool Rent Platform API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: users
+    description: User management
+  - name: shops
+    description: Shop management
+  - name: tools
+    description: Tool management
+  - name: rentals
+    description: Rental operations
+  - name: payments
+    description: Payment operations
+  - name: analytics
+    description: Analytics data
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,7 +37,689 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users:
+    get:
+      operationId: listUsers
+      tags: [users]
+      summary: List all users (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [super_admin, shop_owner, worker, customer]
+        - name: page
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserListResponse"
+
+  /users/{id}:
+    get:
+      operationId: getUser
+      tags: [users]
+      summary: Get user by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: User info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    patch:
+      operationId: updateUser
+      tags: [users]
+      summary: Update user
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /shops:
+    get:
+      operationId: listShops
+      tags: [shops]
+      summary: List shops
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of shops
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ShopListResponse"
+    post:
+      operationId: createShop
+      tags: [shops]
+      summary: Create a shop
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateShopRequest"
+      responses:
+        "201":
+          description: Shop created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shop"
+
+  /shops/{id}:
+    get:
+      operationId: getShop
+      tags: [shops]
+      summary: Get shop by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Shop info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shop"
+    patch:
+      operationId: updateShop
+      tags: [shops]
+      summary: Update shop
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateShopRequest"
+      responses:
+        "200":
+          description: Updated shop
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shop"
+
+  /shops/{shopId}/tools:
+    get:
+      operationId: listShopTools
+      tags: [tools]
+      summary: List tools for a shop
+      parameters:
+        - name: shopId
+          in: path
+          required: true
+          schema:
+            type: number
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, rented, maintenance]
+        - name: page
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolListResponse"
+
+  /tools:
+    get:
+      operationId: listTools
+      tags: [tools]
+      summary: List all tools
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [available, rented, maintenance]
+        - name: shopId
+          in: query
+          schema:
+            type: number
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolListResponse"
+    post:
+      operationId: createTool
+      tags: [tools]
+      summary: Create a tool
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateToolRequest"
+      responses:
+        "201":
+          description: Tool created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+
+  /tools/{id}:
+    get:
+      operationId: getTool
+      tags: [tools]
+      summary: Get tool by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Tool info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+    patch:
+      operationId: updateTool
+      tags: [tools]
+      summary: Update tool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateToolRequest"
+      responses:
+        "200":
+          description: Updated tool
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+    delete:
+      operationId: deleteTool
+      tags: [tools]
+      summary: Delete tool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Tool deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /tools/{id}/qr:
+    get:
+      operationId: getToolQr
+      tags: [tools]
+      summary: Get QR code for tool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: QR code data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QrCodeResponse"
+
+  /tools/scan/{qrCode}:
+    get:
+      operationId: scanToolQr
+      tags: [tools]
+      summary: Scan QR code and get tool info
+      parameters:
+        - name: qrCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tool info from QR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Tool"
+
+  /rentals:
+    get:
+      operationId: listRentals
+      tags: [rentals]
+      summary: List rentals
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, returned, overdue]
+        - name: customerId
+          in: query
+          schema:
+            type: number
+        - name: shopId
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of rentals
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RentalListResponse"
+    post:
+      operationId: createRental
+      tags: [rentals]
+      summary: Start a rental
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRentalRequest"
+      responses:
+        "201":
+          description: Rental created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+
+  /rentals/{id}:
+    get:
+      operationId: getRental
+      tags: [rentals]
+      summary: Get rental by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Rental info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+
+  /rentals/{id}/return:
+    post:
+      operationId: returnRental
+      tags: [rentals]
+      summary: Return a rented tool
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnRentalRequest"
+      responses:
+        "200":
+          description: Rental returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+
+  /rentals/start-by-qr:
+    post:
+      operationId: startRentalByQr
+      tags: [rentals]
+      summary: Start rental by scanning QR code
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartRentalByQrRequest"
+      responses:
+        "201":
+          description: Rental started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+
+  /rentals/return-by-qr:
+    post:
+      operationId: returnRentalByQr
+      tags: [rentals]
+      summary: Return rental by scanning QR code
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnByQrRequest"
+      responses:
+        "200":
+          description: Rental returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rental"
+
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payments
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, completed, failed, refunded]
+        - name: rentalId
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: number
+        - name: limit
+          in: query
+          schema:
+            type: number
+      responses:
+        "200":
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentListResponse"
+    post:
+      operationId: createPayment
+      tags: [payments]
+      summary: Create a payment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentRequest"
+      responses:
+        "201":
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{id}:
+    get:
+      operationId: getPayment
+      tags: [payments]
+      summary: Get payment by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: number
+      responses:
+        "200":
+          description: Payment info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /analytics/dashboard:
+    get:
+      operationId: getDashboardAnalytics
+      tags: [analytics]
+      summary: Get dashboard analytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shopId
+          in: query
+          schema:
+            type: number
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+      responses:
+        "200":
+          description: Dashboard analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardAnalytics"
+
+  /analytics/tools:
+    get:
+      operationId: getToolAnalytics
+      tags: [analytics]
+      summary: Get tool usage analytics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: shopId
+          in: query
+          schema:
+            type: number
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly]
+      responses:
+        "200":
+          description: Tool analytics
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToolAnalytics"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     HealthStatus:
       type: object
@@ -34,3 +729,613 @@ components:
       required:
         - status
 
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        role:
+          type: string
+          enum: [customer, shop_owner, worker]
+      required:
+        - name
+        - phone
+        - password
+        - role
+
+    LoginRequest:
+      type: object
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+      required:
+        - phone
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [super_admin, shop_owner, worker, customer]
+        shopId:
+          type: number
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - phone
+        - role
+        - isActive
+        - createdAt
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        isActive:
+          type: boolean
+        shopId:
+          type: number
+
+    UserListResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number
+      required:
+        - users
+        - total
+        - page
+        - limit
+
+    Shop:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        ownerId:
+          type: number
+        subscriptionStatus:
+          type: string
+          enum: [active, expired, trial]
+        subscriptionEndsAt:
+          type: string
+          format: date-time
+        commission:
+          type: number
+          description: Platform commission percentage
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - address
+        - phone
+        - ownerId
+        - subscriptionStatus
+        - commission
+        - isActive
+        - createdAt
+
+    CreateShopRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        ownerId:
+          type: number
+        commission:
+          type: number
+      required:
+        - name
+        - address
+        - phone
+        - ownerId
+
+    UpdateShopRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        commission:
+          type: number
+        isActive:
+          type: boolean
+        subscriptionStatus:
+          type: string
+          enum: [active, expired, trial]
+
+    ShopListResponse:
+      type: object
+      properties:
+        shops:
+          type: array
+          items:
+            $ref: "#/components/schemas/Shop"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number
+      required:
+        - shops
+        - total
+        - page
+        - limit
+
+    Tool:
+      type: object
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        shopId:
+          type: number
+        shopName:
+          type: string
+        pricePerDay:
+          type: number
+        depositAmount:
+          type: number
+        status:
+          type: string
+          enum: [available, rented, maintenance]
+        qrCode:
+          type: string
+        imageUrl:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - category
+        - shopId
+        - pricePerDay
+        - depositAmount
+        - status
+        - qrCode
+        - createdAt
+
+    CreateToolRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        shopId:
+          type: number
+        pricePerDay:
+          type: number
+        depositAmount:
+          type: number
+        imageUrl:
+          type: string
+      required:
+        - name
+        - category
+        - shopId
+        - pricePerDay
+        - depositAmount
+
+    UpdateToolRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        category:
+          type: string
+        pricePerDay:
+          type: number
+        depositAmount:
+          type: number
+        status:
+          type: string
+          enum: [available, rented, maintenance]
+        imageUrl:
+          type: string
+
+    ToolListResponse:
+      type: object
+      properties:
+        tools:
+          type: array
+          items:
+            $ref: "#/components/schemas/Tool"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number
+      required:
+        - tools
+        - total
+        - page
+        - limit
+
+    QrCodeResponse:
+      type: object
+      properties:
+        toolId:
+          type: number
+        qrCode:
+          type: string
+        qrImageUrl:
+          type: string
+      required:
+        - toolId
+        - qrCode
+
+    Rental:
+      type: object
+      properties:
+        id:
+          type: number
+        toolId:
+          type: number
+        toolName:
+          type: string
+        customerId:
+          type: number
+        customerName:
+          type: string
+        shopId:
+          type: number
+        workerId:
+          type: number
+        status:
+          type: string
+          enum: [active, returned, overdue]
+        rentalPrice:
+          type: number
+        depositAmount:
+          type: number
+        totalAmount:
+          type: number
+        startedAt:
+          type: string
+          format: date-time
+        returnedAt:
+          type: string
+          format: date-time
+        dueDate:
+          type: string
+          format: date-time
+        damageNote:
+          type: string
+        damageCost:
+          type: number
+      required:
+        - id
+        - toolId
+        - customerId
+        - shopId
+        - status
+        - rentalPrice
+        - depositAmount
+        - totalAmount
+        - startedAt
+
+    CreateRentalRequest:
+      type: object
+      properties:
+        toolId:
+          type: number
+        customerId:
+          type: number
+        dueDate:
+          type: string
+          format: date-time
+        paymentMethod:
+          type: string
+          enum: [click, payme, paynet, cash]
+      required:
+        - toolId
+        - customerId
+        - dueDate
+        - paymentMethod
+
+    ReturnRentalRequest:
+      type: object
+      properties:
+        damageNote:
+          type: string
+        damageCost:
+          type: number
+
+    StartRentalByQrRequest:
+      type: object
+      properties:
+        qrCode:
+          type: string
+        customerId:
+          type: number
+        dueDate:
+          type: string
+          format: date-time
+        paymentMethod:
+          type: string
+          enum: [click, payme, paynet, cash]
+      required:
+        - qrCode
+        - customerId
+        - dueDate
+        - paymentMethod
+
+    ReturnByQrRequest:
+      type: object
+      properties:
+        qrCode:
+          type: string
+        damageNote:
+          type: string
+        damageCost:
+          type: number
+      required:
+        - qrCode
+
+    RentalListResponse:
+      type: object
+      properties:
+        rentals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rental"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number
+      required:
+        - rentals
+        - total
+        - page
+        - limit
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: number
+        rentalId:
+          type: number
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [click, payme, paynet, cash]
+        status:
+          type: string
+          enum: [pending, completed, failed, refunded]
+        type:
+          type: string
+          enum: [rental, deposit, deposit_refund, damage_deduction]
+        transactionId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - rentalId
+        - amount
+        - method
+        - status
+        - type
+        - createdAt
+
+    CreatePaymentRequest:
+      type: object
+      properties:
+        rentalId:
+          type: number
+        amount:
+          type: number
+        method:
+          type: string
+          enum: [click, payme, paynet, cash]
+        type:
+          type: string
+          enum: [rental, deposit, deposit_refund, damage_deduction]
+      required:
+        - rentalId
+        - amount
+        - method
+        - type
+
+    PaymentListResponse:
+      type: object
+      properties:
+        payments:
+          type: array
+          items:
+            $ref: "#/components/schemas/Payment"
+        total:
+          type: number
+        page:
+          type: number
+        limit:
+          type: number
+      required:
+        - payments
+        - total
+        - page
+        - limit
+
+    DashboardAnalytics:
+      type: object
+      properties:
+        totalRevenue:
+          type: number
+        activeRentals:
+          type: number
+        overdueRentals:
+          type: number
+        totalTools:
+          type: number
+        availableTools:
+          type: number
+        rentedTools:
+          type: number
+        totalCustomers:
+          type: number
+        revenueByPeriod:
+          type: array
+          items:
+            $ref: "#/components/schemas/RevenuePoint"
+        recentRentals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rental"
+      required:
+        - totalRevenue
+        - activeRentals
+        - overdueRentals
+        - totalTools
+        - availableTools
+        - rentedTools
+        - totalCustomers
+        - revenueByPeriod
+        - recentRentals
+
+    RevenuePoint:
+      type: object
+      properties:
+        date:
+          type: string
+        revenue:
+          type: number
+        rentals:
+          type: number
+      required:
+        - date
+        - revenue
+        - rentals
+
+    ToolAnalytics:
+      type: object
+      properties:
+        topRentedTools:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToolUsageStat"
+        categoryBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryStat"
+      required:
+        - topRentedTools
+        - categoryBreakdown
+
+    ToolUsageStat:
+      type: object
+      properties:
+        toolId:
+          type: number
+        toolName:
+          type: string
+        totalRentals:
+          type: number
+        totalRevenue:
+          type: number
+      required:
+        - toolId
+        - toolName
+        - totalRentals
+        - totalRevenue
+
+    CategoryStat:
+      type: object
+      properties:
+        category:
+          type: string
+        totalTools:
+          type: number
+        totalRentals:
+          type: number
+      required:
+        - category
+        - totalTools
+        - totalRentals

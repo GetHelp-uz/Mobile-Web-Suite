@@ -1,0 +1,434 @@
+[03/15/2026 20:26] Шерзодбек: TOOL RENT PLATFORM
+FULL SYSTEM ARCHITECTURE (UBER-LEVEL)
+
+--------------------------------------------------
+
+CLIENT LAYER
+
+Applications used by users.
+
+1. Customer Mobile App
+2. Worker App (QR Scanner)
+3. Shop Admin Dashboard (Web)
+4. Super Admin Panel
+
+Technologies:
+
+React Native
+React.js
+PWA
+Tailwind CSS
+
+All applications communicate with backend through API Gateway.
+
+--------------------------------------------------
+
+API GATEWAY
+
+Central entry point for all requests.
+
+Responsibilities:
+
+Authentication
+Request routing
+Rate limiting
+API security
+Logging
+
+Example endpoints:
+
+/api/auth
+/api/tools
+/api/rentals
+/api/payments
+/api/analytics
+
+--------------------------------------------------
+
+AUTHENTICATION SERVICE
+
+Handles user authentication and authorization.
+
+Functions:
+
+User registration
+Login
+JWT token generation
+Role-based access control
+
+Roles:
+
+super_admin
+shop_owner
+worker
+customer
+
+Database tables:
+
+users
+sessions
+
+--------------------------------------------------
+
+USER SERVICE
+
+Manages all user profiles.
+
+Functions:
+
+Create user
+Update profile
+Customer history
+User roles
+
+--------------------------------------------------
+
+SHOP SERVICE
+
+Handles shop management.
+
+Functions:
+
+Create shop
+Update shop
+Shop subscription
+Shop analytics
+
+Database:
+
+shops
+subscriptions
+
+--------------------------------------------------
+
+TOOL MANAGEMENT SERVICE
+
+Manages construction tools.
+
+Functions:
+
+Add tool
+Update tool
+Delete tool
+Tool status management
+Tool images
+QR code generation
+
+Database:
+
+tools
+tool_history
+
+Tool status:
+
+available
+rented
+maintenance
+
+--------------------------------------------------
+
+QR CODE SERVICE
+
+Generates and verifies QR codes.
+
+Functions:
+
+Generate QR for tool
+Verify scanned QR
+Return tool information
+
+QR data contains:
+
+tool_id
+shop_id
+security_hash
+
+Flow:
+
+Worker scans QR
+System identifies tool
+Rental starts or ends
+
+--------------------------------------------------
+
+RENTAL SERVICE
+
+Core business logic.
+
+Functions:
+
+Start rental
+Return tool
+Calculate rental duration
+Calculate total price
+Check overdue rentals
+
+Database:
+
+rentals
+
+Status:
+
+active
+returned
+overdue
+
+--------------------------------------------------
+
+ESCROW PAYMENT SERVICE
+
+Handles secure payments.
+
+Customer pays:
+
+Rental price + deposit.
+
+Example:
+
+Rental = 50,000
+Deposit = 200,000
+
+Total payment:
+
+250,000
+
+Money goes into escrow account.
+
+Database:
+
+escrow_accounts
+transactions
+
+Escrow states:
+
+held
+released
+refunded
+partial_refund
+
+--------------------------------------------------
+
+PAYMENT SERVICE
+
+Handles integration with Uzbekistan payment systems:
+
+Click
+Payme
+Paynet
+
+Payment flow:
+
+Create payment request
+Redirect to gateway
+Receive webhook confirmation
+Update payment status
+
+Database:
+
+payments
+
+--------------------------------------------------
+
+NOTIFICATION SERVICE
+
+Sends alerts and messages.
+
+Channels:
+
+SMS
+Telegram Bot
+Push notifications
+
+Events:
+
+Rental started
+Rental returned
+Overdue warning
+Payment confirmation
+
+--------------------------------------------------
+
+ANALYTICS SERVICE
+
+Collects and processes data.
+
+Functions:
+
+Daily revenue
+Monthly revenue
+Tool usage
+Top rented tools
+Customer analytics
+
+Database:
+
+analytics_events
+
+--------------------------------------------------
+
+DELIVERY SERVICE (OPTIONAL)
+
+Handles delivery logistics.
+
+Functions:
+
+Assign courier
+Track delivery
+Delivery pricing
+
+Integration:
+
+Maps API
+
+--------------------------------------------------
+
+DATABASE LAYER
+
+Primary database:
+
+PostgreSQL
+
+Core tables:
+
+users
+shops
+tools
+rentals
+payments
+escrow_accounts
+transactions
+subscriptions
+tool_history
+
+--------------------------------------------------
+
+CACHE LAYER
+
+Redis
+
+Used for:
+
+Session caching
+API rate limits
+Frequently accessed tool data
+Real-time availability
+
+--------------------------------------------------
+
+FILE STORAGE
+
+Used for storing:
+
+Tool images
+Damage photos
+Documents
+
+Options:
+
+AWS S3
+Cloud storage
+
+--------------------------------------------------
+
+MESSAGE QUEUE
+
+RabbitMQ or Kafka
+
+Used for:
+
+Notification events
+Payment events
+Analytics events
+
+Example events:
+[03/15/2026 20:26] Шерзодбек: payment_success
+rental_created
+tool_returned
+
+--------------------------------------------------
+
+SECURITY LAYER
+
+HTTPS encryption
+JWT authentication
+API rate limiting
+Input validation
+Fraud detection
+
+--------------------------------------------------
+
+MONITORING
+
+System monitoring tools:
+
+Server monitoring
+Error logging
+Performance tracking
+
+Tools:
+
+Prometheus
+Grafana
+Sentry
+
+--------------------------------------------------
+
+ESCROW PAYMENT FLOW
+
+Customer selects tool
+Customer pays via Click / Payme / Paynet
+Payment confirmed
+Money stored in escrow
+
+Worker scans QR
+Rental starts
+
+Customer returns tool
+Worker scans QR again
+
+System checks condition
+
+If tool OK:
+
+Escrow released
+Shop receives payment
+Platform receives commission
+Customer receives deposit refund
+
+If tool damaged:
+
+Damage cost deducted
+Remaining deposit refunded
+
+--------------------------------------------------
+
+HIGH LEVEL ARCHITECTURE DIAGRAM
+
+                CLIENT APPS
+        (Mobile / Web / Admin Panel)
+                      │
+                      ▼
+                 API GATEWAY
+                      │
+   ┌──────────────────┼───────────────────┐
+   ▼                  ▼                   ▼
+AUTH SERVICE     USER SERVICE       SHOP SERVICE
+   │                  │                   │
+   ▼                  ▼                   ▼
+ TOOL SERVICE     RENTAL SERVICE     PAYMENT SERVICE
+       │               │                 │
+       ▼               ▼                 ▼
+ QR SERVICE      ESCROW SERVICE   NOTIFICATION SERVICE
+       │               │                 │
+       ▼               ▼                 ▼
+                 DATABASE
+                (PostgreSQL)
+                      │
+                      ▼
+                   REDIS CACHE
+                      │
+                      ▼
+                 MESSAGE QUEUE
+                      │
+                      ▼
+              ANALYTICS SERVICE

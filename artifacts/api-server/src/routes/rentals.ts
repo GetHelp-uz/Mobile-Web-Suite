@@ -1,0 +1,235 @@
+import { Router } from "express";
+import { db, rentalsTable, toolsTable, usersTable, paymentsTable } from "@workspace/db";
+import { eq, sql, and } from "drizzle-orm";
+import { authenticate } from "../lib/auth.js";
+import { CreateRentalBody, ReturnRentalBody, StartRentalByQrBody, ReturnRentalByQrBody } from "@workspace/api-zod";
+
+const router = Router();
+
+async function enrichRental(r: any) {
+  const [tool] = await db.select({ name: toolsTable.name }).from(toolsTable).where(eq(toolsTable.id, r.toolId));
+  const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, r.customerId));
+  return {
+    ...r,
+    toolName: tool?.name || "",
+    customerName: customer?.name || "",
+  };
+}
+
+// List all rentals
+router.get("/", authenticate, async (req, res) => {
+  try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    const status = req.query.status as string | undefined;
+    const customerId = req.query.customerId ? Number(req.query.customerId) : undefined;
+    const shopId = req.query.shopId ? Number(req.query.shopId) : undefined;
+    const user = (req as any).user;
+
+    let conditions: any[] = [];
+    if (status) conditions.push(eq(rentalsTable.status, status as any));
+    if (customerId) conditions.push(eq(rentalsTable.customerId, customerId));
+    if (shopId) conditions.push(eq(rentalsTable.shopId, shopId));
+    // Customers only see their own rentals
+    if (user.role === "customer") conditions.push(eq(rentalsTable.customerId, user.userId));
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+    const rentals = await db.select().from(rentalsTable).where(whereClause).limit(limit).offset(offset);
+    const countResult = await db.select({ count: sql<number>`count(*)` }).from(rentalsTable).where(whereClause);
+    const total = Number(countResult[0].count);
+
+    const enriched = await Promise.all(rentals.map(enrichRental));
+    res.json({ rentals: enriched, total, page, limit });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Create rental
+router.post("/", authenticate, async (req, res) => {
+  try {
+    const body = CreateRentalBody.parse(req.body);
+    const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.id, body.toolId));
+    if (!tool) {
+      res.status(404).json({ error: "Tool not found" });
+      return;
+    }
+    if (tool.status !== "available") {
+      res.status(400).json({ error: "Tool is not available" });
+      return;
+    }
+    const totalAmount = tool.pricePerDay + tool.depositAmount;
+    const [rental] = await db.insert(rentalsTable).values({
+      toolId: body.toolId,
+      customerId: body.customerId,
+      shopId: tool.shopId,
+      workerId: (req as any).user.userId,
+      rentalPrice: tool.pricePerDay,
+      depositAmount: tool.depositAmount,
+      totalAmount,
+      paymentMethod: body.paymentMethod as any,
+      dueDate: new Date(body.dueDate),
+      status: "active",
+    }).returning();
+
+    await db.update(toolsTable).set({ status: "rented" }).where(eq(toolsTable.id, body.toolId));
+
+    // Create payment record
+    await db.insert(paymentsTable).values({
+      rentalId: rental.id,
+      amount: totalAmount,
+      method: body.paymentMethod as any,
+      status: "completed",
+      type: "rental",
+    });
+
+    const enriched = await enrichRental(rental);
+    res.status(201).json(enriched);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Start rental by QR
+router.post("/start-by-qr", authenticate, async (req, res) => {
+  try {
+    const body = StartRentalByQrBody.parse(req.body);
+    const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.qrCode, body.qrCode));
+    if (!tool) {
+      res.status(404).json({ error: "Tool not found for this QR code" });
+      return;
+    }
+    if (tool.status !== "available") {
+      res.status(400).json({ error: "Tool is not available" });
+      return;
+    }
+    const totalAmount = tool.pricePerDay + tool.depositAmount;
+    const [rental] = await db.insert(rentalsTable).values({
+      toolId: tool.id,
+      customerId: body.customerId,
+      shopId: tool.shopId,
+      workerId: (req as any).user.userId,
+      rentalPrice: tool.pricePerDay,
+      depositAmount: tool.depositAmount,
+      totalAmount,
+      paymentMethod: body.paymentMethod as any,
+      dueDate: new Date(body.dueDate),
+      status: "active",
+    }).returning();
+
+    await db.update(toolsTable).set({ status: "rented" }).where(eq(toolsTable.id, tool.id));
+
+    await db.insert(paymentsTable).values({
+      rentalId: rental.id,
+      amount: totalAmount,
+      method: body.paymentMethod as any,
+      status: "completed",
+      type: "rental",
+    });
+
+    const enriched = await enrichRental(rental);
+    res.status(201).json(enriched);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Return rental by QR
+router.post("/return-by-qr", authenticate, async (req, res) => {
+  try {
+    const body = ReturnRentalByQrBody.parse(req.body);
+    const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.qrCode, body.qrCode));
+    if (!tool) {
+      res.status(404).json({ error: "Tool not found for this QR code" });
+      return;
+    }
+    const [activeRental] = await db.select().from(rentalsTable)
+      .where(and(eq(rentalsTable.toolId, tool.id), eq(rentalsTable.status, "active")));
+    if (!activeRental) {
+      res.status(404).json({ error: "No active rental for this tool" });
+      return;
+    }
+    const damageCost = body.damageCost || 0;
+    const [returned] = await db.update(rentalsTable).set({
+      status: "returned",
+      returnedAt: new Date(),
+      damageNote: body.damageNote,
+      damageCost,
+    }).where(eq(rentalsTable.id, activeRental.id)).returning();
+
+    await db.update(toolsTable).set({ status: "available" }).where(eq(toolsTable.id, tool.id));
+
+    if (damageCost > 0) {
+      await db.insert(paymentsTable).values({
+        rentalId: activeRental.id,
+        amount: damageCost,
+        method: "cash" as any,
+        status: "completed",
+        type: "damage_deduction",
+      });
+    }
+    const refundAmount = activeRental.depositAmount - damageCost;
+    if (refundAmount > 0) {
+      await db.insert(paymentsTable).values({
+        rentalId: activeRental.id,
+        amount: refundAmount,
+        method: "cash" as any,
+        status: "completed",
+        type: "deposit_refund",
+      });
+    }
+
+    const enriched = await enrichRental(returned);
+    res.json(enriched);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// Get rental by ID
+router.get("/:id", authenticate, async (req, res) => {
+  try {
+    const [rental] = await db.select().from(rentalsTable).where(eq(rentalsTable.id, Number(req.params.id)));
+    if (!rental) {
+      res.status(404).json({ error: "Rental not found" });
+      return;
+    }
+    const enriched = await enrichRental(rental);
+    res.json(enriched);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Return rental by ID
+router.post("/:id/return", authenticate, async (req, res) => {
+  try {
+    const body = ReturnRentalBody.parse(req.body);
+    const [rental] = await db.select().from(rentalsTable).where(eq(rentalsTable.id, Number(req.params.id)));
+    if (!rental) {
+      res.status(404).json({ error: "Rental not found" });
+      return;
+    }
+    if (rental.status !== "active") {
+      res.status(400).json({ error: "Rental is not active" });
+      return;
+    }
+    const damageCost = body.damageCost || 0;
+    const [returned] = await db.update(rentalsTable).set({
+      status: "returned",
+      returnedAt: new Date(),
+      damageNote: body.damageNote,
+      damageCost,
+    }).where(eq(rentalsTable.id, Number(req.params.id))).returning();
+
+    await db.update(toolsTable).set({ status: "available" }).where(eq(toolsTable.id, rental.toolId));
+
+    const enriched = await enrichRental(returned);
+    res.json(enriched);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+export default router;

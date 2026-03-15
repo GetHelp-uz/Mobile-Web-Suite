@@ -1,0 +1,24 @@
+packages:
+  "lucide-react": "Standard icon library for beautiful, consistent iconography"
+  "recharts": "For creating beautiful analytics dashboards"
+  "framer-motion": "For smooth page transitions and micro-interactions"
+  "date-fns": "For human-readable date formatting"
+  "clsx": "For conditional class merging in UI components"
+  "tailwind-merge": "For merging Tailwind classes efficiently"
+  "html5-qrcode": "For worker QR code scanning functionality"
+  "qrcode.react": "For rendering tool QR codes"
+
+images:
+  - path: "artifacts/web-app/public/images/hero-bg.png"
+    description: "High quality professional photography of a modern construction site with heavy machinery, dark blue and orange cinematic lighting, shallow depth of field"
+    aspect_ratio: "16:9"
+  - path: "artifacts/web-app/public/images/logo.png"
+    description: "Minimalist geometric logo for an industrial tool rental company, dark navy blue and safety orange, clean lines"
+    aspect_ratio: "1:1"
+  - path: "artifacts/web-app/public/images/placeholder-tool.png"
+    description: "Clean studio shot of a generic yellow power drill on a white background, highly detailed"
+    aspect_ratio: "1:1"
+
+notes:
+  - Intercepting fetch globally to inject JWT token from localStorage
+  - Assuming @workspace/api-client-react exports the generated hooks
