@@ -3,7 +3,6 @@ import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { generateToken, authenticate } from "../lib/auth.js";
-import { LoginBody } from "@workspace/api-zod";
 
 const router = Router();
 
@@ -12,6 +11,7 @@ function userResponse(user: any) {
     id: user.id,
     name: user.name,
     phone: user.phone,
+    username: user.username ?? null,
     email: user.email ?? null,
     role: user.role,
     shopId: user.shopId ?? null,
@@ -81,21 +81,37 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    const body = LoginBody.parse(req.body);
-    const phoneRaw = String(body.phone).replace(/\D/g, "");
-    const phone = phoneRaw.startsWith("998") ? phoneRaw : `998${phoneRaw}`;
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
-    if (!user) {
-      res.status(401).json({ error: "Invalid credentials" });
+    const { phone: loginId, password } = req.body;
+    if (!loginId || !password) {
+      res.status(400).json({ error: "Login va parol kiritilishi shart" });
       return;
     }
-    const valid = await bcrypt.compare(body.password, user.password);
+
+    let user: any = null;
+
+    // Try username login first (for admins with special usernames)
+    const byUsername = await db.select().from(usersTable).where(eq(usersTable.username, String(loginId)));
+    if (byUsername.length > 0) {
+      user = byUsername[0];
+    } else {
+      // Try phone login
+      const phoneRaw = String(loginId).replace(/\D/g, "");
+      const phone = phoneRaw.startsWith("998") ? phoneRaw : phoneRaw.length === 9 ? `998${phoneRaw}` : phoneRaw;
+      const byPhone = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
+      if (byPhone.length > 0) user = byPhone[0];
+    }
+
+    if (!user) {
+      res.status(401).json({ error: "Login yoki parol noto'g'ri" });
+      return;
+    }
+    const valid = await bcrypt.compare(String(password), user.password);
     if (!valid) {
-      res.status(401).json({ error: "Invalid credentials" });
+      res.status(401).json({ error: "Login yoki parol noto'g'ri" });
       return;
     }
     if (!user.isActive) {
-      res.status(403).json({ error: "Account is inactive" });
+      res.status(403).json({ error: "Hisob faol emas" });
       return;
     }
     const token = generateToken(user.id, user.role);

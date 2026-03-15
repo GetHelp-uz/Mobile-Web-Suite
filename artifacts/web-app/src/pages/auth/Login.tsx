@@ -3,10 +3,11 @@ import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Hammer, Lock, Phone } from "lucide-react";
+import { Hammer, Lock, Phone, ArrowLeft } from "lucide-react";
 import { useLogin } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 
 export default function Login() {
   const [phone, setPhone] = useState("");
@@ -26,7 +27,7 @@ export default function Login() {
       onError: (error: any) => {
         toast({
           title: "Kirish muvaffaqiyatsiz",
-          description: error.message || "Telefon yoki parol noto'g'ri",
+          description: error.message || "Login yoki parol noto'g'ri",
           variant: "destructive",
         });
       }
@@ -36,18 +37,6 @@ export default function Login() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loginMutation.mutate({ data: { phone, password } });
-  };
-
-  const DEMO_ACCOUNTS: Record<string, string> = {
-    super_admin: "998901234567",
-    shop_owner:  "998901111111",
-    worker:      "998902222222",
-    customer:    "998903333333",
-  };
-
-  const autofill = (role: string) => {
-    setPhone(DEMO_ACCOUNTS[role] ?? "");
-    setPassword("password123");
   };
 
   return (
@@ -71,7 +60,7 @@ export default function Login() {
               Keyingi loyihangizni <span className="text-accent">ToolRent</span> bilan boshlang.
             </h1>
             <p className="text-xl text-primary-foreground/80 leading-relaxed">
-              O'zbekistonda qurilish asbob-uskunalari ijarasining yetakchi platformasi. Xavfsiz, ishonchli va to'liq boshqariladigan.
+              O'zbekistonda qurilish asbob-uskunalari ijarasining yetakchi platformasi.
             </p>
           </motion.div>
         </div>
@@ -80,6 +69,10 @@ export default function Login() {
       {/* O'ng tomon - forma */}
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
+          <Link href="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 text-sm">
+            <ArrowLeft size={16} /> Bosh sahifaga qaytish
+          </Link>
+
           <div className="lg:hidden w-12 h-12 bg-accent rounded-xl flex items-center justify-center mb-8 shadow-lg">
             <Hammer size={24} className="text-white" />
           </div>
@@ -90,7 +83,7 @@ export default function Login() {
           <Card className="p-8 shadow-xl border-border/50">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold">Telefon raqam</label>
+                <label className="text-sm font-semibold">Telefon raqam yoki login</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <Input 
@@ -124,14 +117,13 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-8 pt-8 border-t border-border">
-              <p className="text-sm text-center text-muted-foreground mb-4 font-medium">Demo hisoblar (bosing va to'ldiriladi)</p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" onClick={() => autofill('customer')}>Mijoz</Button>
-                <Button variant="outline" size="sm" onClick={() => autofill('shop_owner')}>Do'kon egasi</Button>
-                <Button variant="outline" size="sm" onClick={() => autofill('worker')}>Hodim</Button>
-                <Button variant="outline" size="sm" onClick={() => autofill('super_admin')}>Admin</Button>
-              </div>
+            <div className="mt-6 pt-6 border-t border-border text-center">
+              <p className="text-sm text-muted-foreground">
+                Do'kon egasimisiz?{" "}
+                <Link href="/register" className="text-primary font-semibold hover:underline">
+                  Ro'yhatdan o'ting
+                </Link>
+              </p>
             </div>
           </Card>
         </motion.div>

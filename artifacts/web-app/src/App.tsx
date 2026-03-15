@@ -5,7 +5,9 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/lib/auth";
 
 // Pages
+import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
+import Register from "@/pages/auth/Register";
 import BrowseTools from "@/pages/customer/BrowseTools";
 import ToolDetails from "@/pages/customer/ToolDetails";
 import MyRentals from "@/pages/customer/MyRentals";
@@ -13,6 +15,7 @@ import ShopDashboard from "@/pages/shop/ShopDashboard";
 import ShopTools from "@/pages/shop/ShopTools";
 import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
+import AdminApp from "@/pages/admin/AdminApp";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -34,7 +37,6 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: any
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
-    // Redirect to their default dashboard if accessing wrong role path
     switch (user.role) {
       case "super_admin": return <Redirect to="/admin" />;
       case "shop_owner": return <Redirect to="/shop" />;
@@ -51,14 +53,14 @@ function RootRedirect() {
   const { user, isAuthenticated, isLoading } = useAuth();
   
   if (isLoading) return null;
-  if (!isAuthenticated) return <Redirect to="/login" />;
+  if (!isAuthenticated) return <Landing />;
   
   switch (user?.role) {
     case "super_admin": return <Redirect to="/admin" />;
     case "shop_owner": return <Redirect to="/shop" />;
     case "worker": return <Redirect to="/worker" />;
     case "customer": return <Redirect to="/browse" />;
-    default: return <Redirect to="/login" />;
+    default: return <Landing />;
   }
 }
 
@@ -67,8 +69,9 @@ function Router() {
     <Switch>
       <Route path="/" component={RootRedirect} />
       <Route path="/login" component={Login} />
+      <Route path="/register" component={Register} />
       
-      {/* Customer Routes */}
+      {/* Mijoz yo'llari */}
       <Route path="/browse">
         {() => <ProtectedRoute component={BrowseTools} allowedRoles={['customer']} />}
       </Route>
@@ -79,7 +82,7 @@ function Router() {
         {() => <ProtectedRoute component={MyRentals} allowedRoles={['customer']} />}
       </Route>
 
-      {/* Shop Owner Routes */}
+      {/* Do'kon egasi yo'llari */}
       <Route path="/shop">
         {() => <ProtectedRoute component={ShopDashboard} allowedRoles={['shop_owner']} />}
       </Route>
@@ -87,14 +90,17 @@ function Router() {
         {() => <ProtectedRoute component={ShopTools} allowedRoles={['shop_owner']} />}
       </Route>
 
-      {/* Worker Routes */}
+      {/* Hodim yo'llari */}
       <Route path="/worker">
         {() => <ProtectedRoute component={QRScanner} allowedRoles={['worker', 'shop_owner']} />}
       </Route>
 
-      {/* Admin Routes */}
+      {/* Admin yo'llari */}
       <Route path="/admin">
         {() => <ProtectedRoute component={AdminOverview} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/app">
+        {() => <ProtectedRoute component={AdminApp} allowedRoles={['super_admin']} />}
       </Route>
 
       <Route component={NotFound} />

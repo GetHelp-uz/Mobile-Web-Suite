@@ -11,7 +11,8 @@ import {
   LogOut,
   Menu,
   QrCode,
-  FileText
+  FileText,
+  Settings
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -38,6 +39,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Umumiy ko'rinish", path: "/admin", icon: LayoutDashboard },
       { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
       { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
+      { name: "Ilova boshqaruvi", path: "/admin/app", icon: Settings },
     ]
   };
 

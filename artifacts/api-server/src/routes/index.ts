@@ -7,6 +7,7 @@ import toolsRouter from "./tools.js";
 import rentalsRouter from "./rentals.js";
 import paymentsRouter from "./payments.js";
 import analyticsRouter from "./analytics.js";
+import plansRouter from "./plans.js";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/tools", toolsRouter);
 router.use("/rentals", rentalsRouter);
 router.use("/payments", paymentsRouter);
 router.use("/analytics", analyticsRouter);
+router.use("/plans", plansRouter);
 
 export default router;

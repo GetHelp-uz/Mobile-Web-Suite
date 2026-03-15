@@ -12,6 +12,7 @@ export const shopsTable = pgTable("shops", {
   ownerId: integer("owner_id").notNull(),
   region: text("region"),
   district: text("district"),
+  planId: integer("plan_id"),
   subscriptionStatus: subscriptionStatusEnum("subscription_status").notNull().default("trial"),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
   commission: real("commission").notNull().default(10),
