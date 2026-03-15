@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE_URL = `${process.env.EXPO_PUBLIC_DOMAIN}/api`;
+const _domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
+const BASE_URL = _domain.startsWith("http") ? `${_domain}/api` : `https://${_domain}/api`;
 
 export type UserRole = "super_admin" | "shop_owner" | "worker" | "customer";
 

@@ -25,6 +25,7 @@ function RootLayoutNav() {
       <Stack.Screen name="index" />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="auth/login" />
+      <Stack.Screen name="auth/register" />
       <Stack.Screen name="tool/[id]" options={{ presentation: "card" }} />
     </Stack>
   );
