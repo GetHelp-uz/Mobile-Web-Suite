@@ -1,6 +1,7 @@
 import { Router } from "express";
+import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { authenticate, requireRole } from "../lib/auth.js";
 import { UpdateUserBody } from "@workspace/api-zod";
 
@@ -54,6 +55,115 @@ router.get("/lookup", authenticate, async (req, res) => {
       return;
     }
     res.json({ id: user.id, name: user.name, phone: user.phone, role: user.role });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get("/workers", authenticate, requireRole("shop_owner"), async (req, res) => {
+  try {
+    const shopOwner = (req as any).user;
+    const [owner] = await db.select().from(usersTable).where(eq(usersTable.id, shopOwner.userId));
+    if (!owner || !owner.shopId) {
+      res.status(400).json({ error: "Do'kon topilmadi" });
+      return;
+    }
+    const workers = await db.select().from(usersTable)
+      .where(and(eq(usersTable.role, "worker" as any), eq(usersTable.shopId, owner.shopId)));
+    res.json({
+      workers: workers.map((w: any) => ({
+        id: w.id,
+        name: w.name,
+        phone: w.phone,
+        role: w.role,
+        shopId: w.shopId,
+        isActive: w.isActive,
+        createdAt: w.createdAt,
+      })),
+      total: workers.length,
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/workers", authenticate, requireRole("shop_owner"), async (req, res) => {
+  try {
+    const shopOwner = (req as any).user;
+    const [owner] = await db.select().from(usersTable).where(eq(usersTable.id, shopOwner.userId));
+    if (!owner || !owner.shopId) {
+      res.status(400).json({ error: "Do'kon topilmadi" });
+      return;
+    }
+
+    const { name, phone: phoneRaw, password } = req.body;
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
+      res.status(400).json({ error: "Ism kamida 2 ta harf bo'lishi kerak" });
+      return;
+    }
+    const phoneDigits = String(phoneRaw || "").replace(/\D/g, "");
+    const is9 = phoneDigits.length === 9;
+    const is12 = phoneDigits.length === 12 && phoneDigits.startsWith("998");
+    if (!is9 && !is12) {
+      res.status(400).json({ error: "Telefon raqamni to'g'ri kiriting" });
+      return;
+    }
+    const phone = phoneDigits.startsWith("998") ? phoneDigits : `998${phoneDigits}`;
+
+    if (!password || typeof password !== "string" || password.length < 6) {
+      res.status(400).json({ error: "Parol kamida 6 ta belgi bo'lishi kerak" });
+      return;
+    }
+
+    const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
+    if (existing.length > 0) {
+      res.status(400).json({ error: "Bu telefon raqam allaqachon ro'yhatdan o'tgan" });
+      return;
+    }
+
+    const hashed = await bcrypt.hash(password, 10);
+    const [worker] = await db.insert(usersTable).values({
+      name: name.trim(),
+      phone,
+      password: hashed,
+      role: "worker" as any,
+      shopId: owner.shopId,
+    }).returning();
+
+    res.status(201).json({
+      worker: {
+        id: worker.id,
+        name: worker.name,
+        phone: worker.phone,
+        role: worker.role,
+        shopId: worker.shopId,
+        isActive: worker.isActive,
+        createdAt: worker.createdAt,
+      },
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+router.delete("/workers/:id", authenticate, requireRole("shop_owner"), async (req, res) => {
+  try {
+    const shopOwner = (req as any).user;
+    const [owner] = await db.select().from(usersTable).where(eq(usersTable.id, shopOwner.userId));
+    if (!owner || !owner.shopId) {
+      res.status(400).json({ error: "Do'kon topilmadi" });
+      return;
+    }
+    const workerId = Number(req.params.id);
+    const [worker] = await db.select().from(usersTable).where(
+      and(eq(usersTable.id, workerId), eq(usersTable.shopId, owner.shopId), eq(usersTable.role, "worker" as any))
+    );
+    if (!worker) {
+      res.status(404).json({ error: "Hodim topilmadi" });
+      return;
+    }
+    await db.update(usersTable).set({ isActive: false } as any).where(eq(usersTable.id, workerId));
+    res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

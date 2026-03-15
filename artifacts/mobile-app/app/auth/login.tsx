@@ -43,7 +43,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [showManual, setShowManual] = useState(false);
 
   async function handleLogin(overridePhone?: string, overridePassword?: string) {
     const p = overridePhone ?? phone;
@@ -121,64 +120,57 @@ export default function LoginScreen() {
             <View style={[styles.dividerLine, { backgroundColor: C.border }]} />
           </View>
 
-          {/* Manual form toggle */}
-          <Pressable
-            style={[styles.toggleFormBtn, { borderColor: C.border }]}
-            onPress={() => { setShowManual(v => !v); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-          >
-            <Ionicons name={showManual ? "chevron-up" : "chevron-down"} size={16} color={C.textSecondary} />
-            <Text style={[styles.toggleFormText, { color: C.textSecondary }]}>
-              {showManual ? "Formani yopish" : "Qo'lda kirish"}
-            </Text>
-          </Pressable>
+          {/* Manual login form — always visible */}
+          <View style={[styles.formCard, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <Text style={[styles.formTitle, { color: C.text }]}>Kirish</Text>
 
-          {showManual && (
-            <View style={[styles.formCard, { backgroundColor: C.surface, borderColor: C.border }]}>
-              <View style={styles.field}>
-                <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Telefon raqam</Text>
-                <View style={[styles.inputRow, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Ionicons name="call-outline" size={18} color={C.textMuted} style={{ marginRight: 8 }} />
-                  <TextInput
-                    style={[styles.input, { color: C.text }]}
-                    value={phone}
-                    onChangeText={setPhone}
-                    placeholder="998XXXXXXXXX"
-                    placeholderTextColor={C.textMuted}
-                    keyboardType="phone-pad"
-                    autoCapitalize="none"
-                  />
-                </View>
+            <View style={styles.field}>
+              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Telefon raqam</Text>
+              <View style={[styles.inputRow, { backgroundColor: C.inputBg, borderColor: C.border }]}>
+                <Ionicons name="call-outline" size={18} color={C.textMuted} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={[styles.input, { color: C.text }]}
+                  value={phone}
+                  onChangeText={setPhone}
+                  placeholder="998XXXXXXXXX"
+                  placeholderTextColor={C.textMuted}
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                />
               </View>
-
-              <View style={styles.field}>
-                <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Parol</Text>
-                <View style={[styles.inputRow, { backgroundColor: C.inputBg, borderColor: C.border }]}>
-                  <Ionicons name="lock-closed-outline" size={18} color={C.textMuted} style={{ marginRight: 8 }} />
-                  <TextInput
-                    style={[styles.input, { color: C.text }]}
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Parolingiz"
-                    placeholderTextColor={C.textMuted}
-                    secureTextEntry={!showPassword}
-                    autoCapitalize="none"
-                  />
-                  <Pressable onPress={() => setShowPassword(v => !v)}>
-                    <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={18} color={C.textMuted} />
-                  </Pressable>
-                </View>
-              </View>
-
-              <Pressable
-                style={({ pressed }) => [styles.loginBtn, { backgroundColor: C.primary, opacity: pressed || loading ? 0.85 : 1 }]}
-                onPress={() => handleLogin()}
-                disabled={loading}
-              >
-                <Ionicons name="log-in-outline" size={20} color="#fff" />
-                <Text style={styles.loginBtnText}>{loading ? "Kirish..." : "Kirish"}</Text>
-              </Pressable>
             </View>
-          )}
+
+            <View style={styles.field}>
+              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Parol</Text>
+              <View style={[styles.inputRow, { backgroundColor: C.inputBg, borderColor: C.border }]}>
+                <Ionicons name="lock-closed-outline" size={18} color={C.textMuted} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={[styles.input, { color: C.text }]}
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Parolingiz"
+                  placeholderTextColor={C.textMuted}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  onSubmitEditing={() => handleLogin()}
+                />
+                <Pressable onPress={() => setShowPassword(v => !v)}>
+                  <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={18} color={C.textMuted} />
+                </Pressable>
+              </View>
+            </View>
+
+            <Pressable
+              style={({ pressed }) => [styles.loginBtn, { backgroundColor: C.primary, opacity: pressed || loading ? 0.85 : 1 }]}
+              onPress={() => handleLogin()}
+              disabled={loading}
+            >
+              <Ionicons name="log-in-outline" size={20} color="#fff" />
+              <Text style={styles.loginBtnText}>{loading ? "Kirish..." : "Kirish"}</Text>
+            </Pressable>
+          </View>
 
           {/* Register link */}
           <View style={styles.registerRow}>
@@ -240,9 +232,8 @@ const styles = StyleSheet.create({
   dividerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 16 },
   dividerLine: { flex: 1, height: 1 },
   dividerText: { fontSize: 13, fontFamily: "Inter_400Regular" },
-  toggleFormBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 12, borderWidth: 1, marginBottom: 16 },
-  toggleFormText: { fontSize: 14, fontFamily: "Inter_500Medium" },
   formCard: { borderRadius: 18, padding: 20, borderWidth: 1, marginBottom: 16, gap: 4 },
+  formTitle: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 8 },
   field: { marginBottom: 12 },
   fieldLabel: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 8 },
   inputRow: { flexDirection: "row", alignItems: "center", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1 },

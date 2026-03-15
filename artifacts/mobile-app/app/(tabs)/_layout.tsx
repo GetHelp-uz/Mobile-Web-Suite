@@ -43,6 +43,13 @@ function NativeTabLayout({ role }: { role: string }) {
         </NativeTabs.Trigger>
       )}
 
+      {isShopOwner && (
+        <NativeTabs.Trigger name="workers">
+          <Icon sf={{ default: "person.2", selected: "person.2.fill" }} />
+          <Label>Hodimlar</Label>
+        </NativeTabs.Trigger>
+      )}
+
       {(!isAdmin && !isShopOwner && !isWorker) && (
         <NativeTabs.Trigger name="my-rentals">
           <Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
@@ -134,6 +141,15 @@ function ClassicTabLayout({ role }: { role: string }) {
           href: (!isAdmin && !isShopOwner && !isWorker) ? undefined : null,
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="doc.text" tintColor={color} size={24} /> : <Feather name="list" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="workers"
+        options={{
+          title: "Hodimlar",
+          href: isShopOwner ? undefined : null,
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="person.2" tintColor={color} size={24} /> : <Ionicons name="people-outline" size={22} color={color} />,
         }}
       />
       <Tabs.Screen

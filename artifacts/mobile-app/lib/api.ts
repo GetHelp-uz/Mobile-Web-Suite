@@ -133,6 +133,14 @@ export const api = {
     lookup: (phone: string): Promise<{ id: number; name: string; phone: string; role: string }> =>
       apiRequest(`/users/lookup?phone=${encodeURIComponent(phone)}`),
   },
+  workers: {
+    list: (): Promise<{ workers: any[]; total: number }> =>
+      apiRequest("/users/workers"),
+    create: (data: { name: string; phone: string; password: string }): Promise<{ worker: any }> =>
+      apiRequest("/users/workers", { method: "POST", body: JSON.stringify(data) }),
+    remove: (id: number): Promise<{ success: boolean }> =>
+      apiRequest(`/users/workers/${id}`, { method: "DELETE" }),
+  },
   analytics: {
     dashboard: (shopId?: number): Promise<any> => {
       const q = shopId ? `?shopId=${shopId}` : "";
