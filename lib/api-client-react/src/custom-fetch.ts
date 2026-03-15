@@ -285,6 +285,21 @@ export async function customFetch<T = unknown>(
 
   const headers = mergeHeaders(isRequest(input) ? input.headers : undefined, headersInit);
 
+  // Auto-inject auth token from localStorage if available and not already set
+  if (!headers.has("authorization")) {
+    try {
+      const token =
+        typeof localStorage !== "undefined"
+          ? localStorage.getItem("tool_rent_token")
+          : null;
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
+    } catch {
+      // localStorage unavailable (e.g. SSR or React Native) — skip silently
+    }
+  }
+
   if (
     typeof init.body === "string" &&
     !headers.has("content-type") &&

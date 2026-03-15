@@ -7,7 +7,7 @@ import { Hammer, Lock, Phone, User, Building2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
-import { useRegister, useCreateShop } from "@workspace/api-client-react";
+import { useRegister } from "@workspace/api-client-react";
 
 const REGIONS = [
   "Toshkent shahri", "Toshkent viloyati", "Samarqand viloyati",
@@ -31,27 +31,35 @@ export default function Register() {
     region: "",
   });
 
-  const createShop = useCreateShop({ mutation: {} });
-
   const registerMutation = useRegister({
     mutation: {
       onSuccess: async (data) => {
-        if (form.shopName && data.token && data.user) {
+        // Token'ni avval localStorage'ga saqlaymiz
+        localStorage.setItem("tool_rent_token", data.token);
+
+        // Do'kon nomini kiritgan bo'lsa, do'kon yaratamiz
+        if (form.shopName && data.user) {
           try {
-            await createShop.mutateAsync({
-              data: {
+            await fetch("/api/shops", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${data.token}`,
+              },
+              body: JSON.stringify({
                 name: form.shopName,
                 address: form.region || "O'zbekiston",
                 phone: data.user.phone || form.phone,
                 ownerId: data.user.id,
                 commission: 10,
-              }
+              }),
             });
           } catch (_) {}
         }
+
+        // Hisobga kiramiz va yo'naltiramiz
         login(data.token, data.user);
         toast({ title: "Muvaffaqiyatli!", description: "Hisobingiz yaratildi. Xush kelibsiz!" });
-        setLocation("/shop");
       },
       onError: (error: any) => {
         toast({ title: "Xatolik", description: error.message || "Ro'yhatdan o'tib bo'lmadi", variant: "destructive" });

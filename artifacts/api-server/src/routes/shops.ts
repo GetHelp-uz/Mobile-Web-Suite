@@ -22,9 +22,15 @@ router.get("/", authenticate, async (req, res) => {
   }
 });
 
-router.post("/", authenticate, requireRole("super_admin"), async (req, res) => {
+router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
   try {
     const body = CreateShopBody.parse(req.body);
+    // Do'kon egasi faqat o'zi uchun do'kon yarata oladi
+    const user = (req as any).user;
+    if (user.role === "shop_owner" && body.ownerId !== user.userId) {
+      res.status(403).json({ error: "Faqat o'z hisobingiz uchun do'kon yarata olasiz" });
+      return;
+    }
     const [shop] = await db.insert(shopsTable).values({
       name: body.name,
       address: body.address,
@@ -32,7 +38,7 @@ router.post("/", authenticate, requireRole("super_admin"), async (req, res) => {
       ownerId: body.ownerId,
       commission: body.commission ?? 10,
     }).returning();
-    res.status(201).json(shop);
+    res.status(201).json({ shop });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
