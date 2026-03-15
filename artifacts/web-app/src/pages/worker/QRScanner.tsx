@@ -9,6 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
+const statusLabels: Record<string, string> = {
+  available: "Mavjud",
+  rented: "Ijarada",
+  maintenance: "Ta'mirda",
+};
+
 export default function QRScanner() {
   const [scannedCode, setScannedCode] = useState("");
   const [manualCode, setManualCode] = useState("");
@@ -21,7 +27,7 @@ export default function QRScanner() {
   const startRental = useStartRentalByQr({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Success", description: "Tool successfully rented out" });
+        toast({ title: "Muvaffaqiyatli", description: "Asbob muvaffaqiyatli ijaraga berildi" });
         setScannedCode("");
       }
     }
@@ -30,7 +36,7 @@ export default function QRScanner() {
   const returnRental = useReturnRentalByQr({
     mutation: {
       onSuccess: () => {
-        toast({ title: "Success", description: "Tool successfully returned" });
+        toast({ title: "Muvaffaqiyatli", description: "Asbob muvaffaqiyatli qaytarildi" });
         setScannedCode("");
       }
     }
@@ -55,11 +61,10 @@ export default function QRScanner() {
   const handleAction = () => {
     if (!tool) return;
     if (tool.status === 'available') {
-      // Simplification for demo: assuming customerId 1 and 1 day rental
       startRental.mutate({
         data: {
           qrCode: scannedCode,
-          customerId: 1, // Need UI to select customer in real app
+          customerId: 1,
           dueDate: new Date(Date.now() + 86400000).toISOString(),
           paymentMethod: 'cash'
         }
@@ -74,50 +79,52 @@ export default function QRScanner() {
   return (
     <DashboardLayout>
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-4xl font-display font-bold mb-8 text-center">Worker Terminal</h1>
+        <h1 className="text-4xl font-display font-bold mb-8 text-center">Hodim Terminali</h1>
 
         {!scannedCode ? (
           <Card className="overflow-hidden mb-8 border-2 border-primary/20">
             <div id="reader" className="w-full"></div>
             <div className="p-6 bg-secondary text-center">
-              <p className="text-sm font-semibold mb-4">Or enter code manually</p>
+              <p className="text-sm font-semibold mb-4">Yoki kodni qo'lda kiriting</p>
               <div className="flex gap-2">
                 <Input 
                   value={manualCode} 
                   onChange={e => setManualCode(e.target.value)} 
-                  placeholder="Enter QR Hash..."
+                  placeholder="QR kodni kiriting..."
                   className="bg-white"
                 />
-                <Button onClick={() => setScannedCode(manualCode)}>Process</Button>
+                <Button onClick={() => setScannedCode(manualCode)}>Tekshirish</Button>
               </div>
             </div>
           </Card>
         ) : toolFound && tool ? (
           <Card className="p-8 shadow-xl text-center">
-            <Badge className="mb-4" variant={tool.status === 'available' ? 'success' : 'warning'}>{tool.status}</Badge>
+            <Badge className="mb-4" variant={tool.status === 'available' ? 'success' : 'warning'}>
+              {statusLabels[tool.status] ?? tool.status}
+            </Badge>
             <h2 className="text-3xl font-bold mb-2">{tool.name}</h2>
             <p className="text-muted-foreground mb-6">{tool.category}</p>
             
             <div className="bg-secondary rounded-xl p-4 mb-8">
-              <p className="text-sm text-muted-foreground mb-1">Rate</p>
-              <p className="text-2xl font-bold">{formatCurrency(tool.pricePerDay)}/day</p>
+              <p className="text-sm text-muted-foreground mb-1">Kunlik narx</p>
+              <p className="text-2xl font-bold">{formatCurrency(tool.pricePerDay)}/kun</p>
             </div>
 
             <div className="flex gap-4">
-              <Button variant="outline" className="flex-1" onClick={() => setScannedCode("")}>Cancel</Button>
+              <Button variant="outline" className="flex-1" onClick={() => setScannedCode("")}>Bekor qilish</Button>
               <Button 
                 className="flex-1" 
                 onClick={handleAction}
                 disabled={startRental.isPending || returnRental.isPending}
               >
-                {tool.status === 'available' ? 'Process Handout' : 'Process Return'}
+                {tool.status === 'available' ? 'Ijaraga berish' : 'Qaytarishni qayd etish'}
               </Button>
             </div>
           </Card>
         ) : (
            <Card className="p-8 text-center">
-             <p className="text-destructive font-bold mb-4">Tool not found</p>
-             <Button onClick={() => setScannedCode("")}>Scan Again</Button>
+             <p className="text-destructive font-bold mb-4">Asbob topilmadi</p>
+             <Button onClick={() => setScannedCode("")}>Qayta skanerlash</Button>
            </Card>
         )}
       </div>

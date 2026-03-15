@@ -19,14 +19,14 @@ export default function Login() {
       onSuccess: (data) => {
         login(data.token, data.user);
         toast({
-          title: "Welcome back!",
-          description: `Logged in as ${data.user.name}`,
+          title: "Xush kelibsiz!",
+          description: `${data.user.name} sifatida kirdingiz`,
         });
       },
       onError: (error: any) => {
         toast({
-          title: "Login failed",
-          description: error.message || "Invalid credentials",
+          title: "Kirish muvaffaqiyatsiz",
+          description: error.message || "Telefon yoki parol noto'g'ri",
           variant: "destructive",
         });
       }
@@ -52,12 +52,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Left side - Image */}
+      {/* Chap tomon - rasm */}
       <div className="hidden lg:flex flex-1 relative bg-primary items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <img 
             src={`${import.meta.env.BASE_URL}images/hero-bg.png`} 
-            alt="Construction background" 
+            alt="Qurilish foni" 
             className="w-full h-full object-cover opacity-40 mix-blend-overlay"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-transparent" />
@@ -68,29 +68,29 @@ export default function Login() {
               <Hammer size={32} className="text-white" />
             </div>
             <h1 className="text-5xl font-display font-bold mb-6 leading-tight">
-              Build your next big project with <span className="text-accent">ToolRent.</span>
+              Keyingi loyihangizni <span className="text-accent">ToolRent</span> bilan boshlang.
             </h1>
             <p className="text-xl text-primary-foreground/80 leading-relaxed">
-              The premier platform for construction equipment rental in Uzbekistan. Safe, secure, and fully managed.
+              O'zbekistonda qurilish asbob-uskunalari ijarasining yetakchi platformasi. Xavfsiz, ishonchli va to'liq boshqariladigan.
             </p>
           </motion.div>
         </div>
       </div>
 
-      {/* Right side - Form */}
+      {/* O'ng tomon - forma */}
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-md">
           <div className="lg:hidden w-12 h-12 bg-accent rounded-xl flex items-center justify-center mb-8 shadow-lg">
             <Hammer size={24} className="text-white" />
           </div>
           
-          <h2 className="text-3xl font-display font-bold mb-2">Welcome Back</h2>
-          <p className="text-muted-foreground mb-8">Enter your credentials to access your account</p>
+          <h2 className="text-3xl font-display font-bold mb-2">Xush kelibsiz</h2>
+          <p className="text-muted-foreground mb-8">Hisobingizga kirish uchun ma'lumotlaringizni kiriting</p>
 
           <Card className="p-8 shadow-xl border-border/50">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold">Phone Number</label>
+                <label className="text-sm font-semibold">Telefon raqam</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <Input 
@@ -105,7 +105,7 @@ export default function Login() {
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-semibold">Password</label>
+                <label className="text-sm font-semibold">Parol</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <Input 
@@ -120,16 +120,16 @@ export default function Login() {
               </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={loginMutation.isPending}>
-                {loginMutation.isPending ? "Signing in..." : "Sign In"}
+                {loginMutation.isPending ? "Kirilmoqda..." : "Kirish"}
               </Button>
             </form>
 
             <div className="mt-8 pt-8 border-t border-border">
-              <p className="text-sm text-center text-muted-foreground mb-4 font-medium">Demo Accounts (Click to autofill)</p>
+              <p className="text-sm text-center text-muted-foreground mb-4 font-medium">Demo hisoblar (bosing va to'ldiriladi)</p>
               <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" size="sm" onClick={() => autofill('customer')}>Customer</Button>
-                <Button variant="outline" size="sm" onClick={() => autofill('shop_owner')}>Shop Owner</Button>
-                <Button variant="outline" size="sm" onClick={() => autofill('worker')}>Worker</Button>
+                <Button variant="outline" size="sm" onClick={() => autofill('customer')}>Mijoz</Button>
+                <Button variant="outline" size="sm" onClick={() => autofill('shop_owner')}>Do'kon egasi</Button>
+                <Button variant="outline" size="sm" onClick={() => autofill('worker')}>Hodim</Button>
                 <Button variant="outline" size="sm" onClick={() => autofill('super_admin')}>Admin</Button>
               </div>
             </div>

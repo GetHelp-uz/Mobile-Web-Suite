@@ -9,13 +9,13 @@ export default function AdminOverview() {
 
   return (
     <DashboardLayout>
-      <h1 className="text-4xl font-display font-bold mb-8">Super Admin Dashboard</h1>
+      <h1 className="text-4xl font-display font-bold mb-8">Super Admin Boshqaruv Paneli</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
         <Card className="bg-primary text-primary-foreground border-none">
           <CardContent className="p-8 flex items-center justify-between">
             <div>
-              <p className="text-primary-foreground/70 font-medium mb-2">Total Partner Shops</p>
+              <p className="text-primary-foreground/70 font-medium mb-2">Jami hamkor do'konlar</p>
               <h2 className="text-5xl font-bold">{shops?.total || 0}</h2>
             </div>
             <Building2 size={64} className="opacity-20" />
@@ -25,7 +25,7 @@ export default function AdminOverview() {
         <Card className="bg-secondary border-none">
           <CardContent className="p-8 flex items-center justify-between">
             <div>
-              <p className="text-muted-foreground font-medium mb-2">Total Registered Users</p>
+              <p className="text-muted-foreground font-medium mb-2">Jami ro'yhatdan o'tgan foydalanuvchilar</p>
               <h2 className="text-5xl font-bold text-primary">{users?.total || 0}</h2>
             </div>
             <Users size={64} className="opacity-10 text-primary" />
@@ -33,7 +33,7 @@ export default function AdminOverview() {
         </Card>
       </div>
 
-      <h2 className="text-2xl font-bold mb-6">Recent Shops</h2>
+      <h2 className="text-2xl font-bold mb-6">So'nggi do'konlar</h2>
       <div className="space-y-4">
         {shops?.shops?.slice(0, 5).map(shop => (
           <Card key={shop.id}>
@@ -44,7 +44,7 @@ export default function AdminOverview() {
               </div>
               <div className="text-right">
                 <span className="inline-flex items-center gap-1 text-sm font-bold text-accent bg-accent/10 px-3 py-1 rounded-full">
-                  {shop.commission}% Commission
+                  {shop.commission}% Komissiya
                 </span>
               </div>
             </CardContent>

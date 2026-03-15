@@ -21,31 +21,38 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   const navItems = {
     customer: [
-      { name: "Browse Tools", path: "/browse", icon: Wrench },
-      { name: "My Rentals", path: "/my-rentals", icon: FileText },
+      { name: "Asboblar", path: "/browse", icon: Wrench },
+      { name: "Ijaralarim", path: "/my-rentals", icon: FileText },
     ],
     shop_owner: [
-      { name: "Dashboard", path: "/shop", icon: LayoutDashboard },
-      { name: "My Tools", path: "/shop/tools", icon: Hammer },
-      { name: "Rentals", path: "/shop/rentals", icon: FileText },
-      { name: "Workers", path: "/shop/workers", icon: Users },
+      { name: "Boshqaruv paneli", path: "/shop", icon: LayoutDashboard },
+      { name: "Asboblarim", path: "/shop/tools", icon: Hammer },
+      { name: "Ijaralar", path: "/shop/rentals", icon: FileText },
+      { name: "Hodimlar", path: "/shop/workers", icon: Users },
     ],
     worker: [
-      { name: "QR Scanner", path: "/worker", icon: QrCode },
-      { name: "Active Rentals", path: "/worker/rentals", icon: FileText },
+      { name: "QR Skaner", path: "/worker", icon: QrCode },
+      { name: "Faol ijaralar", path: "/worker/rentals", icon: FileText },
     ],
     super_admin: [
-      { name: "Overview", path: "/admin", icon: LayoutDashboard },
-      { name: "Shops", path: "/admin/shops", icon: Building2 },
-      { name: "Users", path: "/admin/users", icon: Users },
+      { name: "Umumiy ko'rinish", path: "/admin", icon: LayoutDashboard },
+      { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
+      { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
     ]
   };
 
-  const links = user ? navItems[user.role] : [];
+  const roleLabels: Record<string, string> = {
+    customer: "Mijoz",
+    shop_owner: "Do'kon egasi",
+    worker: "Hodim",
+    super_admin: "Super Admin",
+  };
+
+  const links = user ? navItems[user.role as keyof typeof navItems] ?? [] : [];
 
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Sidebar */}
+      {/* Yon panel */}
       <aside className="w-full md:w-72 bg-card border-r border-border/50 flex flex-col shadow-xl md:shadow-none z-10 hidden md:flex">
         <div className="p-6 flex items-center gap-3 border-b border-border/50">
           <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center text-white shadow-lg shadow-accent/20">
@@ -83,17 +90,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
             <div>
               <p className="text-sm font-bold">{user?.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user?.role.replace('_', ' ')}</p>
+              <p className="text-xs text-muted-foreground">{user?.role ? (roleLabels[user.role] ?? user.role) : ""}</p>
             </div>
           </div>
           <Button variant="outline" className="w-full justify-start gap-2" onClick={logout}>
             <LogOut size={18} />
-            Sign Out
+            Chiqish
           </Button>
         </div>
       </aside>
 
-      {/* Mobile Header */}
+      {/* Mobil sarlavha */}
       <div className="md:hidden flex items-center justify-between p-4 bg-card border-b border-border sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center text-white">
@@ -106,7 +113,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         </Button>
       </div>
 
-      {/* Main Content */}
+      {/* Asosiy kontent */}
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto p-4 md:p-8 lg:p-12">
           <motion.div
@@ -123,7 +130,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   );
 }
 
-// Utility function duplicated here for isolated component scope if needed, but normally imported
 function cn(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }

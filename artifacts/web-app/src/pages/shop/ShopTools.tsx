@@ -13,6 +13,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG } from "qrcode.react";
 
+const statusLabels: Record<string, string> = {
+  available: "Mavjud",
+  rented: "Ijarada",
+  maintenance: "Ta'mirda",
+};
+
 export default function ShopTools() {
   const { user } = useAuth();
   const shopId = user?.shopId || 0;
@@ -33,7 +39,7 @@ export default function ShopTools() {
       onSuccess: () => {
         setCreateOpen(false);
         queryClient.invalidateQueries({ queryKey: [`/api/shops/${shopId}/tools`] });
-        toast({ title: "Success", description: "Tool added to inventory" });
+        toast({ title: "Muvaffaqiyatli", description: "Asbob inventariga qo'shildi" });
       }
     }
   });
@@ -59,9 +65,9 @@ export default function ShopTools() {
   return (
     <DashboardLayout>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-display font-bold">Inventory Management</h1>
+        <h1 className="text-4xl font-display font-bold">Inventar boshqaruvi</h1>
         <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus size={18} /> Add Tool
+          <Plus size={18} /> Asbob qo'shish
         </Button>
       </div>
 
@@ -71,19 +77,21 @@ export default function ShopTools() {
             <CardContent className="p-5 flex-1 flex flex-col">
               <div className="flex justify-between items-start mb-4">
                 <Badge variant="outline">{tool.category}</Badge>
-                <Badge variant={tool.status === 'available' ? 'success' : 'warning'}>{tool.status}</Badge>
+                <Badge variant={tool.status === 'available' ? 'success' : 'warning'}>
+                  {statusLabels[tool.status] ?? tool.status}
+                </Badge>
               </div>
               <h3 className="text-lg font-bold mb-4 flex-1">{tool.name}</h3>
               <div className="space-y-1 mb-4">
                 <p className="text-sm text-muted-foreground flex justify-between">
-                  Rate <span>{formatCurrency(tool.pricePerDay)}/d</span>
+                  Kunlik narx <span>{formatCurrency(tool.pricePerDay)}/kun</span>
                 </p>
                 <p className="text-sm text-muted-foreground flex justify-between">
-                  Deposit <span>{formatCurrency(tool.depositAmount)}</span>
+                  Depozit <span>{formatCurrency(tool.depositAmount)}</span>
                 </p>
               </div>
               <Button variant="outline" className="w-full gap-2" onClick={() => showQr(tool.qrCode)}>
-                <QrCode size={16} /> View QR Tag
+                <QrCode size={16} /> QR kodni ko'rish
               </Button>
             </CardContent>
           </Card>
@@ -93,29 +101,29 @@ export default function ShopTools() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Equipment</DialogTitle>
+            <DialogTitle>Yangi asbob qo'shish</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4">
             <div>
-              <label className="text-sm font-semibold mb-1 block">Tool Name</label>
+              <label className="text-sm font-semibold mb-1 block">Asbob nomi</label>
               <Input required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
             </div>
             <div>
-              <label className="text-sm font-semibold mb-1 block">Category</label>
-              <Input required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="e.g. Drill, Saw" />
+              <label className="text-sm font-semibold mb-1 block">Kategoriya</label>
+              <Input required value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="masalan: Burg'u, Arra" />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-semibold mb-1 block">Daily Rate (UZS)</label>
+                <label className="text-sm font-semibold mb-1 block">Kunlik narx (UZS)</label>
                 <Input type="number" required value={formData.pricePerDay} onChange={e => setFormData({...formData, pricePerDay: e.target.value})} />
               </div>
               <div>
-                <label className="text-sm font-semibold mb-1 block">Deposit (UZS)</label>
+                <label className="text-sm font-semibold mb-1 block">Depozit (UZS)</label>
                 <Input type="number" required value={formData.depositAmount} onChange={e => setFormData({...formData, depositAmount: e.target.value})} />
               </div>
             </div>
             <DialogFooter className="pt-4">
-              <Button type="submit" disabled={createTool.isPending}>Save Tool</Button>
+              <Button type="submit" disabled={createTool.isPending}>Saqlash</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -123,11 +131,11 @@ export default function ShopTools() {
 
       <Dialog open={qrOpen} onOpenChange={setQrOpen}>
         <DialogContent className="sm:max-w-sm flex flex-col items-center p-12">
-          <h3 className="font-display font-bold text-2xl mb-8">Scan to Rent/Return</h3>
+          <h3 className="font-display font-bold text-2xl mb-8">Ijara/Qaytarish uchun skaner</h3>
           <div className="bg-white p-4 rounded-2xl shadow-xl border-4 border-primary">
             {selectedQr && <QRCodeSVG value={selectedQr} size={200} />}
           </div>
-          <p className="mt-8 text-sm text-muted-foreground text-center">Print this code and attach it to the physical tool.</p>
+          <p className="mt-8 text-sm text-muted-foreground text-center">Bu kodni chiqarib, jismoniy asbobga yopishtiring.</p>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

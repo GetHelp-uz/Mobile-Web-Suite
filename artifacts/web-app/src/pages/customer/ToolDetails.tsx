@@ -12,6 +12,12 @@ import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
 
+const paymentLabels: Record<string, string> = {
+  click: "Click",
+  payme: "Payme",
+  cash: "Naqd pul",
+};
+
 export default function ToolDetails() {
   const [, params] = useRoute("/tools/:id");
   const [, setLocation] = useLocation();
@@ -28,11 +34,11 @@ export default function ToolDetails() {
     mutation: {
       onSuccess: () => {
         setRentDialogOpen(false);
-        toast({ title: "Success", description: "Rental request created!" });
+        toast({ title: "Muvaffaqiyatli", description: "Ijara so'rovi yaratildi!" });
         setLocation("/my-rentals");
       },
       onError: () => {
-        toast({ title: "Error", description: "Failed to create rental", variant: "destructive" });
+        toast({ title: "Xatolik", description: "Ijara yaratib bo'lmadi", variant: "destructive" });
       }
     }
   });
@@ -50,7 +56,7 @@ export default function ToolDetails() {
   };
 
   if (isLoading) return <DashboardLayout><div className="animate-pulse h-96 bg-muted rounded-2xl"></div></DashboardLayout>;
-  if (!tool) return <DashboardLayout>Tool not found</DashboardLayout>;
+  if (!tool) return <DashboardLayout>Asbob topilmadi</DashboardLayout>;
 
   return (
     <DashboardLayout>
@@ -67,16 +73,16 @@ export default function ToolDetails() {
           <Badge className="mb-4 text-sm px-3 py-1" variant="outline">{tool.category}</Badge>
           <h1 className="text-4xl font-display font-bold mb-4">{tool.name}</h1>
           <p className="text-lg text-muted-foreground mb-8">
-            {tool.description || "Professional grade equipment maintained to the highest standards. Ready for your next big project."}
+            {tool.description || "Eng yuqori standartlarga muvofiq texnik xizmat ko'rsatilgan professional darajadagi uskuna. Keyingi loyihangiz uchun tayyor."}
           </p>
 
           <div className="grid grid-cols-2 gap-4 mb-8">
             <Card className="p-4 bg-primary text-primary-foreground border-none">
-              <p className="text-primary-foreground/70 text-sm font-medium mb-1">Daily Rate</p>
+              <p className="text-primary-foreground/70 text-sm font-medium mb-1">Kunlik narx</p>
               <p className="text-3xl font-bold">{formatCurrency(tool.pricePerDay)}</p>
             </Card>
             <Card className="p-4 bg-secondary border-none">
-              <p className="text-muted-foreground text-sm font-medium mb-1">Required Deposit</p>
+              <p className="text-muted-foreground text-sm font-medium mb-1">Depozit miqdori</p>
               <p className="text-2xl font-bold">{formatCurrency(tool.depositAmount)}</p>
             </Card>
           </div>
@@ -87,8 +93,8 @@ export default function ToolDetails() {
                 <Shield size={20} />
               </div>
               <div>
-                <p className="font-semibold">Escrow Protection</p>
-                <p className="text-sm text-muted-foreground">Deposit securely held until return</p>
+                <p className="font-semibold">Depozit himoyasi</p>
+                <p className="text-sm text-muted-foreground">Qaytarilgunga qadar xavfsiz saqlanadi</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -96,14 +102,14 @@ export default function ToolDetails() {
                 <CheckCircle2 size={20} />
               </div>
               <div>
-                <p className="font-semibold">Quality Guaranteed</p>
-                <p className="text-sm text-muted-foreground">Inspected before every rental</p>
+                <p className="font-semibold">Sifat kafolati</p>
+                <p className="text-sm text-muted-foreground">Har bir ijaradan oldin tekshiriladi</p>
               </div>
             </div>
           </div>
 
           <Button size="lg" className="w-full text-lg h-14" onClick={() => setRentDialogOpen(true)}>
-            Rent This Tool
+            Ijara olish
           </Button>
         </div>
       </div>
@@ -111,34 +117,34 @@ export default function ToolDetails() {
       <Dialog open={rentDialogOpen} onOpenChange={setRentDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Complete Rental</DialogTitle>
+            <DialogTitle>Ijarani rasmiylashtirish</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             <div>
-              <label className="text-sm font-semibold mb-2 block">Duration (Days)</label>
+              <label className="text-sm font-semibold mb-2 block">Muddat (kunlar)</label>
               <div className="flex items-center gap-4">
                 <Button variant="outline" size="icon" onClick={() => setDays(Math.max(1, days - 1))}>-</Button>
                 <span className="text-xl font-bold w-8 text-center">{days}</span>
                 <Button variant="outline" size="icon" onClick={() => setDays(days + 1)}>+</Button>
               </div>
               <p className="text-sm text-muted-foreground mt-2">
-                Return by: <span className="font-semibold text-foreground">{format(addDays(new Date(), days), 'PPP')}</span>
+                Qaytarish sanasi: <span className="font-semibold text-foreground">{format(addDays(new Date(), days), 'dd.MM.yyyy')}</span>
               </p>
             </div>
 
             <div>
-              <label className="text-sm font-semibold mb-2 block">Payment Method</label>
+              <label className="text-sm font-semibold mb-2 block">To'lov usuli</label>
               <div className="grid grid-cols-3 gap-3">
-                {['click', 'payme', 'cash'].map((method) => (
+                {(['click', 'payme', 'cash'] as const).map((method) => (
                   <div 
                     key={method}
-                    onClick={() => setPaymentMethod(method as any)}
-                    className={`cursor-pointer rounded-xl border-2 p-3 text-center capitalize font-medium transition-all ${
+                    onClick={() => setPaymentMethod(method)}
+                    className={`cursor-pointer rounded-xl border-2 p-3 text-center font-medium transition-all ${
                       paymentMethod === method ? 'border-primary bg-primary/5 text-primary' : 'border-border hover:border-primary/50'
                     }`}
                   >
-                    {method}
+                    {paymentLabels[method]}
                   </div>
                 ))}
               </div>
@@ -146,24 +152,24 @@ export default function ToolDetails() {
 
             <div className="bg-secondary p-4 rounded-xl space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Rental ({days} days)</span>
+                <span>Ijara ({days} kun)</span>
                 <span>{formatCurrency(tool.pricePerDay * days)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Deposit (Refundable)</span>
+                <span>Depozit (qaytariladi)</span>
                 <span>{formatCurrency(tool.depositAmount)}</span>
               </div>
               <div className="pt-2 border-t border-border flex justify-between font-bold text-lg">
-                <span>Total Upfront</span>
+                <span>Jami to'lov</span>
                 <span>{formatCurrency((tool.pricePerDay * days) + tool.depositAmount)}</span>
               </div>
             </div>
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRentDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setRentDialogOpen(false)}>Bekor qilish</Button>
             <Button onClick={handleRent} disabled={createRental.isPending}>
-              {createRental.isPending ? "Processing..." : "Confirm & Pay"}
+              {createRental.isPending ? "Jarayonda..." : "Tasdiqlash va to'lash"}
             </Button>
           </DialogFooter>
         </DialogContent>
