@@ -12,7 +12,9 @@ import {
   Menu,
   QrCode,
   FileText,
-  Settings
+  Settings,
+  MessageSquare,
+  Plug
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -30,6 +32,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Asboblarim", path: "/shop/tools", icon: Hammer },
       { name: "Ijaralar", path: "/shop/rentals", icon: FileText },
       { name: "Hodimlar", path: "/shop/workers", icon: Users },
+      { name: "SMS Xabarlar", path: "/shop/sms", icon: MessageSquare },
     ],
     worker: [
       { name: "QR Skaner", path: "/worker", icon: QrCode },
@@ -40,6 +43,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
       { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
       { name: "Ilova boshqaruvi", path: "/admin/app", icon: Settings },
+      { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
     ]
   };
 

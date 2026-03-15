@@ -4,3 +4,4 @@ export * from "./tools";
 export * from "./rentals";
 export * from "./payments";
 export * from "./plans";
+export * from "./sms";

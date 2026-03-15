@@ -8,6 +8,7 @@ import rentalsRouter from "./rentals.js";
 import paymentsRouter from "./payments.js";
 import analyticsRouter from "./analytics.js";
 import plansRouter from "./plans.js";
+import smsRouter from "./sms.js";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use("/rentals", rentalsRouter);
 router.use("/payments", paymentsRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/plans", plansRouter);
+router.use("/sms", smsRouter);
 
 export default router;

@@ -16,6 +16,8 @@ import ShopTools from "@/pages/shop/ShopTools";
 import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
+import AdminIntegrations from "@/pages/admin/AdminIntegrations";
+import ShopSms from "@/pages/shop/ShopSms";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -101,6 +103,14 @@ function Router() {
       </Route>
       <Route path="/admin/app">
         {() => <ProtectedRoute component={AdminApp} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/integrations">
+        {() => <ProtectedRoute component={AdminIntegrations} allowedRoles={['super_admin']} />}
+      </Route>
+
+      {/* Do'kon SMS yo'llari */}
+      <Route path="/shop/sms">
+        {() => <ProtectedRoute component={ShopSms} allowedRoles={['shop_owner']} />}
       </Route>
 
       <Route component={NotFound} />
