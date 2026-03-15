@@ -38,8 +38,15 @@ export default function Login() {
     loginMutation.mutate({ data: { phone, password } });
   };
 
+  const DEMO_ACCOUNTS: Record<string, string> = {
+    super_admin: "998901234567",
+    shop_owner:  "998901111111",
+    worker:      "998902222222",
+    customer:    "998903333333",
+  };
+
   const autofill = (role: string) => {
-    setPhone(`+99890123456${role === 'super_admin' ? '1' : role === 'shop_owner' ? '2' : role === 'worker' ? '3' : '4'}`);
+    setPhone(DEMO_ACCOUNTS[role] ?? "");
     setPassword("password123");
   };
 
