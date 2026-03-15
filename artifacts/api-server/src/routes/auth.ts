@@ -26,8 +26,14 @@ function validateRegisterBody(body: any): { valid: boolean; error?: string } {
   if (!body.name || typeof body.name !== "string" || body.name.trim().length < 2) {
     return { valid: false, error: "Ism familya kamida 2 ta harf bo'lishi kerak" };
   }
-  if (!body.phone || typeof body.phone !== "string" || body.phone.replace(/\D/g, "").length < 9) {
+  if (!body.phone || typeof body.phone !== "string") {
     return { valid: false, error: "Telefon raqam noto'g'ri" };
+  }
+  const phoneDigits = body.phone.replace(/\D/g, "");
+  const is9 = phoneDigits.length === 9;
+  const is12 = phoneDigits.length === 12 && phoneDigits.startsWith("998");
+  if (!is9 && !is12) {
+    return { valid: false, error: "Telefon raqamni to'g'ri kiriting. Masalan: 901234567 yoki 998901234567" };
   }
   if (!body.password || typeof body.password !== "string" || body.password.length < 6) {
     return { valid: false, error: "Parol kamida 6 ta belgi bo'lishi kerak" };
@@ -44,7 +50,8 @@ router.post("/register", async (req, res) => {
       return;
     }
 
-    const phone = String(body.phone).replace(/\D/g, "");
+    const phoneRaw = String(body.phone).replace(/\D/g, "");
+    const phone = phoneRaw.startsWith("998") ? phoneRaw : `998${phoneRaw}`;
     const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
     if (existing.length > 0) {
       res.status(400).json({ error: "Bu telefon raqam allaqachon ro'yhatdan o'tgan" });
@@ -75,7 +82,9 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   try {
     const body = LoginBody.parse(req.body);
-    const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, body.phone));
+    const phoneRaw = String(body.phone).replace(/\D/g, "");
+    const phone = phoneRaw.startsWith("998") ? phoneRaw : `998${phoneRaw}`;
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
     if (!user) {
       res.status(401).json({ error: "Invalid credentials" });
       return;

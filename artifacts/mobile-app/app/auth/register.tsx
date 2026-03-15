@@ -49,8 +49,13 @@ export default function RegisterScreen() {
       return false;
     }
     const phoneClean = phone.replace(/\D/g, "");
-    if (phoneClean.length < 9) {
-      Alert.alert("Xato", "Telefon raqam to'g'ri kiritilmagan");
+    const is9digits = phoneClean.length === 9;
+    const is12digits = phoneClean.length === 12 && phoneClean.startsWith("998");
+    if (!is9digits && !is12digits) {
+      Alert.alert(
+        "Xato",
+        "Telefon raqamni to'g'ri kiriting\n\nMasalan: 90 123 45 67\n(+998 dan keyin 9 ta raqam)"
+      );
       return false;
     }
     if (password.length < 6) {
@@ -174,8 +179,13 @@ export default function RegisterScreen() {
                   placeholder="90 123 45 67"
                   placeholderTextColor={C.textMuted}
                   value={phone}
-                  onChangeText={setPhone}
+                  onChangeText={(t) => {
+                    const cleaned = t.replace(/\D/g, "");
+                    if (cleaned.length <= 9) setPhone(cleaned);
+                    else if (cleaned.startsWith("998") && cleaned.length <= 12) setPhone(cleaned);
+                  }}
                   keyboardType="phone-pad"
+                  maxLength={12}
                   returnKeyType="next"
                 />
               </View>
