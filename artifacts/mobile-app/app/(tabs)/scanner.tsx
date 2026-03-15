@@ -177,7 +177,7 @@ export default function ScannerScreen() {
         <View style={[styles.demoSection, { backgroundColor: C.surface, borderColor: C.border }]}>
           <Text style={[styles.demoTitle, { color: C.textSecondary }]}>Demo QR kodlar:</Text>
           <View style={styles.demoChips}>
-            {["abc123001", "abc123002", "abc123003", "abc123009"].map(qr => (
+            {["QR-DREL-001", "QR-BORG-001", "QR-SHUR-001", "QR-PERF-001"].map(qr => (
               <Pressable
                 key={qr}
                 style={[styles.demoChip, { backgroundColor: C.surfaceSecondary, borderColor: C.border }]}
