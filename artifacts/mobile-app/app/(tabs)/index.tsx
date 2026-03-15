@@ -92,9 +92,16 @@ function CustomerHome() {
   const { user } = useAuth();
 
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ["tools"],
-    queryFn: () => api.tools.list({ status: "available", limit: 20 }),
+    queryKey: ["tools", user?.region],
+    queryFn: () => api.tools.list({
+      status: "available",
+      limit: 20,
+      region: user?.region || undefined,
+    }),
   });
+
+  const hasRegion = !!user?.region;
+  const allTools = data?.tools || [];
 
   return (
     <ScrollView
@@ -103,27 +110,46 @@ function CustomerHome() {
       refreshControl={<RefreshControl refreshing={isLoading} onRefresh={refetch} tintColor={C.primary} />}
     >
       <View style={styles.headerRow}>
-        <View>
+        <View style={{ flex: 1 }}>
           <Text style={[styles.greeting, { color: C.textSecondary }]}>Xush kelibsiz</Text>
           <Text style={[styles.userName, { color: C.text }]}>{user?.name}</Text>
+          {hasRegion && (
+            <View style={styles.regionBadge}>
+              <Ionicons name="location" size={11} color={C.primary} />
+              <Text style={[styles.regionBadgeText, { color: C.primary }]}>
+                {user?.district ? `${user.district}, ` : ""}{user?.region}
+              </Text>
+            </View>
+          )}
         </View>
         <View style={[styles.avatarBox, { backgroundColor: C.primary }]}>
           <Text style={styles.avatarText}>{user?.name?.[0]?.toUpperCase()}</Text>
         </View>
       </View>
 
-      <Text style={[styles.sectionTitle, { color: C.text }]}>Mavjud asboblar</Text>
+      <Text style={[styles.sectionTitle, { color: C.text }]}>
+        {hasRegion ? `${user!.region} asboblari` : "Barcha mavjud asboblar"}
+      </Text>
+
+      {hasRegion && allTools.length === 0 && !isLoading && (
+        <View style={[styles.regionNotice, { backgroundColor: C.surfaceSecondary, borderColor: C.border }]}>
+          <Ionicons name="information-circle-outline" size={20} color={C.textSecondary} />
+          <Text style={[styles.regionNoticeText, { color: C.textSecondary }]}>
+            {user?.region} hududida hozircha bo'sh asbob yo'q. Boshqa hududlardan ham ko'rishingiz mumkin.
+          </Text>
+        </View>
+      )}
 
       {isLoading ? (
         <ActivityIndicator color={C.primary} style={{ marginTop: 40 }} />
-      ) : data?.tools?.length === 0 ? (
+      ) : allTools.length === 0 ? (
         <View style={styles.emptyState}>
           <MaterialCommunityIcons name="toolbox-outline" size={48} color={C.textMuted} />
           <Text style={[styles.emptyText, { color: C.textMuted }]}>Hozircha bo'sh asbob yo'q</Text>
         </View>
       ) : (
         <View style={styles.toolGrid}>
-          {data?.tools?.map(tool => <ToolCard key={tool.id} tool={tool} />)}
+          {allTools.map(tool => <ToolCard key={tool.id} tool={tool} />)}
         </View>
       )}
     </ScrollView>
@@ -278,6 +304,10 @@ const styles = StyleSheet.create({
   badgeText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   emptyState: { alignItems: "center", justifyContent: "center", paddingTop: 48, gap: 12 },
   emptyText: { fontSize: 15, fontFamily: "Inter_400Regular" },
+  regionBadge: { flexDirection: "row", alignItems: "center", gap: 3, marginTop: 3 },
+  regionBadgeText: { fontSize: 12, fontFamily: "Inter_500Medium" },
+  regionNotice: { marginHorizontal: 20, marginBottom: 16, borderRadius: 12, padding: 14, borderWidth: 1, flexDirection: "row", gap: 10, alignItems: "flex-start" },
+  regionNoticeText: { flex: 1, fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18 },
   // Dashboard
   totalRevCard: {
     marginHorizontal: 20, marginBottom: 20, borderRadius: 18, padding: 24,

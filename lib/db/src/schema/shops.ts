@@ -10,6 +10,8 @@ export const shopsTable = pgTable("shops", {
   address: text("address").notNull(),
   phone: text("phone").notNull(),
   ownerId: integer("owner_id").notNull(),
+  region: text("region"),
+  district: text("district"),
   subscriptionStatus: subscriptionStatusEnum("subscription_status").notNull().default("trial"),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
   commission: real("commission").notNull().default(10),

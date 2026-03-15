@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, toolsTable, shopsTable } from "@workspace/db";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql, and, inArray } from "drizzle-orm";
 import { authenticate, requireRole } from "../lib/auth.js";
 import { CreateToolBody, UpdateToolBody } from "@workspace/api-zod";
 import crypto from "crypto";
@@ -51,20 +51,37 @@ router.get("/", async (req, res) => {
     const status = req.query.status as string | undefined;
     const shopId = req.query.shopId ? Number(req.query.shopId) : undefined;
     const category = req.query.category as string | undefined;
+    const region = req.query.region as string | undefined;
+
+    // If region filter requested, get shop IDs for that region first
+    let regionShopIds: number[] | undefined;
+    if (region) {
+      const regionShops = await db
+        .select({ id: shopsTable.id })
+        .from(shopsTable)
+        .where(eq(shopsTable.region, region));
+      regionShopIds = regionShops.map(s => s.id);
+      // If no shops in region, return empty
+      if (regionShopIds.length === 0) {
+        res.json({ tools: [], total: 0, page, limit });
+        return;
+      }
+    }
 
     let conditions: any[] = [];
     if (status) conditions.push(eq(toolsTable.status, status as any));
     if (shopId) conditions.push(eq(toolsTable.shopId, shopId));
     if (category) conditions.push(eq(toolsTable.category, category));
+    if (regionShopIds) conditions.push(inArray(toolsTable.shopId, regionShopIds));
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const tools = await db.select().from(toolsTable).where(whereClause).limit(limit).offset(offset);
     const countResult = await db.select({ count: sql<number>`count(*)` }).from(toolsTable).where(whereClause);
     const total = Number(countResult[0].count);
 
-    const shopIds = [...new Set(tools.map(t => t.shopId))];
-    const shops = shopIds.length > 0
-      ? await db.select({ id: shopsTable.id, name: shopsTable.name }).from(shopsTable)
+    const uniqueShopIds = [...new Set(tools.map(t => t.shopId))];
+    const shops = uniqueShopIds.length > 0
+      ? await db.select({ id: shopsTable.id, name: shopsTable.name, region: shopsTable.region }).from(shopsTable)
       : [];
     const shopMap = Object.fromEntries(shops.map(s => [s.id, s.name]));
 

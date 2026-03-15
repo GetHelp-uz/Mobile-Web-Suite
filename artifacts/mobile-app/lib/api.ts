@@ -11,6 +11,8 @@ export interface User {
   email?: string;
   role: UserRole;
   shopId?: number;
+  region?: string;
+  district?: string;
   isActive: boolean;
   createdAt: string;
 }
@@ -78,18 +80,33 @@ export const api = {
   auth: {
     login: (phone: string, password: string): Promise<AuthResponse> =>
       apiRequest("/auth/login", { method: "POST", body: JSON.stringify({ phone, password }) }),
-    register: (data: { name: string; phone: string; password: string; role: string; email?: string }): Promise<AuthResponse> =>
-      apiRequest("/auth/register", { method: "POST", body: JSON.stringify(data) }),
+    register: (data: {
+      name: string;
+      phone: string;
+      password: string;
+      region?: string;
+      district?: string;
+      email?: string;
+    }): Promise<AuthResponse> =>
+      apiRequest("/auth/register", { method: "POST", body: JSON.stringify({ ...data, role: "customer" }) }),
     me: (): Promise<User> => apiRequest("/auth/me"),
   },
   tools: {
-    list: (params?: { status?: string; shopId?: number; category?: string; page?: number; limit?: number }): Promise<{ tools: Tool[]; total: number }> => {
+    list: (params?: {
+      status?: string;
+      shopId?: number;
+      category?: string;
+      page?: number;
+      limit?: number;
+      region?: string;
+    }): Promise<{ tools: Tool[]; total: number }> => {
       const q = new URLSearchParams();
       if (params?.status) q.set("status", params.status);
       if (params?.shopId) q.set("shopId", String(params.shopId));
       if (params?.category) q.set("category", params.category);
       if (params?.page) q.set("page", String(params.page));
       if (params?.limit) q.set("limit", String(params.limit));
+      if (params?.region) q.set("region", params.region);
       return apiRequest(`/tools?${q.toString()}`);
     },
     get: (id: number): Promise<Tool> => apiRequest(`/tools/${id}`),

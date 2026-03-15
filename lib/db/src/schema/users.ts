@@ -12,6 +12,8 @@ export const usersTable = pgTable("users", {
   password: text("password").notNull(),
   role: roleEnum("role").notNull().default("customer"),
   shopId: integer("shop_id"),
+  region: text("region"),
+  district: text("district"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

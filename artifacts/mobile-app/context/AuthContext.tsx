@@ -2,11 +2,20 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, User } from "@/lib/api";
 
+interface RegisterData {
+  name: string;
+  phone: string;
+  password: string;
+  region?: string;
+  district?: string;
+}
+
 interface AuthContextValue {
   user: User | null;
   token: string | null;
   isLoading: boolean;
   login: (phone: string, password: string) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -47,6 +56,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(res.user);
   }
 
+  async function register(data: RegisterData) {
+    const res = await api.auth.register(data);
+    await Promise.all([
+      AsyncStorage.setItem("tool_rent_token", res.token),
+      AsyncStorage.setItem("tool_rent_user", JSON.stringify(res.user)),
+    ]);
+    setToken(res.token);
+    setUser(res.user);
+  }
+
   async function logout() {
     await Promise.all([
       AsyncStorage.removeItem("tool_rent_token"),
@@ -57,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

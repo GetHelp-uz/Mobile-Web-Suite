@@ -180,6 +180,14 @@ export default function LoginScreen() {
             </View>
           )}
 
+          {/* Register link */}
+          <View style={styles.registerRow}>
+            <Text style={[styles.registerText, { color: C.textSecondary }]}>Hisobingiz yo'qmi?</Text>
+            <Pressable onPress={() => router.push("/auth/register")}>
+              <Text style={[styles.registerLink, { color: C.primary }]}>  Ro'yhatdan o'tish</Text>
+            </Pressable>
+          </View>
+
           {/* Barcha demo hisoblar */}
           <Text style={[styles.sectionLabel, { color: C.textSecondary, marginTop: 8 }]}>Barcha demo hisoblar</Text>
           <View style={[styles.demoList, { backgroundColor: C.surface, borderColor: C.border }]}>
@@ -246,4 +254,7 @@ const styles = StyleSheet.create({
   demoIconBox: { width: 38, height: 38, borderRadius: 10, justifyContent: "center", alignItems: "center" },
   demoName: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 2 },
   demoPhone: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  registerRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginBottom: 20 },
+  registerText: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  registerLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
 });
