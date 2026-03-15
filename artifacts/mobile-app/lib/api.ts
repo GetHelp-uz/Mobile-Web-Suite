@@ -111,6 +111,10 @@ export const api = {
       apiRequest("/rentals/return-by-qr", { method: "POST", body: JSON.stringify(data) }),
     get: (id: number): Promise<Rental> => apiRequest(`/rentals/${id}`),
   },
+  users: {
+    lookup: (phone: string): Promise<{ id: number; name: string; phone: string; role: string }> =>
+      apiRequest(`/users/lookup?phone=${encodeURIComponent(phone)}`),
+  },
   analytics: {
     dashboard: (shopId?: number): Promise<any> => {
       const q = shopId ? `?shopId=${shopId}` : "";

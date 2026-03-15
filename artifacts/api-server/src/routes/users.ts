@@ -41,6 +41,24 @@ router.get("/", authenticate, requireRole("super_admin"), async (req, res) => {
   }
 });
 
+router.get("/lookup", authenticate, async (req, res) => {
+  try {
+    const phone = req.query.phone as string;
+    if (!phone) {
+      res.status(400).json({ error: "phone query param required" });
+      return;
+    }
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
+    if (!user) {
+      res.status(404).json({ error: "Mijoz topilmadi" });
+      return;
+    }
+    res.json({ id: user.id, name: user.name, phone: user.phone, role: user.role });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 router.get("/:id", authenticate, async (req, res) => {
   try {
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, Number(req.params.id)));
