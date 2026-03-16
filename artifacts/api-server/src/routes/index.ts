@@ -28,6 +28,7 @@ import suppliersRouter from "./suppliers.js";
 import inAppNotificationsRouter from "./in-app-notifications.js";
 import exportRouter from "./export.js";
 import auditRouter from "./audit.js";
+import gpsRouter from "./gps.js";
 
 const router: IRouter = Router();
 
@@ -60,5 +61,6 @@ router.use("/suppliers", suppliersRouter);
 router.use("/in-app-notifications", inAppNotificationsRouter);
 router.use("/export", exportRouter);
 router.use("/audit", auditRouter);
+router.use("/gps", gpsRouter);
 
 export default router;

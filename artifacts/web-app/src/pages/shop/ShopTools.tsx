@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, QrCode, Download, Printer, Search } from "lucide-react";
+import { Plus, QrCode, Download, Printer, Search, Satellite, Link } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
@@ -64,17 +65,46 @@ export default function ShopTools() {
   const [form, setForm] = useState({
     name: "", category: "", description: "",
     pricePerDay: "", pricePerHour: "", depositAmount: "",
+    gpsDeviceId: "",
   });
+  const [gpsDevices, setGpsDevices] = useState<any[]>([]);
+  const [showGPS, setShowGPS] = useState(false);
+
+  useEffect(() => {
+    if (!shopId) return;
+    const token = localStorage.getItem("tool_rent_token") || "";
+    const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+    fetch(`${baseUrl}/api/gps/devices/shop/${shopId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(r => r.json()).then(d => {
+      const unlinked = (d.devices || []).filter((g: any) => !g.tool_id);
+      setGpsDevices(unlinked);
+    }).catch(() => {});
+  }, [shopId, createOpen]);
 
   const barcodeSvgRef = useRef<SVGSVGElement>(null);
 
   const createTool = useCreateTool({
     mutation: {
-      onSuccess: () => {
+      onSuccess: async (data: any) => {
+        // GPS qurilma ulash (agar tanlangan bo'lsa)
+        if (form.gpsDeviceId && data?.tool?.id) {
+          const token = localStorage.getItem("tool_rent_token") || "";
+          const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+          await fetch(`${baseUrl}/api/gps/devices/${form.gpsDeviceId}/link`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ toolId: data.tool.id }),
+          });
+        }
         setCreateOpen(false);
-        setForm({ name: "", category: "", description: "", pricePerDay: "", pricePerHour: "", depositAmount: "" });
+        setShowGPS(false);
+        setForm({ name: "", category: "", description: "", pricePerDay: "", pricePerHour: "", depositAmount: "", gpsDeviceId: "" });
         queryClient.invalidateQueries({ queryKey: [`/api/shops/${shopId}/tools`] });
-        toast({ title: "Muvaffaqiyatli", description: "Asbob qo'shildi va QR kod yaratildi" });
+        toast({
+          title: "Muvaffaqiyatli",
+          description: form.gpsDeviceId ? "Asbob qo'shildi va GPS ulandi!" : "Asbob qo'shildi va QR kod yaratildi"
+        });
       },
       onError: (e: any) => toast({ title: "Xatolik", description: e.message, variant: "destructive" }),
     }
@@ -319,6 +349,52 @@ export default function ShopTools() {
                 <label className="text-sm font-semibold mb-1.5 block">Depozit *</label>
                 <Input type="number" placeholder="200000" value={form.depositAmount} onChange={e=>setForm(f=>({...f,depositAmount:e.target.value}))} required min="0"/>
               </div>
+            </div>
+
+            {/* Ixtiyoriy GPS qurilma ulash */}
+            <div className="border border-dashed rounded-xl p-3">
+              <button type="button"
+                className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground w-full"
+                onClick={() => setShowGPS(v => !v)}>
+                <Satellite className="h-4 w-4 text-blue-500" />
+                GPS qurilma ulash (ixtiyoriy)
+                <span className="ml-auto text-xs">{showGPS ? "▲" : "▼"}</span>
+              </button>
+              {showGPS && (
+                <div className="mt-3">
+                  {gpsDevices.length === 0 ? (
+                    <div className="text-xs text-muted-foreground p-2 bg-muted/40 rounded-lg">
+                      Mavjud GPS qurilmalar yo'q. Avval GPS Monitoring sahifasida qurilma qo'shing.
+                    </div>
+                  ) : (
+                    <>
+                      <label className="text-xs text-muted-foreground mb-1.5 block">Asbobga biriktiriladigan GPS qurilma:</label>
+                      <Select value={form.gpsDeviceId} onValueChange={v => setForm(f => ({ ...f, gpsDeviceId: v }))}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="GPS qurilmani tanlang..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">GPS ulashmaslik</SelectItem>
+                          {gpsDevices.map((g: any) => (
+                            <SelectItem key={g.id} value={String(g.id)}>
+                              <div className="flex items-center gap-2">
+                                <Satellite className="h-3.5 w-3.5" />
+                                {g.device_name} ({g.model} • {g.serial_number})
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.gpsDeviceId && (
+                        <div className="mt-2 flex items-center gap-1.5 text-xs text-green-700 bg-green-50 rounded p-2">
+                          <Link className="h-3.5 w-3.5" />
+                          GPS qurilma asbobga ulanadi va xaritada ko'rinadi
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {form.name && (

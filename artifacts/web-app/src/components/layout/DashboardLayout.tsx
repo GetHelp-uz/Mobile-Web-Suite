@@ -35,6 +35,7 @@ import {
   Shield,
   Download,
   X,
+  MapPin,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -67,6 +68,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Promo kodlar", path: "/shop/promo-codes", icon: Tag },
       { name: "Xodim vazifalari", path: "/shop/worker-tasks", icon: Users },
       { name: "Shikast xabarlari", path: "/shop/damage-reports", icon: AlertTriangle },
+      { name: "GPS Monitoring", path: "/shop/gps", icon: MapPin },
       { name: "Ta'minotchilar", path: "/shop/suppliers", icon: Truck },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
       { name: "SMS Xabarlar", path: "/shop/sms", icon: MessageSquare },

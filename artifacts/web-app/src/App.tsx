@@ -28,6 +28,7 @@ import ShopPromoCodes from "@/pages/shop/ShopPromoCodes";
 import ShopWorkerTasks from "@/pages/shop/ShopWorkerTasks";
 import ShopSuppliers from "@/pages/shop/ShopSuppliers";
 import ShopDamageReports from "@/pages/shop/ShopDamageReports";
+import ShopGPS from "@/pages/shop/ShopGPS";
 import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
@@ -153,6 +154,9 @@ function Router() {
       </Route>
       <Route path="/shop/damage-reports">
         {() => <ProtectedRoute component={ShopDamageReports} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/gps">
+        {() => <ProtectedRoute component={ShopGPS} allowedRoles={['shop_owner']} />}
       </Route>
 
       {/* Hodim yo'llari */}

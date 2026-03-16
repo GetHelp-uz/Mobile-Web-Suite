@@ -7,6 +7,16 @@ To'liq stekli qurilish asboblari ijarasi platformasi. Rollar: super_admin, shop_
 **Shop owner**: phone=998901111111 / password123
 **Worker**: phone=998902222222 / password123
 
+## GPS Monitoring tizimi (Mar 2026)
+- DB: `gps_devices`, `gps_tracking_logs`, `gps_geofences` jadvallar; `tools` jadvalida `gps_device_id`, `gps_enabled`
+- API: `POST /api/gps/ping` (GPS hardware → server, autentifikatsiyasiz); `GET /api/gps/monitoring/:shopId`; device CRUD; history; geofence CRUD; `POST /api/gps/simulate`
+- Web: `/shop/gps` — OpenStreetMap xarita (react-leaflet), qurilmalar ro'yxati, tarix, geofence, simulyatsiya
+- ShopTools.tsx: Asbob qo'shishda ixtiyoriy GPS qurilma ulash tugmasi
+- Qo'llab-quvvatlanadigan qurilmalar: TK103, GT06N, TK110, Coban GPS, Concox, Queclink va boshqa GPRS trackerlar
+- Onlayn/oflayn holat (5 daqiqa ping bo'lmasa = oflayn), tezlik, batareya monitoring
+- Geofence: ruxsat etilgan zona, zonadan chiqsa do'kon egasiga bildirishnoma
+- DashboardLayout.tsx: "GPS Monitoring" nav elementi qo'shildi (shop_owner uchun)
+
 ## Yangi funksiyalar (Mar 2026)
 
 ### Hamyon (Wallet) tizimi
