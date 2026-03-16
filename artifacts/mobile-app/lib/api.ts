@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const _domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
-const BASE_URL = _domain.startsWith("http") ? `${_domain}/api` : `https://${_domain}/api`;
+export const BASE_URL = _domain.startsWith("http") ? `${_domain}/api` : `https://${_domain}/api`;
 
 export type UserRole = "super_admin" | "shop_owner" | "worker" | "customer";
 
@@ -145,6 +145,21 @@ export const api = {
     dashboard: (shopId?: number): Promise<any> => {
       const q = shopId ? `?shopId=${shopId}` : "";
       return apiRequest(`/analytics/dashboard${q}`);
+    },
+  },
+  wallet: {
+    get: (): Promise<{ wallet: any; transactions: any[] }> => apiRequest("/wallet/me"),
+    topup: (amount: number, provider: string): Promise<{ referenceId: string; paymentUrl: string; amount: number }> =>
+      apiRequest("/wallet/topup", { method: "POST", body: JSON.stringify({ amount, provider }) }),
+    confirmTopup: (referenceId: string, providerTxId?: string): Promise<{ success: boolean; newBalance: number }> =>
+      apiRequest("/wallet/topup/confirm", { method: "POST", body: JSON.stringify({ referenceId, providerTxId }) }),
+    pay: (amount: number, rentalId?: number, description?: string): Promise<{ success: boolean; newBalance: number }> =>
+      apiRequest("/wallet/pay", { method: "POST", body: JSON.stringify({ amount, rentalId, description }) }),
+    transactions: (limit?: number, offset?: number): Promise<{ transactions: any[]; total: number }> => {
+      const q = new URLSearchParams();
+      if (limit) q.set("limit", String(limit));
+      if (offset) q.set("offset", String(offset));
+      return apiRequest(`/wallet/transactions?${q.toString()}`);
     },
   },
 };

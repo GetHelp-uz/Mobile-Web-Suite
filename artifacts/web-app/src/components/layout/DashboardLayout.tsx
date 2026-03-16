@@ -14,7 +14,8 @@ import {
   FileText,
   Settings,
   MessageSquare,
-  Plug
+  Plug,
+  Wallet
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -26,12 +27,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     customer: [
       { name: "Asboblar", path: "/browse", icon: Wrench },
       { name: "Ijaralarim", path: "/my-rentals", icon: FileText },
+      { name: "Hamyon", path: "/wallet", icon: Wallet },
     ],
     shop_owner: [
       { name: "Boshqaruv paneli", path: "/shop", icon: LayoutDashboard },
       { name: "Asboblarim", path: "/shop/tools", icon: Hammer },
       { name: "Ijaralar", path: "/shop/rentals", icon: FileText },
       { name: "Hodimlar", path: "/shop/workers", icon: Users },
+      { name: "Hamyon", path: "/wallet", icon: Wallet },
       { name: "SMS Xabarlar", path: "/shop/sms", icon: MessageSquare },
     ],
     worker: [

@@ -9,6 +9,7 @@ import paymentsRouter from "./payments.js";
 import analyticsRouter from "./analytics.js";
 import plansRouter from "./plans.js";
 import smsRouter from "./sms.js";
+import walletRouter from "./wallet.js";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use("/payments", paymentsRouter);
 router.use("/analytics", analyticsRouter);
 router.use("/plans", plansRouter);
 router.use("/sms", smsRouter);
+router.use("/wallet", walletRouter);
 
 export default router;

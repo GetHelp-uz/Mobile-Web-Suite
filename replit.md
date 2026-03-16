@@ -1,4 +1,36 @@
-# Workspace
+# ToolRent Platform — Uzbekistan
+
+## Loyiha haqida
+To'liq stekli qurilish asboblari ijarasi platformasi. Rollar: super_admin, shop_owner, worker, customer. UI: O'zbek tilida.
+
+**Admin login**: im_yakuboff98 / wer5459865
+**Shop owner**: phone=998901111111 / password123
+**Worker**: phone=998902222222 / password123
+
+## Yangi funksiyalar (Mar 2026)
+
+### Hamyon (Wallet) tizimi
+- `wallets` va `wallet_transactions` jadvallar
+- API: `GET /api/wallet/me`, `POST /api/wallet/topup`, `POST /api/wallet/topup/confirm`
+- `POST /api/wallet/pay`, `POST /api/wallet/deposit-hold`, `POST /api/wallet/deposit-release`
+- Click/Payme/Paynet to'lov URL generatsiyasi
+- Escrow tizimi: depozit ushlab qolish va qaytarish
+- Web: `/wallet` sahifasi (mijoz + do'kon egasi)
+- Mobile: Wallet tab (barcode)
+
+### Asbob inventar yaxshilanishi
+- `tools` jadvaliga `price_per_hour`, `barcode` ustunlari qo'shildi
+- QR kod + Shtrix kod generatsiyasi (qrcode.react + jsbarcode)
+- Chop etish (print) va yuklab olish funksiyalari
+- Qidruv va filter funksiyalari qo'shildi
+
+### Mobile Wallet tab
+- Balans ko'rsatish, escrow ko'rsatish
+- Tranzaksiyalar ro'yxati (kirim/chiqim)
+- Click/Payme/Paynet orqali to'ldirish
+- api.wallet metodlari qo'shildi
+
+
 
 ## Overview
 

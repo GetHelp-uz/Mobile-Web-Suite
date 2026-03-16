@@ -18,6 +18,7 @@ import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
 import AdminIntegrations from "@/pages/admin/AdminIntegrations";
 import ShopSms from "@/pages/shop/ShopSms";
+import WalletPage from "@/pages/wallet/Wallet";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -111,6 +112,11 @@ function Router() {
       {/* Do'kon SMS yo'llari */}
       <Route path="/shop/sms">
         {() => <ProtectedRoute component={ShopSms} allowedRoles={['shop_owner']} />}
+      </Route>
+
+      {/* Hamyon — barcha rollar uchun */}
+      <Route path="/wallet">
+        {() => <ProtectedRoute component={WalletPage} allowedRoles={['customer','shop_owner','worker']} />}
       </Route>
 
       <Route component={NotFound} />

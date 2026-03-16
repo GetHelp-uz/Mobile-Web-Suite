@@ -57,6 +57,13 @@ function NativeTabLayout({ role }: { role: string }) {
         </NativeTabs.Trigger>
       )}
 
+      {!isAdmin && (
+        <NativeTabs.Trigger name="wallet">
+          <Icon sf={{ default: "wallet.bifold", selected: "wallet.bifold.fill" }} />
+          <Label>Hamyon</Label>
+        </NativeTabs.Trigger>
+      )}
+
       <NativeTabs.Trigger name="profile">
         <Icon sf={{ default: "person", selected: "person.fill" }} />
         <Label>Profil</Label>
@@ -150,6 +157,15 @@ function ClassicTabLayout({ role }: { role: string }) {
           href: isShopOwner ? undefined : null,
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="person.2" tintColor={color} size={24} /> : <Ionicons name="people-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: "Hamyon",
+          href: !isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="creditcard" tintColor={color} size={24} /> : <Ionicons name="wallet-outline" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
