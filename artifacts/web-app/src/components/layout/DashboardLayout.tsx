@@ -37,6 +37,8 @@ import {
   X,
   MapPin,
   Sparkles,
+  BarChart2,
+  Package,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -66,6 +68,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Bronlar", path: "/shop/bookings", icon: CalendarCheck },
       { name: "Texnik xizmat", path: "/shop/maintenance", icon: ClipboardList },
       { name: "Narx qoidalari", path: "/shop/pricing", icon: TrendingUp },
+      { name: "Statistika", path: "/shop/stats", icon: BarChart2 },
+      { name: "Zaxira", path: "/shop/inventory", icon: Package },
       { name: "Baholar", path: "/shop/ratings", icon: Star },
       { name: "Hujjatlar", path: "/shop/documents", icon: FileCheck },
       { name: "Promo kodlar", path: "/shop/promo-codes", icon: Tag },

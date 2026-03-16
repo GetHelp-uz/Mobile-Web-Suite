@@ -7,6 +7,45 @@ To'liq stekli qurilish asboblari ijarasi platformasi. Rollar: super_admin, shop_
 **Shop owner**: phone=998901111111 / password123
 **Worker**: phone=998902222222 / password123
 
+## 8 ta yangi funksiya (Mar 2026)
+
+### 1. Statistika dashboard (ShopStats.tsx)
+- `/shop/stats` — recharts bilan daromad grafigi, asbob holati pie chart, reyting taqsimoti, top asboblar
+- Mobile: `stats.tsx` tab (shop_owner uchun)
+
+### 2. Reyting va sharhlar
+- `tool_ratings` jadvali mavjud edi; `POST /api/ratings` endpoint mavjud
+- Web: `MyRentals.tsx` — qaytarilgan ijara uchun baho berish dialog (1-5 yulduz + izoh)
+- Mobile: `my-rentals.tsx` tab'ga baho berish tugmasi qo'shish rejalashtirilgan
+
+### 3. Narx kalkulyator
+- `ToolDetails.tsx` — ijara olinishdan oldin kun sonini o'zgartirib narxni ko'rish (ijara + depozit = jami)
+- Mobile: `tool/[id].tsx`'ga qo'shish rejalashtirilgan
+
+### 4. Do'kon umumiy profil sahifasi
+- `/shops/:id` — ommaviy do'kon profili: asboblar, baholar, filiallar (auth talab qilinmaydi)
+- `GET /api/shops/:id/public` endpoint qo'shildi
+
+### 5. Asbob zaxira boshqaruvi
+- `tools` jadvaliga `stock_count integer DEFAULT 1` qo'shildi
+- `/shop/inventory` — zaxira miqdorini ko'rish va tahrirlash sahifasi
+- `PATCH /api/tools/:id/stock` endpoint qo'shildi
+
+### 6. Push bildirishnomalar
+- `expo-notifications` + `expo-device` o'rnatildi
+- `utils/notifications.ts` — ruxsat so'rash va token olish
+- `POST /api/users/push-token` endpoint qo'shildi
+- `AuthContext.tsx` — login/register'da avtomatik push token saqlaydi
+
+### 7. Sodiqlik ballari (Loyalty)
+- `loyalty_points`, `loyalty_transactions` jadvallar mavjud edi
+- Web: `LoyaltyPage.tsx` (184 qator) mavjud edi
+- Mobile: yangi `loyalty.tsx` tab — daraja kartasi, progress bar, ball sarflash, liderlar jadvali
+
+### 8. Asbob holati (Before/After)
+- `damage-reports.ts` API va `ShopDamageReports.tsx` mavjud edi
+- DashboardLayout: Statistika va Zaxira nav elementlari qo'shildi
+
 ## GPS Monitoring tizimi (Mar 2026)
 - DB: `gps_devices`, `gps_tracking_logs`, `gps_geofences` jadvallar; `tools` jadvalida `gps_device_id`, `gps_enabled`
 - API: `POST /api/gps/ping` (GPS hardware → server, autentifikatsiyasiz); `GET /api/gps/monitoring/:shopId`; device CRUD; history; geofence CRUD; `POST /api/gps/simulate`

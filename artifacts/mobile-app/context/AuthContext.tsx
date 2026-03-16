@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { api, User } from "@/lib/api";
+import { registerForPushNotificationsAsync, savePushToken } from "@/utils/notifications";
 
 interface RegisterData {
   name: string;
@@ -46,6 +47,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadAuth();
   }, []);
 
+  async function registerPushIfNeeded(authToken: string) {
+    try {
+      const baseUrl = process.env.EXPO_PUBLIC_DOMAIN
+        ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
+        : "";
+      if (!baseUrl) return;
+      const pushToken = await registerForPushNotificationsAsync();
+      if (pushToken) await savePushToken(pushToken, authToken, baseUrl);
+    } catch {}
+  }
+
   async function login(phone: string, password: string) {
     const res = await api.auth.login(phone, password);
     await Promise.all([
@@ -54,6 +66,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ]);
     setToken(res.token);
     setUser(res.user);
+    registerPushIfNeeded(res.token);
   }
 
   async function register(data: RegisterData) {
@@ -64,6 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     ]);
     setToken(res.token);
     setUser(res.user);
+    registerPushIfNeeded(res.token);
   }
 
   async function logout() {

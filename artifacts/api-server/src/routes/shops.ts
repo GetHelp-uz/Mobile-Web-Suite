@@ -71,4 +71,31 @@ router.patch("/:id", authenticate, requireRole("super_admin", "shop_owner"), asy
   }
 });
 
+// GET /api/shops/:id/public — ommaviy do'kon profili (auth shart emas)
+router.get("/:id/public", async (req, res) => {
+  try {
+    const shopId = Number(req.params.id);
+    const [shop] = await db.select().from(shopsTable).where(eq(shopsTable.id, shopId));
+    if (!shop) { res.status(404).json({ error: "Do'kon topilmadi" }); return; }
+    const toolsResult = await db.execute(sql`
+      SELECT id, name, category, price_per_day, deposit_amount, status, image_url, description
+      FROM tools WHERE shop_id = ${shopId} AND status = 'available' ORDER BY created_at DESC LIMIT 20
+    `);
+    const ratingsResult = await db.execute(sql`
+      SELECT r.*, u.name as customer_name FROM tool_ratings r
+      LEFT JOIN users u ON u.id = r.customer_id WHERE r.shop_id = ${shopId} ORDER BY r.created_at DESC LIMIT 20
+    `);
+    const avgResult = await db.execute(sql`SELECT AVG(rating)::numeric(3,1) as avg, COUNT(*) as cnt FROM tool_ratings WHERE shop_id = ${shopId}`);
+    const branchesResult = await db.execute(sql`SELECT * FROM shop_branches WHERE shop_id = ${shopId} AND is_active = TRUE ORDER BY is_main DESC`);
+    res.json({
+      shop,
+      tools: toolsResult.rows,
+      ratings: ratingsResult.rows,
+      averageRating: Number((avgResult.rows[0] as any)?.avg || 0),
+      ratingCount: Number((avgResult.rows[0] as any)?.cnt || 0),
+      branches: branchesResult.rows,
+    });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export default router;

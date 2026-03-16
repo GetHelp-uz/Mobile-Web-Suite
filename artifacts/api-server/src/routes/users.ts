@@ -214,4 +214,19 @@ router.patch("/:id", authenticate, async (req, res) => {
   }
 });
 
+// POST /api/users/push-token — push notification tokenini saqlash
+router.post("/push-token", authenticate, async (req, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { token, platform } = req.body;
+    if (!token) { res.status(400).json({ error: "token kerak" }); return; }
+    await db.execute(sql`
+      INSERT INTO push_tokens (user_id, token, platform, is_active)
+      VALUES (${userId}, ${token}, ${platform || "unknown"}, TRUE)
+      ON CONFLICT (token) DO UPDATE SET user_id = ${userId}, is_active = TRUE, platform = EXCLUDED.platform
+    `);
+    res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export default router;

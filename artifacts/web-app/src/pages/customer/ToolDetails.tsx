@@ -167,6 +167,33 @@ export default function ToolDetails() {
             </div>
           </div>
 
+          {/* Narx kalkulyator */}
+          <div className="bg-muted/50 rounded-2xl p-5 mb-5 border border-border">
+            <h3 className="font-bold text-sm mb-3 text-muted-foreground uppercase tracking-wide">Narx hisobi</h3>
+            <div className="flex items-center gap-3 mb-3">
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setDays(Math.max(1, days - 1))}>-</Button>
+              <div className="flex-1 text-center">
+                <span className="text-3xl font-bold">{days}</span>
+                <span className="text-muted-foreground ml-1.5 text-sm">kun</span>
+              </div>
+              <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => setDays(days + 1)}>+</Button>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Ijara ({days} kun)</span>
+                <span className="font-medium">{formatCurrency(tool.pricePerDay * days)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Depozit (qaytariladi)</span>
+                <span className="font-medium text-accent">{formatCurrency(tool.depositAmount)}</span>
+              </div>
+              <div className="flex justify-between pt-2 border-t border-border">
+                <span className="font-bold">Jami to'lov</span>
+                <span className="font-bold text-primary text-base">{formatCurrency(tool.pricePerDay * days + tool.depositAmount)}</span>
+              </div>
+            </div>
+          </div>
+
           <Button size="lg" className="w-full text-lg h-14" onClick={() => setRentDialogOpen(true)}>
             Ijara olish
           </Button>

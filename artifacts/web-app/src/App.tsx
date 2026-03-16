@@ -30,6 +30,9 @@ import ShopSuppliers from "@/pages/shop/ShopSuppliers";
 import ShopDamageReports from "@/pages/shop/ShopDamageReports";
 import ShopGPS from "@/pages/shop/ShopGPS";
 import ShopBranches from "@/pages/shop/ShopBranches";
+import ShopStats from "@/pages/shop/ShopStats";
+import ShopInventory from "@/pages/shop/ShopInventory";
+import PublicShopProfile from "@/pages/shop/PublicShopProfile";
 import ChatPage from "@/pages/chat/ChatPage";
 import AIRecommendPage from "@/pages/ai/AIRecommendPage";
 import QRScanner from "@/pages/worker/QRScanner";
@@ -163,6 +166,15 @@ function Router() {
       </Route>
       <Route path="/shop/branches">
         {() => <ProtectedRoute component={ShopBranches} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/stats">
+        {() => <ProtectedRoute component={ShopStats} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shop/inventory">
+        {() => <ProtectedRoute component={ShopInventory} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shops/:id">
+        {() => <PublicShopProfile />}
       </Route>
       <Route path="/chat">
         {() => <ProtectedRoute component={ChatPage} allowedRoles={['customer', 'shop_owner']} />}

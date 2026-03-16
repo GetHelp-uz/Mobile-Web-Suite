@@ -200,5 +200,17 @@ router.get("/:id/qr", authenticate, async (req, res) => {
   }
 });
 
+// PATCH /api/tools/:id/stock — zaxira miqdorini yangilash
+router.patch("/:id/stock", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
+  try {
+    const { stockCount } = req.body;
+    if (stockCount === undefined || stockCount < 0) {
+      res.status(400).json({ error: "stockCount musbat son bo'lishi kerak" }); return;
+    }
+    await db.execute(sql`UPDATE tools SET stock_count = ${Number(stockCount)} WHERE id = ${Number(req.params.id)}`);
+    res.json({ success: true, stockCount: Number(stockCount) });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export { router as shopToolsRouter };
 export default router;
