@@ -29,6 +29,9 @@ import ShopWorkerTasks from "@/pages/shop/ShopWorkerTasks";
 import ShopSuppliers from "@/pages/shop/ShopSuppliers";
 import ShopDamageReports from "@/pages/shop/ShopDamageReports";
 import ShopGPS from "@/pages/shop/ShopGPS";
+import ShopBranches from "@/pages/shop/ShopBranches";
+import ChatPage from "@/pages/chat/ChatPage";
+import AIRecommendPage from "@/pages/ai/AIRecommendPage";
 import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
@@ -157,6 +160,15 @@ function Router() {
       </Route>
       <Route path="/shop/gps">
         {() => <ProtectedRoute component={ShopGPS} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/branches">
+        {() => <ProtectedRoute component={ShopBranches} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/chat">
+        {() => <ProtectedRoute component={ChatPage} allowedRoles={['customer', 'shop_owner']} />}
+      </Route>
+      <Route path="/ai-suggest">
+        {() => <ProtectedRoute component={AIRecommendPage} allowedRoles={['customer', 'shop_owner', 'worker', 'super_admin']} />}
       </Route>
 
       {/* Hodim yo'llari */}

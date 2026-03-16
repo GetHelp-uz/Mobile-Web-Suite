@@ -72,6 +72,20 @@ function NativeTabLayout({ role }: { role: string }) {
         </NativeTabs.Trigger>
       )}
 
+      {(isCustomer || isShopOwner) && (
+        <NativeTabs.Trigger name="chat">
+          <Icon sf={{ default: "message", selected: "message.fill" }} />
+          <Label>Chat</Label>
+        </NativeTabs.Trigger>
+      )}
+
+      {!isAdmin && (
+        <NativeTabs.Trigger name="ai">
+          <Icon sf={{ default: "sparkles", selected: "sparkles" }} />
+          <Label>AI</Label>
+        </NativeTabs.Trigger>
+      )}
+
       {!isAdmin && (
         <NativeTabs.Trigger name="referral">
           <Icon sf={{ default: "gift", selected: "gift.fill" }} />
@@ -191,6 +205,24 @@ function ClassicTabLayout({ role }: { role: string }) {
           href: !isAdmin ? undefined : null,
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="creditcard" tintColor={color} size={24} /> : <Ionicons name="wallet-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "Chat",
+          href: (isCustomer || isShopOwner) ? undefined : null,
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="message" tintColor={color} size={24} /> : <Ionicons name="chatbubble-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="ai"
+        options={{
+          title: "AI",
+          href: !isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) =>
+            <Ionicons name="sparkles-outline" size={22} color={color} />,
         }}
       />
       <Tabs.Screen

@@ -36,6 +36,7 @@ import {
   Download,
   X,
   MapPin,
+  Sparkles,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -53,6 +54,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Loyihalarim", path: "/projects", icon: FolderOpen },
       { name: "Sevimlilar", path: "/favorites", icon: Heart },
       { name: "Loyallik", path: "/loyalty", icon: Award },
+      { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
+      { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
       { name: "Referal", path: "/referral", icon: Gift },
       { name: "Bildirishnomalar", path: "/notifications-center", icon: Bell },
@@ -69,9 +72,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Xodim vazifalari", path: "/shop/worker-tasks", icon: Users },
       { name: "Shikast xabarlari", path: "/shop/damage-reports", icon: AlertTriangle },
       { name: "GPS Monitoring", path: "/shop/gps", icon: MapPin },
+      { name: "Filiallar", path: "/shop/branches", icon: Building2 },
       { name: "Ta'minotchilar", path: "/shop/suppliers", icon: Truck },
+      { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
+      { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
-      { name: "SMS Xabarlar", path: "/shop/sms", icon: MessageSquare },
       { name: "Bildirishnomalar", path: "/notifications-center", icon: Bell },
     ],
     worker: [

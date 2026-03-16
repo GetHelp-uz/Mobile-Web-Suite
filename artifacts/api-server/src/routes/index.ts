@@ -29,6 +29,9 @@ import inAppNotificationsRouter from "./in-app-notifications.js";
 import exportRouter from "./export.js";
 import auditRouter from "./audit.js";
 import gpsRouter from "./gps.js";
+import branchesRouter from "./branches.js";
+import chatRouter from "./chat.js";
+import aiRecommendRouter from "./ai-recommend.js";
 
 const router: IRouter = Router();
 
@@ -62,5 +65,8 @@ router.use("/in-app-notifications", inAppNotificationsRouter);
 router.use("/export", exportRouter);
 router.use("/audit", auditRouter);
 router.use("/gps", gpsRouter);
+router.use("/branches", branchesRouter);
+router.use("/chat", chatRouter);
+router.use("/ai", aiRecommendRouter);
 
 export default router;
