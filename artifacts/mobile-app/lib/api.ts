@@ -162,4 +162,43 @@ export const api = {
       return apiRequest(`/wallet/transactions?${q.toString()}`);
     },
   },
+  bookings: {
+    list: (params?: { shopId?: number; customerId?: number; status?: string }): Promise<{ bookings: any[] }> => {
+      const q = new URLSearchParams();
+      if (params?.shopId) q.set("shopId", String(params.shopId));
+      if (params?.customerId) q.set("customerId", String(params.customerId));
+      if (params?.status) q.set("status", params.status);
+      return apiRequest(`/bookings?${q.toString()}`);
+    },
+    create: (data: { toolId: number; shopId: number; startDate: string; endDate: string; paymentMethod?: string; notes?: string }): Promise<{ success: boolean; booking: any }> =>
+      apiRequest("/bookings", { method: "POST", body: JSON.stringify(data) }),
+    updateStatus: (id: number, status: string): Promise<{ success: boolean }> =>
+      apiRequest(`/bookings/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    cancel: (id: number): Promise<{ success: boolean }> =>
+      apiRequest(`/bookings/${id}`, { method: "DELETE" }),
+    getAvailability: (toolId: number): Promise<{ bookedDates: any[] }> =>
+      apiRequest(`/bookings/tool/${toolId}/availability`),
+  },
+  referrals: {
+    my: (): Promise<{ referralCode: string; rewards: any[]; totalEarned: number; pendingCount: number }> =>
+      apiRequest("/referrals/my"),
+    apply: (referralCode: string): Promise<{ success: boolean; message: string }> =>
+      apiRequest("/referrals/apply", { method: "POST", body: JSON.stringify({ referralCode }) }),
+    leaderboard: (): Promise<{ leaderboard: any[] }> =>
+      apiRequest("/referrals/leaderboard"),
+  },
+  ratings: {
+    forTool: (toolId: number): Promise<{ ratings: any[]; average: number; count: number }> =>
+      apiRequest(`/ratings/tool/${toolId}`),
+    create: (data: { toolId: number; shopId: number; rentalId?: number; rating: number; comment?: string }): Promise<{ success: boolean }> =>
+      apiRequest("/ratings", { method: "POST", body: JSON.stringify(data) }),
+  },
+  notifications: {
+    registerToken: (token: string, platform?: string): Promise<{ success: boolean }> =>
+      apiRequest("/notifications/register-token", { method: "POST", body: JSON.stringify({ token, platform: platform || "expo" }) }),
+  },
+  contracts: {
+    getForRental: (rentalId: number): Promise<{ contract: any }> =>
+      apiRequest(`/contracts/rental/${rentalId}`),
+  },
 };

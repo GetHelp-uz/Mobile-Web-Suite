@@ -10,6 +10,14 @@ import analyticsRouter from "./analytics.js";
 import plansRouter from "./plans.js";
 import smsRouter from "./sms.js";
 import walletRouter from "./wallet.js";
+import ratingsRouter from "./ratings.js";
+import maintenanceRouter from "./maintenance.js";
+import bookingsRouter from "./bookings.js";
+import referralsRouter from "./referrals.js";
+import pricingRouter from "./pricing.js";
+import projectsRouter from "./projects.js";
+import notificationsRouter from "./notifications.js";
+import contractsRouter from "./contracts.js";
 
 const router: IRouter = Router();
 
@@ -24,5 +32,13 @@ router.use("/analytics", analyticsRouter);
 router.use("/plans", plansRouter);
 router.use("/sms", smsRouter);
 router.use("/wallet", walletRouter);
+router.use("/ratings", ratingsRouter);
+router.use("/maintenance", maintenanceRouter);
+router.use("/bookings", bookingsRouter);
+router.use("/referrals", referralsRouter);
+router.use("/pricing", pricingRouter);
+router.use("/projects", projectsRouter);
+router.use("/notifications", notificationsRouter);
+router.use("/contracts", contractsRouter);
 
 export default router;

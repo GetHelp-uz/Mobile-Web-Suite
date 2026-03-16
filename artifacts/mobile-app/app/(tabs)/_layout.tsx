@@ -14,6 +14,7 @@ function NativeTabLayout({ role }: { role: string }) {
   const isWorker = role === "worker";
   const isAdmin = role === "super_admin";
   const isShopOwner = role === "shop_owner";
+  const isCustomer = role === "customer";
 
   return (
     <NativeTabs>
@@ -22,7 +23,7 @@ function NativeTabLayout({ role }: { role: string }) {
         <Label>{isAdmin || isShopOwner ? "Dashboard" : "Asboblar"}</Label>
       </NativeTabs.Trigger>
 
-      {(isWorker) && (
+      {isWorker && (
         <NativeTabs.Trigger name="scanner">
           <Icon sf={{ default: "qrcode.viewfinder", selected: "qrcode.viewfinder" }} />
           <Label>Skaner</Label>
@@ -50,10 +51,17 @@ function NativeTabLayout({ role }: { role: string }) {
         </NativeTabs.Trigger>
       )}
 
-      {(!isAdmin && !isShopOwner && !isWorker) && (
+      {isCustomer && (
         <NativeTabs.Trigger name="my-rentals">
           <Icon sf={{ default: "doc.text", selected: "doc.text.fill" }} />
           <Label>Ijaralarim</Label>
+        </NativeTabs.Trigger>
+      )}
+
+      {isCustomer && (
+        <NativeTabs.Trigger name="bookings">
+          <Icon sf={{ default: "calendar.badge.plus", selected: "calendar.badge.plus" }} />
+          <Label>Bronlar</Label>
         </NativeTabs.Trigger>
       )}
 
@@ -61,6 +69,13 @@ function NativeTabLayout({ role }: { role: string }) {
         <NativeTabs.Trigger name="wallet">
           <Icon sf={{ default: "wallet.bifold", selected: "wallet.bifold.fill" }} />
           <Label>Hamyon</Label>
+        </NativeTabs.Trigger>
+      )}
+
+      {!isAdmin && (
+        <NativeTabs.Trigger name="referral">
+          <Icon sf={{ default: "gift", selected: "gift.fill" }} />
+          <Label>Referal</Label>
         </NativeTabs.Trigger>
       )}
 
@@ -82,6 +97,7 @@ function ClassicTabLayout({ role }: { role: string }) {
   const isWorker = role === "worker";
   const isAdmin = role === "super_admin";
   const isShopOwner = role === "shop_owner";
+  const isCustomer = role === "customer";
 
   return (
     <Tabs
@@ -145,9 +161,18 @@ function ClassicTabLayout({ role }: { role: string }) {
         name="my-rentals"
         options={{
           title: "Ijaralarim",
-          href: (!isAdmin && !isShopOwner && !isWorker) ? undefined : null,
+          href: isCustomer ? undefined : null,
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="doc.text" tintColor={color} size={24} /> : <Feather name="list" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="bookings"
+        options={{
+          title: "Bronlar",
+          href: isCustomer ? undefined : null,
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="calendar.badge.plus" tintColor={color} size={24} /> : <Ionicons name="calendar-outline" size={22} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -166,6 +191,15 @@ function ClassicTabLayout({ role }: { role: string }) {
           href: !isAdmin ? undefined : null,
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="creditcard" tintColor={color} size={24} /> : <Ionicons name="wallet-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="referral"
+        options={{
+          title: "Referal",
+          href: !isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="gift" tintColor={color} size={24} /> : <Ionicons name="gift-outline" size={22} color={color} />,
         }}
       />
       <Tabs.Screen

@@ -15,7 +15,14 @@ import {
   Settings,
   MessageSquare,
   Plug,
-  Wallet
+  Wallet,
+  CalendarCheck,
+  Star,
+  TrendingUp,
+  Gift,
+  FolderOpen,
+  Bell,
+  ClipboardList,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -27,12 +34,19 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     customer: [
       { name: "Asboblar", path: "/browse", icon: Wrench },
       { name: "Ijaralarim", path: "/my-rentals", icon: FileText },
+      { name: "Bronlarim", path: "/bookings", icon: CalendarCheck },
+      { name: "Loyihalarim", path: "/projects", icon: FolderOpen },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
+      { name: "Referal", path: "/referral", icon: Gift },
     ],
     shop_owner: [
       { name: "Boshqaruv paneli", path: "/shop", icon: LayoutDashboard },
       { name: "Asboblarim", path: "/shop/tools", icon: Hammer },
       { name: "Ijaralar", path: "/shop/rentals", icon: FileText },
+      { name: "Bronlar", path: "/shop/bookings", icon: CalendarCheck },
+      { name: "Texnik xizmat", path: "/shop/maintenance", icon: ClipboardList },
+      { name: "Narx qoidalari", path: "/shop/pricing", icon: TrendingUp },
+      { name: "Baholar", path: "/shop/ratings", icon: Star },
       { name: "Hodimlar", path: "/shop/workers", icon: Users },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
       { name: "SMS Xabarlar", path: "/shop/sms", icon: MessageSquare },
@@ -45,6 +59,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Umumiy ko'rinish", path: "/admin", icon: LayoutDashboard },
       { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
       { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
+      { name: "Bildirishnomalar", path: "/admin/notifications", icon: Bell },
       { name: "Ilova boshqaruvi", path: "/admin/app", icon: Settings },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
     ]
@@ -72,33 +87,33 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           </span>
         </div>
         
-        <div className="flex-1 py-6 px-4 space-y-2">
+        <div className="flex-1 py-4 px-3 space-y-0.5 overflow-y-auto">
           {links.map((link) => {
             const isActive = location === link.path || location.startsWith(link.path + '/');
             return (
               <Link key={link.path} href={link.path} className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group",
+                "flex items-center gap-3 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 group",
                 isActive 
                   ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground"
               )}>
-                <link.icon size={20} className={cn(
+                <link.icon size={18} className={cn(
                   "transition-transform duration-200 group-hover:scale-110",
                   isActive ? "text-primary-foreground" : "text-muted-foreground group-hover:text-primary"
                 )} />
-                {link.name}
+                <span className="text-sm">{link.name}</span>
               </Link>
             );
           })}
         </div>
 
-        <div className="p-6 border-t border-border/50">
-          <div className="flex items-center gap-3 mb-6 px-2">
-            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-primary">
+        <div className="p-5 border-t border-border/50">
+          <div className="flex items-center gap-3 mb-4 px-1">
+            <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold text-primary flex-shrink-0">
               {user?.name.charAt(0)}
             </div>
-            <div>
-              <p className="text-sm font-bold">{user?.name}</p>
+            <div className="min-w-0">
+              <p className="text-sm font-bold truncate">{user?.name}</p>
               <p className="text-xs text-muted-foreground">{user?.role ? (roleLabels[user.role] ?? user.role) : ""}</p>
             </div>
           </div>

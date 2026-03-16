@@ -11,12 +11,20 @@ import Register from "@/pages/auth/Register";
 import BrowseTools from "@/pages/customer/BrowseTools";
 import ToolDetails from "@/pages/customer/ToolDetails";
 import MyRentals from "@/pages/customer/MyRentals";
+import BookingsPage from "@/pages/customer/Bookings";
+import ProjectsPage from "@/pages/customer/Projects";
+import ReferralPage from "@/pages/customer/Referral";
 import ShopDashboard from "@/pages/shop/ShopDashboard";
 import ShopTools from "@/pages/shop/ShopTools";
+import ShopMaintenance from "@/pages/shop/ShopMaintenance";
+import ShopPricing from "@/pages/shop/ShopPricing";
+import ShopRatings from "@/pages/shop/ShopRatings";
+import ShopBookings from "@/pages/shop/ShopBookings";
 import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
 import AdminIntegrations from "@/pages/admin/AdminIntegrations";
+import AdminNotifications from "@/pages/admin/AdminNotifications";
 import ShopSms from "@/pages/shop/ShopSms";
 import WalletPage from "@/pages/wallet/Wallet";
 import NotFound from "@/pages/not-found";
@@ -84,6 +92,15 @@ function Router() {
       <Route path="/my-rentals">
         {() => <ProtectedRoute component={MyRentals} allowedRoles={['customer']} />}
       </Route>
+      <Route path="/bookings">
+        {() => <ProtectedRoute component={BookingsPage} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/projects">
+        {() => <ProtectedRoute component={ProjectsPage} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/referral">
+        {() => <ProtectedRoute component={ReferralPage} allowedRoles={['customer','shop_owner','worker']} />}
+      </Route>
 
       {/* Do'kon egasi yo'llari */}
       <Route path="/shop">
@@ -91,6 +108,21 @@ function Router() {
       </Route>
       <Route path="/shop/tools">
         {() => <ProtectedRoute component={ShopTools} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/bookings">
+        {() => <ProtectedRoute component={ShopBookings} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/maintenance">
+        {() => <ProtectedRoute component={ShopMaintenance} allowedRoles={['shop_owner','worker']} />}
+      </Route>
+      <Route path="/shop/pricing">
+        {() => <ProtectedRoute component={ShopPricing} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/ratings">
+        {() => <ProtectedRoute component={ShopRatings} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/sms">
+        {() => <ProtectedRoute component={ShopSms} allowedRoles={['shop_owner']} />}
       </Route>
 
       {/* Hodim yo'llari */}
@@ -108,10 +140,8 @@ function Router() {
       <Route path="/admin/integrations">
         {() => <ProtectedRoute component={AdminIntegrations} allowedRoles={['super_admin']} />}
       </Route>
-
-      {/* Do'kon SMS yo'llari */}
-      <Route path="/shop/sms">
-        {() => <ProtectedRoute component={ShopSms} allowedRoles={['shop_owner']} />}
+      <Route path="/admin/notifications">
+        {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}
       </Route>
 
       {/* Hamyon — barcha rollar uchun */}
