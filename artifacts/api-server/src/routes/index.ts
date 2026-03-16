@@ -18,6 +18,16 @@ import pricingRouter from "./pricing.js";
 import projectsRouter from "./projects.js";
 import notificationsRouter from "./notifications.js";
 import contractsRouter from "./contracts.js";
+import documentsRouter from "./documents.js";
+import loyaltyRouter from "./loyalty.js";
+import promoCodesRouter from "./promo-codes.js";
+import favoritesRouter from "./favorites.js";
+import damageReportsRouter from "./damage-reports.js";
+import workerTasksRouter from "./worker-tasks.js";
+import suppliersRouter from "./suppliers.js";
+import inAppNotificationsRouter from "./in-app-notifications.js";
+import exportRouter from "./export.js";
+import auditRouter from "./audit.js";
 
 const router: IRouter = Router();
 
@@ -40,5 +50,15 @@ router.use("/pricing", pricingRouter);
 router.use("/projects", projectsRouter);
 router.use("/notifications", notificationsRouter);
 router.use("/contracts", contractsRouter);
+router.use("/documents", documentsRouter);
+router.use("/loyalty", loyaltyRouter);
+router.use("/promo-codes", promoCodesRouter);
+router.use("/favorites", favoritesRouter);
+router.use("/damage-reports", damageReportsRouter);
+router.use("/worker-tasks", workerTasksRouter);
+router.use("/suppliers", suppliersRouter);
+router.use("/in-app-notifications", inAppNotificationsRouter);
+router.use("/export", exportRouter);
+router.use("/audit", auditRouter);
 
 export default router;

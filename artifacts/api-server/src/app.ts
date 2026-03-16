@@ -1,9 +1,14 @@
 import express, { type Express } from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import router from "./routes/index.js";
 import { sendOverdueSmsAlerts } from "./lib/sms.js";
 
 const app: Express = express();
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const uploadsDir = path.join(process.cwd(), "uploads");
 
 app.use(cors());
 app.use(express.json());

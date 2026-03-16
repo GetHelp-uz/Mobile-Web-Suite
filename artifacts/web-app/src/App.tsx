@@ -14,19 +14,28 @@ import MyRentals from "@/pages/customer/MyRentals";
 import BookingsPage from "@/pages/customer/Bookings";
 import ProjectsPage from "@/pages/customer/Projects";
 import ReferralPage from "@/pages/customer/Referral";
+import CustomerFavorites from "@/pages/customer/CustomerFavorites";
+import LoyaltyPage from "@/pages/customer/LoyaltyPage";
 import ShopDashboard from "@/pages/shop/ShopDashboard";
 import ShopTools from "@/pages/shop/ShopTools";
 import ShopMaintenance from "@/pages/shop/ShopMaintenance";
 import ShopPricing from "@/pages/shop/ShopPricing";
 import ShopRatings from "@/pages/shop/ShopRatings";
 import ShopBookings from "@/pages/shop/ShopBookings";
+import ShopSms from "@/pages/shop/ShopSms";
+import ShopDocuments from "@/pages/shop/ShopDocuments";
+import ShopPromoCodes from "@/pages/shop/ShopPromoCodes";
+import ShopWorkerTasks from "@/pages/shop/ShopWorkerTasks";
+import ShopSuppliers from "@/pages/shop/ShopSuppliers";
+import ShopDamageReports from "@/pages/shop/ShopDamageReports";
 import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
 import AdminIntegrations from "@/pages/admin/AdminIntegrations";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
-import ShopSms from "@/pages/shop/ShopSms";
+import AdminAuditLog from "@/pages/admin/AdminAuditLog";
 import WalletPage from "@/pages/wallet/Wallet";
+import NotificationsCenter from "@/pages/NotificationsCenter";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -42,7 +51,7 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: any
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center">Yuklanmoqda...</div>;
-  
+
   if (!isAuthenticated) {
     return <Redirect to="/login" />;
   }
@@ -62,10 +71,10 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: any
 
 function RootRedirect() {
   const { user, isAuthenticated, isLoading } = useAuth();
-  
+
   if (isLoading) return null;
   if (!isAuthenticated) return <Landing />;
-  
+
   switch (user?.role) {
     case "super_admin": return <Redirect to="/admin" />;
     case "shop_owner": return <Redirect to="/shop" />;
@@ -81,7 +90,7 @@ function Router() {
       <Route path="/" component={RootRedirect} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
-      
+
       {/* Mijoz yo'llari */}
       <Route path="/browse">
         {() => <ProtectedRoute component={BrowseTools} allowedRoles={['customer']} />}
@@ -100,6 +109,12 @@ function Router() {
       </Route>
       <Route path="/referral">
         {() => <ProtectedRoute component={ReferralPage} allowedRoles={['customer','shop_owner','worker']} />}
+      </Route>
+      <Route path="/favorites">
+        {() => <ProtectedRoute component={CustomerFavorites} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/loyalty">
+        {() => <ProtectedRoute component={LoyaltyPage} allowedRoles={['customer']} />}
       </Route>
 
       {/* Do'kon egasi yo'llari */}
@@ -124,6 +139,21 @@ function Router() {
       <Route path="/shop/sms">
         {() => <ProtectedRoute component={ShopSms} allowedRoles={['shop_owner']} />}
       </Route>
+      <Route path="/shop/documents">
+        {() => <ProtectedRoute component={ShopDocuments} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/promo-codes">
+        {() => <ProtectedRoute component={ShopPromoCodes} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/worker-tasks">
+        {() => <ProtectedRoute component={ShopWorkerTasks} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/suppliers">
+        {() => <ProtectedRoute component={ShopSuppliers} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/damage-reports">
+        {() => <ProtectedRoute component={ShopDamageReports} allowedRoles={['shop_owner']} />}
+      </Route>
 
       {/* Hodim yo'llari */}
       <Route path="/worker">
@@ -143,10 +173,16 @@ function Router() {
       <Route path="/admin/notifications">
         {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}
       </Route>
+      <Route path="/admin/audit">
+        {() => <ProtectedRoute component={AdminAuditLog} allowedRoles={['super_admin']} />}
+      </Route>
 
-      {/* Hamyon — barcha rollar uchun */}
+      {/* Hamyon va bildirishnomalar — barcha rollar */}
       <Route path="/wallet">
         {() => <ProtectedRoute component={WalletPage} allowedRoles={['customer','shop_owner','worker']} />}
+      </Route>
+      <Route path="/notifications-center">
+        {() => <ProtectedRoute component={NotificationsCenter} />}
       </Route>
 
       <Route component={NotFound} />
