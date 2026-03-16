@@ -32,6 +32,8 @@ import gpsRouter from "./gps.js";
 import branchesRouter from "./branches.js";
 import chatRouter from "./chat.js";
 import aiRecommendRouter from "./ai-recommend.js";
+import paymentSettingsRouter from "./payment-settings.js";
+import paymentWebhooksRouter from "./payment-webhooks.js";
 
 const router: IRouter = Router();
 
@@ -68,5 +70,7 @@ router.use("/gps", gpsRouter);
 router.use("/branches", branchesRouter);
 router.use("/chat", chatRouter);
 router.use("/ai", aiRecommendRouter);
+router.use("/payment-settings", paymentSettingsRouter);
+router.use("/pay", paymentWebhooksRouter);
 
 export default router;

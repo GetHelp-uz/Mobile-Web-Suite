@@ -76,16 +76,31 @@ router.post("/topup", authenticate, async (req, res) => {
     // To'lov URL-larini generatsiya qilamiz
     const encodedAmount = Math.round(Number(amount) * 100); // tiyin
     let paymentUrl = "";
-    const merchantId = process.env.MERCHANT_ID || "toolrent";
-    const returnUrl = process.env.APP_URL ? `${process.env.APP_URL}/wallet/success` : `https://toolrent.uz/wallet/success`;
+
+    // DB'dan credentials olish
+    const settingsRow = await db.execute(sql`SELECT * FROM payment_settings WHERE provider = ${provider} AND is_active = true LIMIT 1`);
+    const pSettings = settingsRow.rows[0] as any;
+    const isTest = !pSettings || pSettings.is_test_mode;
+
+    const returnUrl = process.env.APP_URL
+      ? `${process.env.APP_URL}/wallet/success`
+      : `https://toolrent.uz/wallet/success`;
 
     if (provider === "click") {
-      paymentUrl = `https://my.click.uz/services/pay?service_id=${process.env.CLICK_SERVICE_ID || "12345"}&merchant_id=${merchantId}&amount=${amount}&transaction_param=${refId}&return_url=${returnUrl}`;
+      const serviceId = pSettings?.service_id || process.env.CLICK_SERVICE_ID || "12345";
+      const merchantId = pSettings?.merchant_id || process.env.CLICK_MERCHANT_ID || "toolrent";
+      const base = isTest ? "https://my.click.uz/services/pay" : "https://my.click.uz/services/pay";
+      paymentUrl = `${base}?service_id=${serviceId}&merchant_id=${merchantId}&amount=${amount}&transaction_param=${refId}&return_url=${encodeURIComponent(returnUrl)}`;
     } else if (provider === "payme") {
-      const base64Param = Buffer.from(`m=${process.env.PAYME_MERCHANT_ID || "65f8e5c9e34b2700017e65c9"};ac.order_id=${refId};a=${encodedAmount}`).toString("base64");
-      paymentUrl = `https://checkout.paycom.uz/${base64Param}`;
+      const paymeMerchant = pSettings?.merchant_id || process.env.PAYME_MERCHANT_ID || "65f8e5c9e34b2700017e65c9";
+      const base64Param = Buffer.from(`m=${paymeMerchant};ac.order_id=${refId};a=${encodedAmount}`).toString("base64");
+      const base = isTest ? "https://checkout.paycom.uz" : "https://checkout.paycom.uz";
+      paymentUrl = `${base}/${base64Param}`;
     } else if (provider === "paynet") {
-      paymentUrl = `https://paynet.uz/processing/order?merchantId=${process.env.PAYNET_MERCHANT_ID || "toolrent"}&orderId=${refId}&amount=${amount}&currency=860&returnUrl=${returnUrl}`;
+      const paynetMerchant = pSettings?.merchant_id || process.env.PAYNET_MERCHANT_ID || "toolrent";
+      const serviceId = pSettings?.service_id || process.env.PAYNET_SERVICE_ID || "";
+      const base = isTest ? "https://test.paynet.uz/processing/order" : "https://paynet.uz/processing/order";
+      paymentUrl = `${base}?merchantId=${paynetMerchant}&orderId=${refId}&amount=${amount}&currency=860&returnUrl=${encodeURIComponent(returnUrl)}${serviceId ? `&serviceId=${serviceId}` : ""}`;
     }
 
     res.json({

@@ -39,6 +39,7 @@ import {
   Sparkles,
   BarChart2,
   Package,
+  CreditCard,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -77,6 +78,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Shikast xabarlari", path: "/shop/damage-reports", icon: AlertTriangle },
       { name: "GPS Monitoring", path: "/shop/gps", icon: MapPin },
       { name: "Filiallar", path: "/shop/branches", icon: Building2 },
+      { name: "To'lov ulash", path: "/shop/payment-settings", icon: CreditCard },
       { name: "Ta'minotchilar", path: "/shop/suppliers", icon: Truck },
       { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
       { name: "Chat", path: "/chat", icon: MessageSquare },
@@ -96,6 +98,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Audit jurnali", path: "/admin/audit", icon: Shield },
       { name: "Ilova boshqaruvi", path: "/admin/app", icon: Settings },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
+      { name: "To'lov sozlamalari", path: "/admin/payment-settings", icon: CreditCard },
     ]
   };
 

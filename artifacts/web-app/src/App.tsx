@@ -39,8 +39,10 @@ import QRScanner from "@/pages/worker/QRScanner";
 import AdminOverview from "@/pages/admin/AdminOverview";
 import AdminApp from "@/pages/admin/AdminApp";
 import AdminIntegrations from "@/pages/admin/AdminIntegrations";
+import AdminPaymentSettings from "@/pages/admin/AdminPaymentSettings";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
+import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
 import WalletPage from "@/pages/wallet/Wallet";
 import NotificationsCenter from "@/pages/NotificationsCenter";
 import NotFound from "@/pages/not-found";
@@ -197,6 +199,12 @@ function Router() {
       </Route>
       <Route path="/admin/integrations">
         {() => <ProtectedRoute component={AdminIntegrations} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/payment-settings">
+        {() => <ProtectedRoute component={AdminPaymentSettings} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/shop/payment-settings">
+        {() => <ProtectedRoute component={ShopPaymentSettings} allowedRoles={['shop_owner', 'super_admin']} />}
       </Route>
       <Route path="/admin/notifications">
         {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}

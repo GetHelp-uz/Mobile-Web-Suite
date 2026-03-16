@@ -68,9 +68,11 @@ export default function WalletPage() {
   // Topup dialog
   const [topupOpen, setTopupOpen] = useState(false);
   const [amount, setAmount] = useState("");
+  const [phone, setPhone] = useState("");
   const [provider, setProvider] = useState("click");
   const [topping, setTopping] = useState(false);
   const [payUrl, setPayUrl] = useState("");
+  const [referenceId, setReferenceId] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -93,15 +95,20 @@ export default function WalletPage() {
       toast({ title: "Xatolik", description: "Minimal miqdor: 1 000 UZS", variant: "destructive" });
       return;
     }
+    if (!phone || phone.length < 9) {
+      toast({ title: "Xatolik", description: "To'g'ri telefon raqam kiriting", variant: "destructive" });
+      return;
+    }
     setTopping(true);
     try {
       const r = await fetch("/api/wallet/topup", {
         method: "POST", headers: h,
-        body: JSON.stringify({ amount: Number(amount), provider }),
+        body: JSON.stringify({ amount: Number(amount), provider, phone }),
       });
       const d = await r.json();
       if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
       setPayUrl(d.paymentUrl);
+      setReferenceId(d.referenceId || "");
       toast({ title: "To'lov yaratildi!", description: "To'lov sahifasiga o'ting" });
     } finally {
       setTopping(false);
@@ -254,7 +261,7 @@ export default function WalletPage() {
       </Card>
 
       {/* Topup Dialog */}
-      <Dialog open={topupOpen} onOpenChange={(v) => { setTopupOpen(v); if (!v) { setPayUrl(""); setAmount(""); } }}>
+      <Dialog open={topupOpen} onOpenChange={(v) => { setTopupOpen(v); if (!v) { setPayUrl(""); setAmount(""); setPhone(""); setReferenceId(""); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Plus size={20} /> Hisobni to'ldirish</DialogTitle>
@@ -262,6 +269,22 @@ export default function WalletPage() {
 
           {!payUrl ? (
             <div className="space-y-5 py-2">
+              {/* Telefon raqam */}
+              <div>
+                <label className="text-sm font-semibold mb-2 block">Telefon raqam</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium text-sm">+998</span>
+                  <Input
+                    type="tel"
+                    placeholder="901234567"
+                    value={phone}
+                    onChange={e => setPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                    className="pl-14 h-12"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Ro'yxatdan o'tgandagi telefon raqamingiz</p>
+              </div>
+
               {/* Miqdor */}
               <div>
                 <label className="text-sm font-semibold mb-2 block">Miqdor (UZS)</label>
@@ -317,12 +340,7 @@ export default function WalletPage() {
               </Button>
               <div className="border-t pt-4">
                 <p className="text-xs text-center text-muted-foreground mb-3">Test rejimida to'lovni tasdiqlash:</p>
-                <Button variant="outline" className="w-full" onClick={() => {
-                  // referenceId'ni URL'dan olish
-                  const url = new URL(payUrl);
-                  const refId = url.searchParams.get("transaction_param") || url.searchParams.get("order_id") || Date.now().toString();
-                  confirmTestPayment(refId);
-                }}>
+                <Button variant="outline" className="w-full" onClick={() => confirmTestPayment(referenceId)}>
                   Test: To'lovni tasdiqlash
                 </Button>
               </div>
@@ -332,7 +350,7 @@ export default function WalletPage() {
           {!payUrl && (
             <DialogFooter>
               <Button variant="outline" onClick={() => setTopupOpen(false)}>Bekor</Button>
-              <Button onClick={handleTopup} disabled={topping || !amount || Number(amount) < 1000} className="gap-2">
+              <Button onClick={handleTopup} disabled={topping || !amount || Number(amount) < 1000 || phone.length < 9} className="gap-2">
                 <CreditCard size={16} /> {topping ? "Tayyorlanmoqda..." : "To'lov yaratish"}
               </Button>
             </DialogFooter>
