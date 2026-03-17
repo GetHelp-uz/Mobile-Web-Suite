@@ -118,6 +118,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     ],
     super_admin: [
       { name: "Boshqaruv paneli", path: "/admin", icon: LayoutDashboard },
+      { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
+      { name: "Hujjatlar", path: "/admin/documents", icon: FileText },
       { name: "Tarif rejalari", path: "/admin/tariffs", icon: PieChart },
       { name: "Komissiya boshqaruvi", path: "/admin/commissions", icon: DollarSign },
       { name: "Yechib olish so'rovlari", path: "/admin/withdrawals", icon: ArrowDownToLine },
@@ -125,7 +127,6 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Bildirishnomalar", path: "/admin/notifications", icon: Bell },
       { name: "SMS Boshqaruv", path: "/admin/sms", icon: MessageSquare },
       { name: "Audit jurnali", path: "/admin/audit", icon: Shield },
-      { name: "Ilova (eski)", path: "/admin/app", icon: Settings },
       { name: "AI Yordamchi", path: "/admin/ai-assistant", icon: Bot },
       { name: "Plaginylar", path: "/admin/plugins", icon: Puzzle },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },

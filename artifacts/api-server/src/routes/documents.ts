@@ -5,7 +5,7 @@ import crypto from "crypto";
 import fs from "fs";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
-import { authenticate } from "../lib/auth.js";
+import { authenticate, requireRole } from "../lib/auth.js";
 
 const router = Router();
 
@@ -106,6 +106,57 @@ router.get("/rental/:rentalId", authenticate, async (req, res) => {
     `);
     res.json({ documents: rows.rows });
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
+});
+
+// GET /api/documents/admin — admin: barcha hujjatlar
+router.get("/admin", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 15));
+    const offset = (page - 1) * limit;
+    const statusFilter = req.query.status as string | undefined;
+    const search = (req.query.search as string || "").trim();
+
+    // Build dynamic conditions
+    const conditions: any[] = [];
+    if (statusFilter && ["pending", "approved", "rejected"].includes(statusFilter)) {
+      conditions.push(sql`d.status = ${statusFilter}`);
+    }
+    if (search) {
+      conditions.push(sql`(d.original_name ILIKE ${`%${search}%`} OR u.name ILIKE ${`%${search}%`} OR u.phone ILIKE ${`%${search}%`})`);
+    }
+
+    const whereExpr = conditions.length > 0
+      ? sql.join([sql`WHERE`, sql.join(conditions, sql` AND `)], sql` `)
+      : sql``;
+
+    const [docsResult, countResult] = await Promise.all([
+      db.execute(sql`
+        SELECT d.*, u.name as user_name, u.phone as user_phone
+        FROM customer_documents d
+        LEFT JOIN users u ON u.id = d.user_id
+        ${whereExpr}
+        ORDER BY d.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `),
+      db.execute(sql`
+        SELECT COUNT(*) as total
+        FROM customer_documents d
+        LEFT JOIN users u ON u.id = d.user_id
+        ${whereExpr}
+      `),
+    ]);
+
+    res.json({
+      documents: docsResult.rows,
+      total: Number((countResult.rows[0] as any)?.total || 0),
+      page,
+      limit,
+    });
+  } catch (err: any) {
+    console.error("[Documents Admin GET]", err.message);
+    res.status(500).json({ error: "Server xatosi yuz berdi. Qayta urining." });
+  }
 });
 
 // PATCH /api/documents/:id/review — tasdiqlash/rad etish
