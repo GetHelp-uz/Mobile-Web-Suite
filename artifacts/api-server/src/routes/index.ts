@@ -38,6 +38,7 @@ import deliveryRouter from "./delivery.js";
 import workerPerformanceRouter from "./worker-performance.js";
 import platformRouter from "./platform.js";
 import withdrawalsRouter from "./withdrawals.js";
+import aiAdminRouter from "./ai-admin.js";
 
 const router: IRouter = Router();
 
@@ -74,6 +75,7 @@ router.use("/gps", gpsRouter);
 router.use("/branches", branchesRouter);
 router.use("/chat", chatRouter);
 router.use("/ai", aiRecommendRouter);
+router.use("/ai", aiAdminRouter);
 router.use("/payment-settings", paymentSettingsRouter);
 router.use("/pay", paymentWebhooksRouter);
 router.use("/delivery", deliveryRouter);

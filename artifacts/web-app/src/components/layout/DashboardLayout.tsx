@@ -46,6 +46,8 @@ import {
   ArrowDownToLine,
   Smartphone,
   PieChart,
+  Puzzle,
+  Bot,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -111,6 +113,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "SMS Boshqaruv", path: "/admin/sms", icon: MessageSquare },
       { name: "Audit jurnali", path: "/admin/audit", icon: Shield },
       { name: "Ilova (eski)", path: "/admin/app", icon: Settings },
+      { name: "AI Yordamchi", path: "/admin/ai-assistant", icon: Bot },
+      { name: "Plaginylar", path: "/admin/plugins", icon: Puzzle },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
       { name: "To'lov sozlamalari", path: "/admin/payment-settings", icon: CreditCard },
       { name: "Hamyon", path: "/wallet", icon: Wallet },

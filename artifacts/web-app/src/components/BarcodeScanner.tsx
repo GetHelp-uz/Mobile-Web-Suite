@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5QrcodeScanner, Html5QrcodeScanType } from "html5-qrcode";
 import { Button } from "@/components/ui/button";
-import { Camera, X, Flashlight, ScanLine } from "lucide-react";
+import { Camera, X, ScanLine } from "lucide-react";
 
 type Props = {
   onScan: (code: string) => void;
@@ -36,8 +36,8 @@ export function BarcodeScanner({ onScan, onClose }: Props) {
         scanner.clear().catch(() => {});
         onScan(decodedText);
       },
-      (errorMessage) => {
-        // Scanning errors are normal - don't show them all
+      (_errorMessage) => {
+        // Normal scanning errors — ignore
       }
     );
     scannerRef.current = scanner;
@@ -64,7 +64,8 @@ export function BarcodeScanner({ onScan, onClose }: Props) {
 
         {/* Ko'rsatma */}
         <div className="px-4 pt-3 pb-1">
-          <p className="text-xs text-muted-foreground text-center">
+          <p className="text-xs text-muted-foreground text-center flex items-center justify-center gap-1">
+            <Camera size={12} />
             Shtrix kod yoki QR kodni kamera oldiga tuzing
           </p>
         </div>
@@ -79,7 +80,7 @@ export function BarcodeScanner({ onScan, onClose }: Props) {
 
           {lastScanned && (
             <div className="mt-3 p-3 rounded-xl bg-green-50 border border-green-200 text-center">
-              <p className="text-green-700 text-sm font-semibold">Skanerlanди!</p>
+              <p className="text-green-700 text-sm font-semibold">Skanerland!</p>
               <p className="text-green-600 text-xs mt-1 font-mono break-all">{lastScanned}</p>
             </div>
           )}

@@ -47,6 +47,8 @@ import AdminTariffs from "@/pages/admin/AdminTariffs";
 import AdminCommissions from "@/pages/admin/AdminCommissions";
 import AdminWithdrawals from "@/pages/admin/AdminWithdrawals";
 import AdminAppManagement from "@/pages/admin/AdminAppManagement";
+import AdminPlugins from "@/pages/admin/AdminPlugins";
+import AdminAIAssistant from "@/pages/admin/AdminAIAssistant";
 import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
 import ShopDeliverySettings from "@/pages/shop/ShopDeliverySettings";
 import ShopMaintenanceSchedule from "@/pages/shop/ShopMaintenanceSchedule";
@@ -234,6 +236,12 @@ function Router() {
       </Route>
       <Route path="/admin/app-management">
         {() => <ProtectedRoute component={AdminAppManagement} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/plugins">
+        {() => <ProtectedRoute component={AdminPlugins} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/ai-assistant">
+        {() => <ProtectedRoute component={AdminAIAssistant} allowedRoles={['super_admin']} />}
       </Route>
       <Route path="/shop/payment-settings">
         {() => <ProtectedRoute component={ShopPaymentSettings} allowedRoles={['shop_owner', 'super_admin']} />}
