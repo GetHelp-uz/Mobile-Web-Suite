@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 import React, { useState } from "react";
+import { playSound } from "@/lib/sound";
 import {
   Alert,
   Modal,
@@ -110,6 +111,7 @@ export default function ScannerScreen() {
     },
     onSuccess: (rental) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      playSound("success").catch(() => {});
       setShowModal(false);
       setQrInput("");
       setScannedTool(null);
@@ -129,6 +131,7 @@ export default function ScannerScreen() {
     }),
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      playSound("rental_return").catch(() => {});
       setShowModal(false);
       setQrInput("");
       setScannedTool(null);

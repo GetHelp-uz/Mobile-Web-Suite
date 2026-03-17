@@ -3,6 +3,7 @@ import { db, rentalsTable, toolsTable, usersTable, paymentsTable } from "@worksp
 import { eq, sql, and } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
 import { CreateRentalBody, ReturnRentalBody, StartRentalByQrBody, ReturnRentalByQrBody } from "@workspace/api-zod";
+import { sendRentalStartNotifications, sendRentalReturnNotifications, sendDepositNotification } from "../lib/push-notify.js";
 
 const router = Router();
 
@@ -154,6 +155,9 @@ router.post("/", authenticate, async (req, res) => {
 
     const enriched = await enrichRental(rental);
     res.status(201).json(enriched);
+
+    // Bildirishnomalar (javobdan keyin)
+    sendRentalStartNotifications(rental.id).catch(() => {});
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
@@ -198,6 +202,9 @@ router.post("/start-by-qr", authenticate, async (req, res) => {
 
     const enriched = await enrichRental(rental);
     res.status(201).json(enriched);
+
+    // Bildirishnomalar (javobdan keyin)
+    sendRentalStartNotifications(rental.id).catch(() => {});
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
@@ -250,6 +257,9 @@ router.post("/return-by-qr", authenticate, async (req, res) => {
 
     const enriched = await enrichRental(returned);
     res.json(enriched);
+
+    // Bildirishnomalar
+    sendRentalReturnNotifications(activeRental.id, Math.max(0, activeRental.depositAmount - damageCost)).catch(() => {});
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
@@ -339,6 +349,12 @@ router.post("/:id/confirm-return", authenticate, async (req, res) => {
 
     const enriched = await enrichRental(completed);
     res.json({ ...enriched, depositRefunded: refundAmount, depositDeducted: damageCost });
+
+    // Depozit va yakunlash bildirishnomasi
+    if (refundAmount > 0) {
+      sendDepositNotification(rental.customerId, refundAmount, rentalId).catch(() => {});
+    }
+    sendRentalReturnNotifications(rentalId, refundAmount).catch(() => {});
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
@@ -369,6 +385,9 @@ router.post("/:id/return", authenticate, async (req, res) => {
 
     const enriched = await enrichRental(returned);
     res.json(enriched);
+
+    // Bildirishnomalar
+    sendRentalReturnNotifications(Number(req.params.id)).catch(() => {});
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }

@@ -232,3 +232,28 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
 - **Auto SMS**: Ro'yxatdan o'tishda welcome SMS (fire-and-forget), 1 kun oldin eslatma, muddati o'tgan eslatma
 - **Web admin**: `/admin/sms` — AdminSms.tsx (provayderlar, shablonlar, tarix, triggerlar, tahlil)
 - **Lib**: `artifacts/api-server/src/lib/sms.ts` — `sendSms()`, `sendTemplateSms()`, `sendOverdueSmsAlerts()`, `sendReminderSmsAlerts()`
+
+## Xavfsizlik va bildirishnoma tizimi (Mar 2026)
+
+### 1. API Server — Kuchaytirilgan xavfsizlik (app.ts)
+- **HPP** (HTTP Parameter Pollution) himoya — `hpp` paketi, whitelist: status, role, category
+- **express-slow-down** — login/register uchun 5 urinishdan keyin har 500ms sekinlashtirish (max 20s)
+- **Helmet CSP** — to'liq Content Security Policy: defaultSrc self, scriptSrc jsdelivr.net, imgSrc blob+data, frameSloc none
+- **HSTS** — maxAge 1 yil, includeSubDomains, preload
+- **IP bloklash** — brute force limitga yetganda IP 1 soatga bloklanadi
+- **Shubhali yo'llar** — /etc/passwd, /.env, /wp-admin va boshqa hacking yo'llariga auto-block
+- **XSS/SQLi** sanitizer — barcha request body'dan `<script>`, eval, UNION SELECT va boshqa pattern'lar olib tashlanadi
+- **Rate limiting** — AI: 10/min, upload: 30/min, umumiy API: 300/min, login: 15/15min
+- **Request ID** — har bir so'rovga `X-Request-ID` sarlavhasi
+
+### 2. Push bildirishnomalar tizimi (to'liq)
+- **DB**: `notifications` jadvaliga `sound_type TEXT DEFAULT 'general'` ustuni qo'shildi
+- **push-notify.ts** — to'g'rilandi: `sendRentalStartNotifications()`, `sendRentalReturnNotifications()`, `sendDepositNotification()`
+- **rentals.ts** — 4 ta endpointga (POST /, start-by-qr, return-by-qr, /:id/return, /:id/confirm-return) notification trigger qo'shildi
+- **useLiveNotifications hook** — har 15s da polling, yangi bildirishnomalar uchun ovoz va toast
+- **DashboardLayout** — `useLiveNotifications` integratsiya qilindi (ovoz + toast)
+
+### 3. Mobile scanner ovozi (expo-av)
+- `artifacts/mobile-app/lib/sound.ts` — Web Audio API orqali WAV beep generatsiya qilish
+- `scanner.tsx` — ijara boshlanganda `playSound("success")`, qaytarishda `playSound("rental_return")`
+- Haptic feedback saqlab qolindi (vibrasiya + ovoz birga)

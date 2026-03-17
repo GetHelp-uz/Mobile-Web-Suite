@@ -1,7 +1,9 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/hooks/use-theme";
+import { useLiveNotifications } from "@/hooks/use-live-notifications";
+import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
   Wrench,
@@ -56,6 +58,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { theme, toggleTheme, isDark } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleNewNotification = useCallback((notif: any) => {
+    toast({
+      title: notif.title,
+      description: notif.body,
+      duration: 5000,
+    });
+  }, [toast]);
+
+  useLiveNotifications(handleNewNotification);
 
   const navItems = {
     customer: [
