@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useListShopTools, useCreateTool } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,11 +9,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, QrCode, Download, Printer, Search, Satellite, Link } from "lucide-react";
+import { Plus, QrCode, Download, Printer, Search, Satellite, Link, Camera, Shuffle, CheckCircle, AlertCircle, ScanLine, Barcode, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
 import JsBarcode from "jsbarcode";
+import { BarcodeScanner } from "@/components/BarcodeScanner";
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   available: { label: "Mavjud", color: "bg-green-100 text-green-700" },
@@ -65,10 +66,16 @@ export default function ShopTools() {
   const [form, setForm] = useState({
     name: "", category: "", description: "",
     pricePerDay: "", pricePerHour: "", depositAmount: "",
-    gpsDeviceId: "",
+    gpsDeviceId: "", customBarcode: "",
   });
   const [gpsDevices, setGpsDevices] = useState<any[]>([]);
   const [showGPS, setShowGPS] = useState(false);
+  const [showBarcodeSection, setShowBarcodeSection] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [barcodeStatus, setBarcodeStatus] = useState<"idle"|"checking"|"ok"|"taken">("idle");
+  const [barcodeTakenInfo, setBarcodeTakenInfo] = useState<string>("");
+  const barcodeCheckTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const formBarcodeRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     if (!shopId) return;
@@ -99,21 +106,84 @@ export default function ShopTools() {
         }
         setCreateOpen(false);
         setShowGPS(false);
-        setForm({ name: "", category: "", description: "", pricePerDay: "", pricePerHour: "", depositAmount: "", gpsDeviceId: "" });
+        setShowBarcodeSection(false);
+        setBarcodeStatus("idle");
+        setForm({ name: "", category: "", description: "", pricePerDay: "", pricePerHour: "", depositAmount: "", gpsDeviceId: "", customBarcode: "" });
         queryClient.invalidateQueries({ queryKey: [`/api/shops/${shopId}/tools`] });
         toast({
           title: "Muvaffaqiyatli",
-          description: form.gpsDeviceId ? "Asbob qo'shildi va GPS ulandi!" : "Asbob qo'shildi va QR kod yaratildi"
+          description: form.customBarcode ? "Asbob va shtrix kod saqlandi!" : form.gpsDeviceId ? "Asbob qo'shildi va GPS ulandi!" : "Asbob qo'shildi va QR kod yaratildi"
         });
       },
       onError: (e: any) => toast({ title: "Xatolik", description: e.message, variant: "destructive" }),
     }
   });
 
+  const token = localStorage.getItem("tool_rent_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+
+  // Shtrix kod o'zgarganda unique tekshirish
+  const checkBarcodeUnique = useCallback(async (code: string) => {
+    if (!code.trim()) { setBarcodeStatus("idle"); return; }
+    setBarcodeStatus("checking");
+    try {
+      const r = await fetch(`${baseUrl}/api/tools/barcode-check/${encodeURIComponent(code)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await r.json();
+      if (d.exists) {
+        setBarcodeStatus("taken");
+        setBarcodeTakenInfo(`Allaqachon ishlatilgan: "${d.tool?.name || "noma'lum"}" (Do'kon: ${d.tool?.shop_name || ""})`);
+      } else {
+        setBarcodeStatus("ok");
+        setBarcodeTakenInfo("");
+      }
+    } catch {
+      setBarcodeStatus("idle");
+    }
+  }, [baseUrl, token]);
+
+  const handleBarcodeChange = (value: string) => {
+    setForm(f => ({ ...f, customBarcode: value }));
+    setBarcodeStatus("idle");
+    if (barcodeCheckTimeout.current) clearTimeout(barcodeCheckTimeout.current);
+    if (value.trim()) {
+      barcodeCheckTimeout.current = setTimeout(() => checkBarcodeUnique(value), 600);
+    }
+  };
+
+  const generateBarcode = () => {
+    const code = `TR${shopId}${Date.now().toString(36).toUpperCase()}`;
+    setForm(f => ({ ...f, customBarcode: code }));
+    checkBarcodeUnique(code);
+  };
+
+  const handleScanResult = (scannedCode: string) => {
+    setScannerOpen(false);
+    handleBarcodeChange(scannedCode);
+    setShowBarcodeSection(true);
+  };
+
+  // Formda barcode preview
+  useEffect(() => {
+    if (formBarcodeRef.current && form.customBarcode) {
+      try {
+        JsBarcode(formBarcodeRef.current, form.customBarcode, {
+          format: "CODE128", lineColor: "#000", width: 1.8, height: 50,
+          displayValue: true, fontSize: 12, margin: 8, background: "#fff",
+        });
+      } catch {}
+    }
+  }, [form.customBarcode]);
+
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.name || !form.category || !form.pricePerDay || !form.depositAmount) {
       toast({ title: "Xatolik", description: "Majburiy maydonlarni to'ldiring", variant: "destructive" });
+      return;
+    }
+    if (barcodeStatus === "taken") {
+      toast({ title: "Shtrix kod band", description: barcodeTakenInfo, variant: "destructive" });
       return;
     }
     createTool.mutate({
@@ -124,6 +194,7 @@ export default function ShopTools() {
         description: form.description || undefined,
         pricePerDay: Number(form.pricePerDay),
         depositAmount: Number(form.depositAmount),
+        ...(form.customBarcode ? { customBarcode: form.customBarcode } as any : {}),
       }
     });
   };
@@ -351,6 +422,94 @@ export default function ShopTools() {
               </div>
             </div>
 
+            {/* Shtrix / QR kod bo'limi */}
+            <div className={`border-2 rounded-xl p-3 transition-colors ${showBarcodeSection ? "border-primary/30 bg-primary/5" : "border-dashed border-border"}`}>
+              <button type="button"
+                className="flex items-center gap-2 text-sm font-medium w-full"
+                onClick={() => setShowBarcodeSection(v => !v)}>
+                <ScanLine className="h-4 w-4 text-orange-500" />
+                <span>Shtrix / QR kod biriktirish</span>
+                {form.customBarcode && barcodeStatus === "ok" && (
+                  <Badge className="ml-1 text-xs bg-green-100 text-green-700 h-5">Tayyor</Badge>
+                )}
+                {barcodeStatus === "taken" && (
+                  <Badge className="ml-1 text-xs bg-red-100 text-red-700 h-5">Band</Badge>
+                )}
+                <span className="ml-auto text-xs text-muted-foreground">{showBarcodeSection ? "▲" : "▼"}</span>
+              </button>
+
+              {showBarcodeSection && (
+                <div className="mt-3 space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Har bir shtrix/QR kod faqat bitta asbobga biriktiriladi.
+                  </p>
+
+                  {/* Input va tugmalar */}
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Input
+                        placeholder="Shtrix/QR kod qiymati..."
+                        value={form.customBarcode}
+                        onChange={e => handleBarcodeChange(e.target.value)}
+                        className={`pr-8 ${barcodeStatus === "ok" ? "border-green-500" : barcodeStatus === "taken" ? "border-red-500" : ""}`}
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        {barcodeStatus === "checking" && <div className="w-4 h-4 rounded-full border-2 border-primary border-t-transparent animate-spin" />}
+                        {barcodeStatus === "ok"       && <CheckCircle size={16} className="text-green-600" />}
+                        {barcodeStatus === "taken"    && <AlertCircle size={16} className="text-red-600" />}
+                      </div>
+                    </div>
+                    {form.customBarcode && (
+                      <Button type="button" variant="ghost" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => handleBarcodeChange("")}>
+                        <X size={14} />
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Xato xabar */}
+                  {barcodeStatus === "taken" && (
+                    <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 rounded-lg p-2">
+                      <AlertCircle size={14} className="mt-0.5 flex-shrink-0" />
+                      <span>{barcodeTakenInfo}</span>
+                    </div>
+                  )}
+                  {barcodeStatus === "ok" && (
+                    <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 rounded-lg p-2">
+                      <CheckCircle size={14} />
+                      <span>Bu kod bo'sh — asbobga biriktirish mumkin</span>
+                    </div>
+                  )}
+
+                  {/* Tugmalar qatori */}
+                  <div className="flex gap-2 flex-wrap">
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={generateBarcode}>
+                      <Shuffle size={13} /> Avtomatik generatsiya
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" className="gap-1.5 text-xs h-8" onClick={() => setScannerOpen(true)}>
+                      <Camera size={13} /> Kamera bilan skan
+                    </Button>
+                  </div>
+
+                  {/* Barcode preview */}
+                  {form.customBarcode && barcodeStatus !== "taken" && (
+                    <div className="bg-white rounded-xl p-3 border text-center">
+                      <p className="text-xs text-muted-foreground mb-2">Ko'rinish:</p>
+                      <div className="flex gap-4 justify-center items-center flex-wrap">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Shtrix kod</p>
+                          <svg ref={formBarcodeRef as any} className="max-w-full" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">QR kod</p>
+                          <QRCodeSVG value={form.customBarcode} size={72} level="M" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Ixtiyoriy GPS qurilma ulash */}
             <div className="border border-dashed rounded-xl p-3">
               <button type="button"
@@ -414,13 +573,22 @@ export default function ShopTools() {
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={()=>setCreateOpen(false)}>Bekor</Button>
-              <Button type="submit" disabled={createTool.isPending}>
-                {createTool.isPending ? "Saqlanmoqda..." : "Qo'shish va QR yaratish"}
+              <Button type="submit" disabled={createTool.isPending || barcodeStatus === "taken"} className="gap-1.5">
+                {createTool.isPending ? "Saqlanmoqda..." :
+                  form.customBarcode && barcodeStatus === "ok" ? "Qo'shish va shtrix kod saqlash" : "Qo'shish va QR yaratish"}
               </Button>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Kamera scanner */}
+      {scannerOpen && (
+        <BarcodeScanner
+          onScan={handleScanResult}
+          onClose={() => setScannerOpen(false)}
+        />
+      )}
     </DashboardLayout>
   );
 }

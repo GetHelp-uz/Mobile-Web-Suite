@@ -111,10 +111,47 @@ router.get("/scan/:qrCode", async (req, res) => {
   }
 });
 
+// GET /api/tools/barcode-check/:code — shtrix/QR kod tekshirish (mavjudmi?)
+router.get("/barcode-check/:code", async (req, res) => {
+  try {
+    const code = decodeURIComponent(req.params.code);
+    // custom_barcode, qr_code yoki barcode orqali qidirish
+    const rows = await db.execute(sql`
+      SELECT t.*, s.name as shop_name
+      FROM tools t
+      LEFT JOIN shops s ON s.id = t.shop_id
+      WHERE t.custom_barcode = ${code}
+         OR t.qr_code = ${code}
+         OR t.barcode = ${code}
+      LIMIT 1
+    `);
+    if (rows.rows.length === 0) {
+      res.json({ exists: false });
+      return;
+    }
+    const tool = rows.rows[0] as any;
+    res.json({ exists: true, tool });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Create tool
 router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
   try {
     const body = CreateToolBody.parse(req.body);
+    const customBarcode = (req.body as any).customBarcode || null;
+
+    // Shtrix kod unique tekshiruvi
+    if (customBarcode) {
+      const existing = await db.execute(sql`SELECT id, name FROM tools WHERE custom_barcode = ${customBarcode} LIMIT 1`);
+      if (existing.rows.length > 0) {
+        const ex = existing.rows[0] as any;
+        res.status(400).json({ error: `Bu shtrix kod allaqachon "${ex.name}" asbobida ishlatilgan (ID: ${ex.id})` });
+        return;
+      }
+    }
+
     const tempId = Date.now();
     const qrCode = generateQrCode(tempId, body.shopId);
     const [tool] = await db.insert(toolsTable).values({
@@ -127,11 +164,17 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
       imageUrl: body.imageUrl,
       qrCode,
     }).returning();
-    // Update QR with real ID
+
+    // Update QR with real ID + save custom barcode
     const realQr = generateQrCode(tool.id, body.shopId);
-    const [updated] = await db.update(toolsTable).set({ qrCode: realQr }).where(eq(toolsTable.id, tool.id)).returning();
+    await db.execute(sql`
+      UPDATE tools SET qr_code = ${realQr}, custom_barcode = ${customBarcode}
+      WHERE id = ${tool.id}
+    `);
+    const updatedRow = await db.execute(sql`SELECT * FROM tools WHERE id = ${tool.id} LIMIT 1`);
+    const updated = updatedRow.rows[0] as any;
     const shop = await db.select().from(shopsTable).where(eq(shopsTable.id, body.shopId)).limit(1);
-    res.status(201).json({ ...updated, shopName: shop[0]?.name || "" });
+    res.status(201).json({ ...updated, tool: { ...updated, shopName: shop[0]?.name || "" }, shopName: shop[0]?.name || "" });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
