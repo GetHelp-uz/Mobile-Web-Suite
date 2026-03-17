@@ -20,7 +20,7 @@ router.get("/tool/:toolId", async (req, res) => {
       ? rows.rows.reduce((s: number, r: any) => s + r.rating, 0) / rows.rows.length
       : 0;
     res.json({ ratings: rows.rows, average: Math.round(avg * 10) / 10, count: rows.rows.length });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/ratings/shop/:shopId
@@ -39,7 +39,7 @@ router.get("/shop/:shopId", async (req, res) => {
       ? rows.rows.reduce((s: number, r: any) => s + r.rating, 0) / rows.rows.length
       : 0;
     res.json({ ratings: rows.rows, average: Math.round(avg * 10) / 10, count: rows.rows.length });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/ratings
@@ -62,7 +62,7 @@ router.post("/", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, rating: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

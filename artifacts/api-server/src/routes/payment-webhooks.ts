@@ -252,7 +252,7 @@ router.post("/paynet/notify", async (req, res) => {
       res.json({ success: true, message: "Cancelled" });
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -269,7 +269,7 @@ router.post("/paynet/check", async (req, res) => {
     const tx = txRow.rows[0] as any;
     res.json({ status: 1, orderId, amount: tx.amount, message: "OK" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

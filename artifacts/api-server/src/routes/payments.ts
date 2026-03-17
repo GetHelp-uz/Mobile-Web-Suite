@@ -25,7 +25,7 @@ router.get("/", authenticate, async (req, res) => {
 
     res.json({ payments, total, page, limit });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -41,7 +41,7 @@ router.post("/", authenticate, async (req, res) => {
     }).returning();
     res.status(201).json(payment);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -54,7 +54,7 @@ router.get("/:id", authenticate, async (req, res) => {
     }
     res.json(payment);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

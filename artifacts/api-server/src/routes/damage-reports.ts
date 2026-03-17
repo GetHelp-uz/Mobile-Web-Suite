@@ -32,7 +32,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
       ORDER BY dr.created_at DESC
     `);
     res.json({ reports: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/damage-reports/rental/:rentalId
@@ -40,7 +40,7 @@ router.get("/rental/:rentalId", authenticate, async (req, res) => {
   try {
     const rows = await db.execute(sql`SELECT * FROM damage_reports WHERE rental_id = ${Number(req.params.rentalId)}`);
     res.json({ reports: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/damage-reports
@@ -65,7 +65,7 @@ router.post("/", authenticate, upload.single("photo"), async (req, res) => {
       FROM shops s WHERE s.id = ${Number(shopId)} LIMIT 1
     `);
     res.json({ success: true, report: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/damage-reports/:id/resolve
@@ -77,7 +77,7 @@ router.patch("/:id/resolve", authenticate, async (req, res) => {
       WHERE id = ${Number(req.params.id)}
     `);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

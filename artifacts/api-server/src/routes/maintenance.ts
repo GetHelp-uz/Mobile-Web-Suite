@@ -16,7 +16,7 @@ router.get("/tool/:toolId", authenticate, async (req, res) => {
       ORDER BY m.created_at DESC
     `);
     res.json({ logs: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/maintenance/shop/:shopId
@@ -44,7 +44,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
     `);
 
     res.json({ logs: rows.rows, upcomingService: upcoming.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/maintenance
@@ -68,7 +68,7 @@ router.post("/", authenticate, requireRole("shop_owner", "worker", "super_admin"
       RETURNING *
     `);
     res.json({ success: true, log: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PUT /api/maintenance/:id
@@ -84,7 +84,7 @@ router.put("/:id", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, log: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // ─── Texnik xizmat jadvali ────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ router.get("/schedule", authenticate, async (req, res) => {
     const warning = result.filter(t => t.isWarning).length;
 
     res.json({ tools: result, stats: { total: result.length, due, warning, ok: result.length - due - warning } });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PUT /api/maintenance/schedule/:toolId — intervalini belgilash
@@ -143,7 +143,7 @@ router.put("/schedule/:toolId", authenticate, async (req, res) => {
       UPDATE tools SET maintenance_interval = ${Number(maintenanceInterval)} WHERE id = ${Number(req.params.toolId)}
     `);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/maintenance/schedule/:toolId/done — texnik xizmat bajarildi
@@ -168,7 +168,7 @@ router.post("/schedule/:toolId/done", authenticate, async (req, res) => {
     `);
 
     res.json({ success: true, message: "Texnik xizmat bajarildi deb belgilandi" });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

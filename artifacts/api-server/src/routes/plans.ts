@@ -10,7 +10,7 @@ router.get("/", async (req, res) => {
     const result = await db.execute(sql`SELECT * FROM subscription_plans ORDER BY price ASC`);
     res.json({ plans: result.rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -38,7 +38,7 @@ router.post("/", authenticate, requireRole("super_admin"), async (req, res) => {
     `);
     res.status(201).json({ plan: result.rows[0] });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -96,7 +96,7 @@ router.patch("/:id", authenticate, requireRole("super_admin"), async (req, res) 
     }
     res.json({ plan: rows[0] });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -106,7 +106,7 @@ router.delete("/:id", authenticate, requireRole("super_admin"), async (req, res)
     await db.execute(sql`UPDATE subscription_plans SET is_active = false WHERE id = ${id}`);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -125,7 +125,7 @@ router.post("/assign", authenticate, requireRole("super_admin"), async (req, res
     `);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

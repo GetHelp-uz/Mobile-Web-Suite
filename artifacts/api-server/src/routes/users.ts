@@ -38,7 +38,7 @@ router.get("/", authenticate, requireRole("super_admin"), async (req, res) => {
       limit,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -56,7 +56,7 @@ router.get("/lookup", authenticate, async (req, res) => {
     }
     res.json({ id: user.id, name: user.name, phone: user.phone, role: user.role });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -83,7 +83,7 @@ router.get("/workers", authenticate, requireRole("shop_owner"), async (req, res)
       total: workers.length,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -142,7 +142,7 @@ router.post("/workers", authenticate, requireRole("shop_owner"), async (req, res
       },
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -165,7 +165,7 @@ router.delete("/workers/:id", authenticate, requireRole("shop_owner"), async (re
     await db.update(usersTable).set({ isActive: false } as any).where(eq(usersTable.id, workerId));
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -187,7 +187,7 @@ router.get("/:id", authenticate, async (req, res) => {
       createdAt: user.createdAt,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -210,7 +210,7 @@ router.patch("/:id", authenticate, async (req, res) => {
       createdAt: user.createdAt,
     });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -226,7 +226,7 @@ router.post("/push-token", authenticate, async (req, res) => {
       ON CONFLICT (token) DO UPDATE SET user_id = ${userId}, is_active = TRUE, platform = EXCLUDED.platform
     `);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

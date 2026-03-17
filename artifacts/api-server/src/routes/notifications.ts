@@ -18,7 +18,7 @@ router.post("/register-token", authenticate, async (req, res) => {
       ON CONFLICT (token) DO UPDATE SET user_id = ${user.userId}, is_active = TRUE
     `);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/notifications/send — push yuborish
@@ -52,7 +52,7 @@ router.post("/send", authenticate, async (req, res) => {
 
     const expResult = await expoPushResp.json();
     res.json({ sent: messages.length, result: expResult });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/notifications/broadcast — barcha aktiv foydalanuvchilarga
@@ -76,7 +76,7 @@ router.post("/broadcast", authenticate, async (req, res) => {
     });
 
     res.json({ sent: messages.length });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

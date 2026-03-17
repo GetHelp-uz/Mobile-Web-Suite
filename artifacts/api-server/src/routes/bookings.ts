@@ -31,7 +31,7 @@ router.get("/", authenticate, async (req, res) => {
       ORDER BY b.created_at DESC
     `);
     res.json({ bookings: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/bookings/tool/:toolId/availability
@@ -52,7 +52,7 @@ router.get("/tool/:toolId/availability", async (req, res) => {
       WHERE tool_id = ${toolId} AND status = 'active'
     `);
     res.json({ bookedDates: [...rows.rows, ...rentals.rows] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/bookings
@@ -92,7 +92,7 @@ router.post("/", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, booking: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/bookings/:id/status
@@ -104,7 +104,7 @@ router.patch("/:id/status", authenticate, async (req, res) => {
     }
     const r = await db.execute(sql`UPDATE bookings SET status = ${status} WHERE id = ${Number(req.params.id)} RETURNING *`);
     res.json({ success: true, booking: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // DELETE /api/bookings/:id
@@ -116,7 +116,7 @@ router.delete("/:id", authenticate, async (req, res) => {
         AND (customer_id = ${user.userId} OR ${user.role} IN ('shop_owner','super_admin'))
     `);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

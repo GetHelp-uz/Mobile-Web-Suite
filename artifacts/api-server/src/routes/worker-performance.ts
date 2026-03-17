@@ -63,7 +63,7 @@ router.get("/", authenticate, async (req, res) => {
     }
 
     res.json({ workers, shopStats, topWorker: workers[0] || null, period });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/worker-performance/:workerId — bitta xodim detali
@@ -95,7 +95,7 @@ router.get("/:workerId", authenticate, async (req, res) => {
     );
 
     res.json({ worker: workerRows[0], recentRentals: rentals, tasks, damageReports: [] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

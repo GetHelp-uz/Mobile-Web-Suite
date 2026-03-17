@@ -72,7 +72,7 @@ router.get("/dashboard", authenticate, requireRole("super_admin", "shop_owner"),
       })),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -106,7 +106,7 @@ router.get("/tools", authenticate, requireRole("super_admin", "shop_owner"), asy
 
     res.json({ topRentedTools, categoryBreakdown });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

@@ -86,7 +86,12 @@ router.post("/register", async (req, res) => {
     if (user.role === "shop_owner") smsVars.dokon = body.shopName || user.name;
     sendTemplateSms(user.phone, templateType, smsVars, { lang: body.lang || "uz" }).catch(() => {});
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error("[Register Error]", err.message);
+    if (err.message?.includes("duplicate") || err.message?.includes("unique")) {
+      res.status(400).json({ error: "Bu telefon raqam allaqachon ro'yhatdan o'tgan" });
+    } else {
+      res.status(400).json({ error: "Ro'yhatdan o'tishda xatolik yuz berdi. Qayta urining." });
+    }
   }
 });
 
@@ -128,7 +133,8 @@ router.post("/login", async (req, res) => {
     const token = generateToken(user.id, user.role);
     res.json({ token, user: userResponse(user) });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error("[Login Error]", err.message);
+    res.status(400).json({ error: "Kirish jarayonida xatolik yuz berdi." });
   }
 });
 
@@ -142,7 +148,7 @@ router.get("/me", authenticate, async (req, res) => {
     }
     res.json(userResponse(user));
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -159,7 +165,7 @@ router.patch("/profile", authenticate, async (req, res) => {
     }
     const [updated] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
     res.json(userResponse(updated));
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

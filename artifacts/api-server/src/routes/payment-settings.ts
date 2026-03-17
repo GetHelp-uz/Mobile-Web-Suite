@@ -24,7 +24,7 @@ router.get("/", authenticate, requireRole("super_admin"), async (req, res) => {
     }));
     res.json(masked);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -37,7 +37,7 @@ router.get("/:provider", authenticate, requireRole("super_admin"), async (req, r
     const r = row.rows[0] as any;
     res.json(r);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -73,7 +73,7 @@ router.put("/:provider", authenticate, requireRole("super_admin"), async (req, r
     const r = updated.rows[0] as any;
     res.json({ success: true, setting: { ...r, secret_key: r.secret_key ? "•".repeat(4) + r.secret_key.slice(-4) : "" } });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -100,7 +100,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
     }));
     res.json(masked);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -133,7 +133,7 @@ router.put("/shop/:shopId", authenticate, async (req, res) => {
 
     res.json({ success: true, message: "Do'kon to'lov sozlamalari saqlandi" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -164,7 +164,7 @@ router.post("/test", authenticate, requireRole("super_admin"), async (req, res) 
         : `${provider.toUpperCase()} to'liq sozlanmagan`,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

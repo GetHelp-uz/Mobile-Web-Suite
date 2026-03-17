@@ -7,8 +7,8 @@ import { execSync } from "child_process";
 
 const router = Router();
 
-// ─── Platform sozlamalarini olish ─────────────────────────────────────────────
-router.get("/settings", async (_req, res) => {
+// ─── Platform sozlamalarini olish (faqat super_admin) ────────────────────────
+router.get("/settings", authenticate, requireRole("super_admin"), async (_req, res) => {
   try {
     const rows = await db.execute(sql`SELECT key, value FROM platform_settings ORDER BY key`);
     const settings: Record<string, string> = {};
@@ -17,7 +17,7 @@ router.get("/settings", async (_req, res) => {
     }
     res.json({ settings });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -36,7 +36,7 @@ router.patch("/settings/:key", authenticate, requireRole("super_admin"), async (
     `);
     res.json({ success: true, key, value });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -56,7 +56,7 @@ router.post("/settings/bulk", authenticate, requireRole("super_admin"), async (r
     }
     res.json({ success: true, count: Object.keys(settings).length });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -151,7 +151,7 @@ router.get("/status", authenticate, requireRole("super_admin"), async (_req, res
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -212,7 +212,7 @@ router.get("/commissions", authenticate, requireRole("super_admin"), async (req,
       byShop: byShop.rows,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

@@ -18,7 +18,7 @@ router.get("/devices/shop/:shopId", authenticate, async (req, res) => {
       ORDER BY g.is_active DESC, g.last_seen DESC NULLS LAST
     `);
     res.json({ devices: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/gps/devices/:id — bitta qurilma
@@ -27,7 +27,7 @@ router.get("/devices/:id", authenticate, async (req, res) => {
     const row = await db.execute(sql`SELECT g.*, t.name as tool_name FROM gps_devices g LEFT JOIN tools t ON t.id = g.tool_id WHERE g.id = ${Number(req.params.id)} LIMIT 1`);
     if (!row.rows.length) { res.status(404).json({ error: "Qurilma topilmadi" }); return; }
     res.json({ device: row.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/gps/devices — yangi GPS qurilma qo'shish
@@ -56,7 +56,7 @@ router.post("/devices", authenticate, async (req, res) => {
     res.json({ success: true, device });
   } catch (err: any) {
     if (err.message?.includes("unique")) { res.status(409).json({ error: "Bu serial raqam allaqachon mavjud" }); return; }
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -69,7 +69,7 @@ router.patch("/devices/:id/link", authenticate, async (req, res) => {
       await db.execute(sql`UPDATE tools SET gps_device_id = ${Number(req.params.id)}, gps_enabled = TRUE WHERE id = ${Number(toolId)}`);
     }
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/gps/devices/:id/unlink — asbobdan ajratish
@@ -82,7 +82,7 @@ router.patch("/devices/:id/unlink", authenticate, async (req, res) => {
     }
     await db.execute(sql`UPDATE gps_devices SET tool_id = NULL WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // DELETE /api/gps/devices/:id — o'chirish
@@ -96,7 +96,7 @@ router.delete("/devices/:id", authenticate, async (req, res) => {
     await db.execute(sql`DELETE FROM gps_tracking_logs WHERE device_id = ${Number(req.params.id)}`);
     await db.execute(sql`DELETE FROM gps_devices WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // ─── GPS PING (Hardware → Server) ─────────────────────────────────────────────
@@ -152,7 +152,7 @@ router.post("/ping", async (req, res) => {
     }
 
     res.json({ success: true, deviceId: d.id, timestamp: new Date() });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // ─── MONITORING ──────────────────────────────────────────────────────────────
@@ -172,7 +172,7 @@ router.get("/monitoring/:shopId", authenticate, async (req, res) => {
       ORDER BY g.last_seen DESC NULLS LAST
     `);
     res.json({ devices: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/gps/history/:deviceId?from=&to=&limit=
@@ -188,7 +188,7 @@ router.get("/history/:deviceId", authenticate, async (req, res) => {
       ORDER BY created_at DESC LIMIT ${Number(limit)}
     `);
     res.json({ history: rows.rows.reverse() });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // ─── GEOFENCE ─────────────────────────────────────────────────────────────────
@@ -198,7 +198,7 @@ router.get("/geofences/shop/:shopId", authenticate, async (req, res) => {
   try {
     const rows = await db.execute(sql`SELECT * FROM gps_geofences WHERE shop_id = ${Number(req.params.shopId)} ORDER BY created_at DESC`);
     res.json({ geofences: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/gps/geofences — yangi geofence
@@ -212,7 +212,7 @@ router.post("/geofences", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, geofence: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // DELETE /api/gps/geofences/:id
@@ -220,7 +220,7 @@ router.delete("/geofences/:id", authenticate, async (req, res) => {
   try {
     await db.execute(sql`DELETE FROM gps_geofences WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/gps/simulate — test uchun joylashuv simulyatsiya
@@ -241,7 +241,7 @@ router.post("/simulate", authenticate, async (req, res) => {
       VALUES (${Number(deviceId)}, ${d.tool_id}, ${Number(lat)}, ${Number(lng)}, ${Number(speed) || 0}, ${Number(battery) || 85})
     `);
     res.json({ success: true, message: "Simulyatsiya joylashuv yuborildi" });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

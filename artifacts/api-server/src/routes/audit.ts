@@ -22,7 +22,7 @@ router.get("/", authenticate, requireRole("super_admin", "shop_owner"), async (r
       LIMIT ${Number(limit)} OFFSET ${Number(offset)}
     `);
     res.json({ logs: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export async function logAudit(userId: number, action: string, entityType?: string, entityId?: number, details?: any) {

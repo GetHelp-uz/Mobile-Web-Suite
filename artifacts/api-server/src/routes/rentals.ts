@@ -42,7 +42,7 @@ router.get("/", authenticate, async (req, res) => {
     const enriched = await Promise.all(rentals.map(enrichRental));
     res.json({ rentals: enriched, total, page, limit });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -155,7 +155,7 @@ router.post("/", authenticate, async (req, res) => {
     const enriched = await enrichRental(rental);
     res.status(201).json(enriched);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -199,7 +199,7 @@ router.post("/start-by-qr", authenticate, async (req, res) => {
     const enriched = await enrichRental(rental);
     res.status(201).json(enriched);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -251,7 +251,7 @@ router.post("/return-by-qr", authenticate, async (req, res) => {
     const enriched = await enrichRental(returned);
     res.json(enriched);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -266,7 +266,7 @@ router.get("/:id", authenticate, async (req, res) => {
     const enriched = await enrichRental(rental);
     res.json(enriched);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -296,7 +296,7 @@ router.post("/:id/return", authenticate, async (req, res) => {
     const enriched = await enrichRental(returned);
     res.json(enriched);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 

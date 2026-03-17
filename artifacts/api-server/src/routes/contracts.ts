@@ -246,7 +246,7 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
 
     doc.end();
   } catch (err: any) {
-    if (!res.headersSent) res.status(500).json({ error: err.message });
+    if (!res.headersSent) console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -280,7 +280,7 @@ router.get("/rental/:rentalId", authenticate, async (req, res) => {
       contract = ins;
     }
     res.json({ contract: contract.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/contracts/:rentalId/sign — raqamli imzolash
@@ -308,7 +308,7 @@ router.post("/:rentalId/sign", authenticate, async (req, res) => {
     }
 
     res.json({ success: true, message: "Shartnoma raqamli imzolandi", signedAt: new Date().toISOString() });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/contracts/rental/:rentalId/esign — imzo holatini tekshirish
@@ -322,7 +322,7 @@ router.get("/rental/:rentalId/esign", authenticate, async (req, res) => {
     if (!row.rows.length) { res.json({ signed: false }); return; }
     const r = row.rows[0] as any;
     res.json({ signed: !!r.signed_at, signedAt: r.signed_at, hasSignature: r.has_signature, ip: r.signature_ip });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

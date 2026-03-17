@@ -148,11 +148,11 @@ export default function AIRecommendPage() {
                       <Sparkles className="h-4 w-4 text-primary" />
                       <span className="font-bold text-primary">AI tavsiyasi</span>
                     </div>
-                    <p className="text-sm leading-relaxed"
-                      dangerouslySetInnerHTML={{
-                        __html: result.aiMessage?.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") || ""
-                      }}
-                    />
+                    <p className="text-sm leading-relaxed">
+                      {(result.aiMessage || "").split(/\*\*(.*?)\*\*/g).map((part: string, i: number) =>
+                        i % 2 === 1 ? <strong key={i}>{part}</strong> : part
+                      )}
+                    </p>
                     <div className="flex flex-wrap gap-2 mt-3">
                       {result.recommendedCategories?.map((cat: string) => (
                         <Badge key={cat} variant="secondary">{cat}</Badge>

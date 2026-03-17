@@ -38,7 +38,7 @@ router.get("/shops/:shopId/tools", async (req, res) => {
       limit,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -92,7 +92,7 @@ router.get("/", async (req, res) => {
       limit,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -107,7 +107,7 @@ router.get("/scan/:qrCode", async (req, res) => {
     const shop = await db.select().from(shopsTable).where(eq(shopsTable.id, tool.shopId)).limit(1);
     res.json({ ...tool, shopName: shop[0]?.name || "" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -132,7 +132,7 @@ router.get("/barcode-check/:code", async (req, res) => {
     const tool = rows.rows[0] as any;
     res.json({ exists: true, tool });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -176,7 +176,7 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
     const shop = await db.select().from(shopsTable).where(eq(shopsTable.id, body.shopId)).limit(1);
     res.status(201).json({ ...updated, tool: { ...updated, shopName: shop[0]?.name || "" }, shopName: shop[0]?.name || "" });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -191,7 +191,7 @@ router.get("/:id", async (req, res) => {
     const shop = await db.select().from(shopsTable).where(eq(shopsTable.id, tool.shopId)).limit(1);
     res.json({ ...tool, shopName: shop[0]?.name || "" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -207,7 +207,7 @@ router.patch("/:id", authenticate, requireRole("super_admin", "shop_owner", "wor
     const shop = await db.select().from(shopsTable).where(eq(shopsTable.id, tool.shopId)).limit(1);
     res.json({ ...tool, shopName: shop[0]?.name || "" });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -221,7 +221,7 @@ router.delete("/:id", authenticate, requireRole("super_admin", "shop_owner"), as
     }
     res.json({ message: "Tool deleted" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -239,7 +239,7 @@ router.get("/:id/qr", authenticate, async (req, res) => {
       qrImageUrl: `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(tool.qrCode)}`,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -252,7 +252,7 @@ router.patch("/:id/stock", authenticate, requireRole("super_admin", "shop_owner"
     }
     await db.execute(sql`UPDATE tools SET stock_count = ${Number(stockCount)} WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true, stockCount: Number(stockCount) });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export { router as shopToolsRouter };

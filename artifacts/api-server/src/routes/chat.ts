@@ -36,7 +36,7 @@ router.get("/rooms", authenticate, async (req, res) => {
     }
     const rows = await db.execute(query);
     res.json({ rooms: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/chat/rooms/:shopId — do'kon bilan chat boshlash (yoki mavjud xona)
@@ -61,7 +61,7 @@ router.post("/rooms/:shopId", authenticate, async (req, res) => {
       `);
     }
     res.json({ room: room.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/chat/rooms/:id/messages?limit=50&before=
@@ -78,7 +78,7 @@ router.get("/rooms/:id/messages", authenticate, async (req, res) => {
       ORDER BY m.created_at DESC LIMIT ${Number(limit)}
     `);
     res.json({ messages: rows.rows.reverse() });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/chat/rooms/:id/messages/new?after=  — yangi xabarlarni tekshirish (polling)
@@ -94,7 +94,7 @@ router.get("/rooms/:id/messages/new", authenticate, async (req, res) => {
       ORDER BY m.created_at ASC
     `);
     res.json({ messages: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/chat/rooms/:id/messages — xabar yuborish
@@ -150,7 +150,7 @@ router.post("/rooms/:id/messages", authenticate, async (req, res) => {
       JOIN users u ON u.id = m.sender_id WHERE m.id = ${(msg.rows[0] as any).id}
     `);
     res.json({ success: true, message: fullMsg.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/chat/rooms/:id/read — xabarlarni o'qildi deb belgilash
@@ -165,7 +165,7 @@ router.patch("/rooms/:id/read", authenticate, async (req, res) => {
       await db.execute(sql`UPDATE chat_messages SET is_read = TRUE WHERE room_id = ${Number(req.params.id)} AND sender_role = 'customer'`);
     }
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/chat/unread — jami o'qilmagan xabarlar soni
@@ -184,7 +184,7 @@ router.get("/unread", authenticate, async (req, res) => {
       res.json({ total: 0 }); return;
     }
     res.json({ total: Number((count.rows[0] as any)?.total || 0) });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

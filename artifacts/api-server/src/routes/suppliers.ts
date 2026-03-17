@@ -16,7 +16,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
       GROUP BY s.id ORDER BY s.name
     `);
     res.json({ suppliers: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/suppliers
@@ -31,7 +31,7 @@ router.post("/", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, supplier: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PUT /api/suppliers/:id
@@ -45,7 +45,7 @@ router.put("/:id", authenticate, async (req, res) => {
       WHERE id = ${Number(req.params.id)} RETURNING *
     `);
     res.json({ success: true, supplier: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // DELETE /api/suppliers/:id
@@ -54,7 +54,7 @@ router.delete("/:id", authenticate, async (req, res) => {
     await db.execute(sql`UPDATE tools SET supplier_id = NULL WHERE supplier_id = ${Number(req.params.id)}`);
     await db.execute(sql`DELETE FROM suppliers WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

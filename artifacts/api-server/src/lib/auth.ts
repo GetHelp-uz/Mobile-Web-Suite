@@ -1,14 +1,20 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET || "gethelp_secret_2024";
+// JWT_SECRET muhit o'zgaruvchisidan kelishi SHART
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET || JWT_SECRET.length < 32) {
+  console.error("XAVFSIZLIK XATOSI: JWT_SECRET env o'rnatilmagan yoki 32 belgidan qisqa!");
+  console.error("Iltimos, .env faylida JWT_SECRET ni o'rnating.");
+  process.exit(1);
+}
 
 export function generateToken(userId: number, role: string): string {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: "7d" });
+  return jwt.sign({ userId, role }, JWT_SECRET!, { expiresIn: "24h" });
 }
 
 export function verifyToken(token: string): { userId: number; role: string } {
-  return jwt.verify(token, JWT_SECRET) as { userId: number; role: string };
+  return jwt.verify(token, JWT_SECRET!) as { userId: number; role: string };
 }
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {

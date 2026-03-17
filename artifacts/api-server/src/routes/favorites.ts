@@ -19,7 +19,7 @@ router.get("/", authenticate, async (req, res) => {
       ORDER BY f.created_at DESC
     `);
     res.json({ favorites: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/favorites/:toolId
@@ -31,7 +31,7 @@ router.post("/:toolId", authenticate, async (req, res) => {
       ON CONFLICT (user_id, tool_id) DO NOTHING
     `);
     res.json({ success: true, isFavorite: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // DELETE /api/favorites/:toolId
@@ -40,7 +40,7 @@ router.delete("/:toolId", authenticate, async (req, res) => {
     const user = (req as any).user;
     await db.execute(sql`DELETE FROM favorites WHERE user_id = ${user.userId} AND tool_id = ${Number(req.params.toolId)}`);
     res.json({ success: true, isFavorite: false });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/favorites/check/:toolId
@@ -49,7 +49,7 @@ router.get("/check/:toolId", authenticate, async (req, res) => {
     const user = (req as any).user;
     const row = await db.execute(sql`SELECT id FROM favorites WHERE user_id = ${user.userId} AND tool_id = ${Number(req.params.toolId)} LIMIT 1`);
     res.json({ isFavorite: row.rows.length > 0 });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

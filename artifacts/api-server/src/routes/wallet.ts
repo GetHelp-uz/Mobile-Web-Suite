@@ -28,7 +28,7 @@ router.get("/me", authenticate, async (req, res) => {
     `);
     res.json({ wallet, transactions: txns.rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -45,7 +45,7 @@ router.get("/transactions", authenticate, async (req, res) => {
     const total = await db.execute(sql`SELECT COUNT(*) as cnt FROM wallet_transactions WHERE user_id = ${user.userId}`);
     res.json({ transactions: txns.rows, total: Number((total.rows[0] as any).cnt) });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -112,7 +112,7 @@ router.post("/topup", authenticate, async (req, res) => {
       message: `${provider.toUpperCase()} orqali ${amount} UZS to'ldirish`,
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -144,7 +144,7 @@ router.post("/topup/confirm", authenticate, async (req, res) => {
 
     res.json({ success: true, newBalance, amount: tx.amount });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -171,7 +171,7 @@ router.post("/pay", authenticate, async (req, res) => {
 
     res.json({ success: true, newBalance, deducted: Number(amount) });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -199,7 +199,7 @@ router.post("/deposit-hold", authenticate, async (req, res) => {
 
     res.json({ success: true, newBalance, escrowBalance: newEscrow });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -231,7 +231,7 @@ router.post("/deposit-release", authenticate, async (req, res) => {
 
     res.json({ success: true, released: releaseAmount, deducted: damageCost, newBalance });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

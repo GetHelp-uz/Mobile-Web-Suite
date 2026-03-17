@@ -11,7 +11,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
   try {
     const rows = await db.execute(sql`SELECT * FROM promo_codes WHERE shop_id = ${Number(req.params.shopId)} ORDER BY created_at DESC`);
     res.json({ codes: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/promo-codes/validate — kodni tekshirish
@@ -37,7 +37,7 @@ router.post("/validate", async (req, res) => {
       : c.discount_value;
 
     res.json({ valid: true, code: c, discount, finalAmount: amount - discount });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/promo-codes/use — kodni ishlatish
@@ -48,7 +48,7 @@ router.post("/use", authenticate, async (req, res) => {
     if (!row.rows.length) { res.status(404).json({ error: "Promo kod topilmadi" }); return; }
     await db.execute(sql`UPDATE promo_codes SET used_count = used_count + 1 WHERE id = ${(row.rows[0] as any).id}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/promo-codes — yangi yaratish
@@ -63,7 +63,7 @@ router.post("/", authenticate, requireRole("shop_owner", "super_admin"), async (
       RETURNING *
     `);
     res.json({ success: true, code: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/promo-codes/:id
@@ -72,7 +72,7 @@ router.patch("/:id", authenticate, async (req, res) => {
     const { isActive } = req.body;
     await db.execute(sql`UPDATE promo_codes SET is_active = ${isActive} WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // DELETE /api/promo-codes/:id
@@ -80,7 +80,7 @@ router.delete("/:id", authenticate, async (req, res) => {
   try {
     await db.execute(sql`DELETE FROM promo_codes WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

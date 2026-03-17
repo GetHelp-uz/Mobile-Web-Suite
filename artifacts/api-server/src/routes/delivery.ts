@@ -25,7 +25,7 @@ router.get("/settings/:shopId", async (req, res) => {
     }
     const s = row.rows[0] as any;
     res.json({ ...s, time_slots: typeof s.time_slots === "string" ? JSON.parse(s.time_slots) : s.time_slots });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PUT /api/delivery/settings/:shopId — do'kon yetkazib berish narxini sozlash
@@ -61,7 +61,7 @@ router.put("/settings/:shopId", authenticate, async (req, res) => {
     `);
 
     res.json({ success: true, message: "Yetkazib berish sozlamalari saqlandi" });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/delivery/calculate — masofaga qarab narx hisoblash
@@ -96,7 +96,7 @@ router.post("/calculate", async (req, res) => {
       freeKm: s.free_km || 0,
       timeSlots: slots,
     });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/delivery/orders — buyurtma yaratish
@@ -116,7 +116,7 @@ router.post("/orders", authenticate, async (req, res) => {
     `).then(r => r.rows);
 
     res.status(201).json({ success: true, order });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/delivery/orders — buyurtmalar ro'yxati (do'kon uchun)
@@ -140,7 +140,7 @@ router.get("/orders", authenticate, async (req, res) => {
       ORDER BY d.created_at DESC LIMIT 50
     `);
     res.json({ orders: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/delivery/orders/:id/status — holat yangilash (do'kon egasi)
@@ -155,7 +155,7 @@ router.patch("/orders/:id/status", authenticate, async (req, res) => {
       UPDATE delivery_orders SET status = ${status} ${delivered} WHERE id = ${Number(req.params.id)}
     `);
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

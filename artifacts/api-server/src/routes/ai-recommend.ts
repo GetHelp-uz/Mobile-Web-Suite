@@ -141,7 +141,7 @@ router.post("/recommend", async (req, res) => {
       description: mapping.description,
       tools: tools,
     });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 function generateAIMessage(text: string, type: string, mapping: any, toolCount: number): string {

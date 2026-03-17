@@ -18,7 +18,7 @@ router.get("/", authenticate, async (req, res) => {
 
     res.json({ shops, total, page, limit });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -40,7 +40,7 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
     }).returning();
     res.status(201).json({ shop });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -53,7 +53,7 @@ router.get("/:id", authenticate, async (req, res) => {
     }
     res.json(shop);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -67,7 +67,7 @@ router.patch("/:id", authenticate, requireRole("super_admin", "shop_owner"), asy
     }
     res.json(shop);
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -78,7 +78,7 @@ router.put("/:id/owner-signature", authenticate, requireRole("super_admin", "sho
     if (!signatureData) { res.status(400).json({ error: "Imzo ma'lumoti kerak" }); return; }
     await db.execute(sql`UPDATE shops SET owner_signature_data = ${signatureData} WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true, message: "Do'kon imzosi saqlandi" });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/shops/:id/owner-signature — imzo mavjudligini tekshirish
@@ -92,7 +92,7 @@ router.get("/:id/owner-signature", authenticate, async (req, res) => {
     if (!row.rows.length) { res.status(404).json({ error: "Do'kon topilmadi" }); return; }
     const r = row.rows[0] as any;
     res.json({ hasSignature: r.has_signature });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/shops/:id/public — ommaviy do'kon profili (auth shart emas)
@@ -119,7 +119,7 @@ router.get("/:id/public", async (req, res) => {
       ratingCount: Number((avgResult.rows[0] as any)?.cnt || 0),
       branches: branchesResult.rows,
     });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

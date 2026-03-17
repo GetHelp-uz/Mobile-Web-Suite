@@ -55,7 +55,7 @@ router.post("/upload", authenticate, upload.single("file"), async (req, res) => 
     `);
 
     res.json({ success: true, document: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/documents/file/:filename — faylni ko'rsatish
@@ -73,7 +73,7 @@ router.get("/my", authenticate, async (req, res) => {
       SELECT * FROM customer_documents WHERE user_id = ${user.userId} ORDER BY created_at DESC
     `);
     res.json({ documents: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/documents/shop/:shopId — do'kon uchun hujjatlar
@@ -91,7 +91,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
       ORDER BY d.created_at DESC
     `);
     res.json({ documents: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/documents/rental/:rentalId
@@ -105,7 +105,7 @@ router.get("/rental/:rentalId", authenticate, async (req, res) => {
       ORDER BY d.created_at DESC
     `);
     res.json({ documents: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/documents/:id/review — tasdiqlash/rad etish
@@ -135,7 +135,7 @@ router.patch("/:id/review", authenticate, async (req, res) => {
               ${status === "approved" ? "success" : "error"}, ${doc.id}, 'document')
     `);
     res.json({ success: true, document: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

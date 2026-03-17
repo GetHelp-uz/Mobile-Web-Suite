@@ -69,7 +69,7 @@ router.get("/my", authenticate, async (req, res) => {
       transactions: txns.rows,
       pointsToNext: nextLevel ? nextLevel.minPoints - (p.lifetime_points || 0) : 0,
     });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/loyalty/redeem — ballarni chegirmaga almashtirish
@@ -90,7 +90,7 @@ router.post("/redeem", authenticate, async (req, res) => {
       VALUES (${user.userId}, ${rentalId || null}, ${-points}, 'redeem', 'Ball chegirmaga almashtirildi')
     `);
     res.json({ success: true, discountAmount, pointsUsed: points });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/loyalty/leaderboard
@@ -101,7 +101,7 @@ router.get("/leaderboard", async (_req, res) => {
       ORDER BY lp.lifetime_points DESC LIMIT 20
     `);
     res.json({ leaderboard: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

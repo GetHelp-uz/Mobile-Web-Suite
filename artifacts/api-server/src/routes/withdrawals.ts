@@ -24,16 +24,20 @@ router.post("/", authenticate, async (req, res) => {
       return;
     }
 
-    // Do'kon va wallet ni topish
+    // Do'kon va wallet ni topish — faqat o'z do'koniga yechib olish mumkin
     let shopId = bodyShopId;
-    if (!shopId) {
-      const shop = await db.execute(sql`SELECT id FROM shops WHERE owner_id = ${user.userId} LIMIT 1`);
-      if (!shop.rows.length) {
-        res.status(404).json({ error: "Do'kon topilmadi" });
-        return;
-      }
-      shopId = (shop.rows[0] as any).id;
+    const ownShop = await db.execute(sql`SELECT id FROM shops WHERE owner_id = ${user.userId} LIMIT 1`);
+    if (!ownShop.rows.length) {
+      res.status(404).json({ error: "Do'kon topilmadi" });
+      return;
     }
+    const ownShopId = (ownShop.rows[0] as any).id;
+    // Agar shopId body'da kelsa, u ham o'ziga tegishli bo'lishi kerak
+    if (shopId && shopId !== ownShopId) {
+      res.status(403).json({ error: "Boshqa do'kondan yechib olish taqiqlangan" });
+      return;
+    }
+    shopId = ownShopId;
 
     // Wallet balansini tekshirish
     const wallet = await db.execute(sql`SELECT * FROM wallets WHERE user_id = ${user.userId} LIMIT 1`);
@@ -85,7 +89,7 @@ router.post("/", authenticate, async (req, res) => {
 
     res.status(201).json({ request: result.rows[0], message: "Yechib olish so'rovi yuborildi. Admin tomonidan ko'rib chiqiladi." });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -109,7 +113,7 @@ router.get("/", authenticate, requireRole("super_admin"), async (req, res) => {
     `);
     res.json({ requests: rows.rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -123,7 +127,7 @@ router.get("/my", authenticate, async (req, res) => {
     `);
     res.json({ requests: rows.rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -188,7 +192,7 @@ router.patch("/:id", authenticate, requireRole("super_admin"), async (req, res) 
 
     res.json({ success: true, status });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

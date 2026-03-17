@@ -28,7 +28,7 @@ router.get("/settings", authenticate, requireRole("super_admin", "shop_owner"), 
     }
     res.json({ settings: rows.rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -66,7 +66,7 @@ router.post("/settings", authenticate, requireRole("super_admin"), async (req, r
       res.status(201).json({ settings: rows[0] });
     }
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -75,7 +75,7 @@ router.delete("/settings/:id", authenticate, requireRole("super_admin"), async (
     await db.execute(sql`DELETE FROM sms_settings WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -88,7 +88,7 @@ router.patch("/settings/:id/toggle", authenticate, requireRole("super_admin"), a
     );
     res.json({ settings: rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -113,7 +113,7 @@ router.post("/settings/refresh-token", authenticate, requireRole("super_admin", 
     await db.execute(sql`UPDATE sms_settings SET token = ${token}, token_expires_at = ${expiresAt}, updated_at = NOW() WHERE id = ${settings.id}`);
     res.json({ success: true, expiresAt });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -136,7 +136,7 @@ router.get("/templates", authenticate, async (req, res) => {
     const { rows } = await db.$client.query(query, params);
     res.json({ templates: rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -150,7 +150,7 @@ router.post("/templates", authenticate, requireRole("super_admin", "shop_owner")
     );
     res.status(201).json({ template: rows[0] });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -171,7 +171,7 @@ router.patch("/templates/:id", authenticate, requireRole("super_admin", "shop_ow
     const { rows } = await db.$client.query(`UPDATE sms_templates SET ${sets.join(", ")} WHERE id = $${i} RETURNING *`, params);
     res.json({ template: rows[0] });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }
 });
 
@@ -180,7 +180,7 @@ router.delete("/templates/:id", authenticate, requireRole("super_admin", "shop_o
     await db.execute(sql`DELETE FROM sms_templates WHERE id = ${Number(req.params.id)}`);
     res.json({ success: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -193,7 +193,7 @@ router.post("/send", authenticate, requireRole("super_admin", "shop_owner"), asy
     const result = await sendSms(phone, message, { shopId, rentalId, lang });
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -207,7 +207,7 @@ router.post("/send-bulk", authenticate, requireRole("super_admin", "shop_owner")
     const success = results.filter(r => r.status === "fulfilled" && (r as any).value.success).length;
     res.json({ total: phones.length, success, failed: phones.length - success });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -219,7 +219,7 @@ router.post("/send-template", authenticate, requireRole("super_admin"), async (r
     const result = await sendTemplateSms(phone, type, vars, { lang });
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -249,7 +249,7 @@ router.get("/logs", authenticate, async (req, res) => {
     const { rows } = await db.$client.query(query, params);
     res.json({ logs: rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -278,7 +278,7 @@ router.get("/stats", authenticate, requireRole("super_admin"), async (req, res) 
     `);
     res.json({ stats: stats.rows[0], byType: byType.rows, byProvider: byProvider.rows });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -289,7 +289,7 @@ router.post("/trigger-overdue", authenticate, requireRole("super_admin"), async 
     const count = await sendOverdueSmsAlerts();
     res.json({ success: true, sent: count, type: "overdue" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -298,7 +298,7 @@ router.post("/trigger-reminder", authenticate, requireRole("super_admin"), async
     const count = await sendReminderSmsAlerts();
     res.json({ success: true, sent: count, type: "reminder" });
   } catch (err: any) {
-    res.status(500).json({ error: err.message });
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 

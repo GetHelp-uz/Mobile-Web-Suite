@@ -33,7 +33,7 @@ router.get("/my", authenticate, async (req, res) => {
       totalEarned,
       pendingCount: rewards.rows.filter((r: any) => r.status === "pending").length,
     });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/referrals/apply — referal kodni qo'llash (ro'yxatdan o'tishda)
@@ -64,7 +64,7 @@ router.post("/apply", authenticate, async (req, res) => {
     `);
 
     res.json({ success: true, message: `${(referrer.rows[0] as any).name} taklif kodi qo'llanildi!` });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/referrals/reward/:id/pay — bonusni hamyonga o'tkazish (admin)
@@ -86,7 +86,7 @@ router.post("/reward/:id/pay", authenticate, async (req, res) => {
     await db.execute(sql`UPDATE referral_rewards SET status = 'paid', paid_at = NOW() WHERE id = ${Number(req.params.id)}`);
 
     res.json({ success: true, paidAmount: r.amount });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/referrals/leaderboard — top referralchilar
@@ -104,7 +104,7 @@ router.get("/leaderboard", async (_req, res) => {
       LIMIT 20
     `);
     res.json({ leaderboard: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;

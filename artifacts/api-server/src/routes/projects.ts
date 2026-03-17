@@ -30,7 +30,7 @@ router.get("/", authenticate, async (req, res) => {
       ORDER BY p.created_at DESC
     `);
     res.json({ projects: rows.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // GET /api/projects/:id
@@ -55,7 +55,7 @@ router.get("/:id", authenticate, async (req, res) => {
     `);
 
     res.json({ project: project.rows[0], rentals: rentals.rows });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/projects
@@ -73,7 +73,7 @@ router.post("/", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, project: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // POST /api/projects/:id/add-rental
@@ -92,7 +92,7 @@ router.post("/:id/add-rental", authenticate, async (req, res) => {
       await db.execute(sql`UPDATE projects SET total_amount = total_amount + ${amount} WHERE id = ${Number(req.params.id)}`);
     }
     res.json({ success: true });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 // PATCH /api/projects/:id
@@ -110,7 +110,7 @@ router.patch("/:id", authenticate, async (req, res) => {
       RETURNING *
     `);
     res.json({ success: true, project: r.rows[0] });
-  } catch (err: any) { res.status(500).json({ error: err.message }); }
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
 export default router;
