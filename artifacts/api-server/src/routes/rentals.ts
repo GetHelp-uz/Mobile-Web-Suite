@@ -270,6 +270,80 @@ router.get("/:id", authenticate, async (req, res) => {
   }
 });
 
+// ─── Do'kon egasi qaytarishni tasdiqlash + depozitni mijozga qaytarish ────────
+router.post("/:id/confirm-return", authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const rentalId = Number(req.params.id);
+
+    const [rental] = await db.select().from(rentalsTable).where(eq(rentalsTable.id, rentalId));
+    if (!rental) {
+      res.status(404).json({ error: "Ijara topilmadi" });
+      return;
+    }
+
+    // Faqat do'kon egasi yoki super_admin tasdiqlashi mumkin
+    if (user.role !== "super_admin") {
+      const shopCheck = await db.execute(sql`SELECT id FROM shops WHERE id = ${rental.shopId} AND owner_id = ${user.userId} LIMIT 1`);
+      if (!shopCheck.rows.length && user.role !== "super_admin") {
+        res.status(403).json({ error: "Faqat do'kon egasi tasdiqlashi mumkin" });
+        return;
+      }
+    }
+
+    if (rental.status !== "returned") {
+      res.status(400).json({ error: "Ijara qaytarilgan holatda emas" });
+      return;
+    }
+
+    // Depozitni mijoz hamyoniga qaytarish
+    const depositAmount = Number(rental.depositAmount) || 0;
+    const damageCost = Number(rental.damageCost) || 0;
+    const refundAmount = Math.max(0, depositAmount - damageCost);
+
+    if (depositAmount > 0) {
+      // Mijoz hamyonini olish yoki yaratish
+      const custWalletRows = await db.execute(sql`SELECT * FROM wallets WHERE user_id = ${rental.customerId} LIMIT 1`);
+      let custWallet = custWalletRows.rows[0] as any;
+      if (!custWallet) {
+        const created = await db.execute(sql`INSERT INTO wallets (user_id, balance, escrow_balance, currency) VALUES (${rental.customerId}, 0, 0, 'UZS') RETURNING *`);
+        custWallet = created.rows[0];
+      }
+
+      const balBefore = Number(custWallet.balance);
+      const escrowBefore = Number(custWallet.escrow_balance);
+
+      if (refundAmount > 0) {
+        const newBalance = balBefore + refundAmount;
+        const newEscrow = Math.max(0, escrowBefore - depositAmount);
+        await db.execute(sql`UPDATE wallets SET balance = ${newBalance}, escrow_balance = ${newEscrow}, updated_at = NOW() WHERE id = ${custWallet.id}`);
+        await db.execute(sql`
+          INSERT INTO wallet_transactions (wallet_id, user_id, rental_id, amount, type, provider, status, description, balance_before, balance_after)
+          VALUES (${custWallet.id}, ${rental.customerId}, ${rentalId}, ${refundAmount}, 'deposit_release', 'system', 'completed', 'Ijara depoziti qaytarildi', ${balBefore}, ${newBalance})
+        `);
+      }
+      if (damageCost > 0) {
+        const newEscrow2 = Math.max(0, escrowBefore - depositAmount);
+        await db.execute(sql`UPDATE wallets SET escrow_balance = ${newEscrow2}, updated_at = NOW() WHERE id = ${custWallet.id}`);
+        await db.execute(sql`
+          INSERT INTO wallet_transactions (wallet_id, user_id, rental_id, amount, type, provider, status, description, balance_before, balance_after)
+          VALUES (${custWallet.id}, ${rental.customerId}, ${rentalId}, ${damageCost}, 'deposit_deduct', 'system', 'completed', 'Zarar uchun ushlab qolindi', ${balBefore}, ${balBefore})
+        `);
+      }
+    }
+
+    // Ijarani completed holatiga o'tkazish
+    const [completed] = await db.update(rentalsTable).set({
+      status: "completed",
+    } as any).where(eq(rentalsTable.id, rentalId)).returning();
+
+    const enriched = await enrichRental(completed);
+    res.json({ ...enriched, depositRefunded: refundAmount, depositDeducted: damageCost });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
+  }
+});
+
 // Return rental by ID
 router.post("/:id/return", authenticate, async (req, res) => {
   try {

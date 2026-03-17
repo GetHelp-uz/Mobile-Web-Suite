@@ -186,6 +186,8 @@ export const api = {
       if (offset) q.set("offset", String(offset));
       return apiRequest(`/wallet/transactions?${q.toString()}`);
     },
+    withdraw: (amount: number, cardNumber: string, cardHolder?: string, provider?: string): Promise<{ request: any; message: string }> =>
+      apiRequest("/withdrawals", { method: "POST", body: JSON.stringify({ amount, cardNumber, cardHolder: cardHolder || "", provider: provider || "payme" }) }),
   },
   bookings: {
     list: (params?: { shopId?: number; customerId?: number; status?: string }): Promise<{ bookings: any[] }> => {

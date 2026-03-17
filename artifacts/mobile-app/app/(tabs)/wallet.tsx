@@ -60,6 +60,12 @@ export default function WalletScreen() {
   const [provider, setProvider] = useState("click");
   const [topping, setTopping] = useState(false);
 
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
+  const [wAmount, setWAmount] = useState("");
+  const [wCard, setWCard] = useState("");
+  const [wHolder, setWHolder] = useState("");
+  const [withdrawing, setWithdrawing] = useState(false);
+
   const load = useCallback(async () => {
     try {
       const d = await api.wallet.get();
@@ -92,6 +98,34 @@ export default function WalletScreen() {
     } catch (e: any) {
       Alert.alert("Xatolik", e.message);
     } finally { setTopping(false); }
+  };
+
+  const handleWithdraw = async () => {
+    const amtNum = Number(wAmount);
+    if (!wAmount || amtNum < 1000) {
+      Alert.alert("Xatolik", "Minimal miqdor: 1 000 so'm");
+      return;
+    }
+    if (!wCard || wCard.replace(/\s/g, "").length < 16) {
+      Alert.alert("Xatolik", "Karta raqamini to'liq kiriting (16 ta raqam)");
+      return;
+    }
+    if (!wallet || wallet.balance < amtNum) {
+      Alert.alert("Xatolik", `Balans yetarli emas. Mavjud: ${fmt(wallet?.balance || 0)}`);
+      return;
+    }
+    setWithdrawing(true);
+    try {
+      await api.wallet.withdraw(amtNum, wCard.replace(/\s/g, ""), wHolder);
+      setWithdrawOpen(false);
+      setWAmount("");
+      setWCard("");
+      setWHolder("");
+      Alert.alert("Yuborildi", "Pul yechish so'rovingiz admin tomonidan ko'rib chiqiladi va 1-3 ish kuni ichida kartangizga o'tkaziladi.");
+      load();
+    } catch (e: any) {
+      Alert.alert("Xatolik", e.message || "So'rov yuborilmadi");
+    } finally { setWithdrawing(false); }
   };
 
   const isIncome = (type: string) => ["topup", "deposit_release", "refund"].includes(type);
@@ -153,11 +187,27 @@ export default function WalletScreen() {
               </View>
             </View>
 
-            {/* To'ldirish tugmasi */}
-            <Pressable style={[styles.topupBtn, { backgroundColor: C.primary }]} onPress={() => setTopupOpen(true)}>
-              <Ionicons name="add-circle-outline" size={22} color="#fff" />
-              <Text style={styles.topupBtnText}>Hisobni to'ldirish</Text>
-            </Pressable>
+            {/* Tugmalar qatori */}
+            <View style={{ flexDirection: "row", marginHorizontal: 20, gap: 12, marginBottom: 16 }}>
+              <Pressable style={[styles.topupBtn, { backgroundColor: C.primary, flex: 1, marginHorizontal: 0, marginBottom: 0 }]} onPress={() => setTopupOpen(true)}>
+                <Ionicons name="add-circle-outline" size={20} color="#fff" />
+                <Text style={styles.topupBtnText}>To'ldirish</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.topupBtn, {
+                  backgroundColor: "transparent",
+                  flex: 1,
+                  marginHorizontal: 0,
+                  marginBottom: 0,
+                  borderWidth: 1.5,
+                  borderColor: C.primary,
+                }]}
+                onPress={() => setWithdrawOpen(true)}
+              >
+                <Ionicons name="arrow-up-circle-outline" size={20} color={C.primary} />
+                <Text style={[styles.topupBtnText, { color: C.primary }]}>Yechish</Text>
+              </Pressable>
+            </View>
 
             {/* Qisqa statistika */}
             <View style={styles.statsRow}>
@@ -189,6 +239,89 @@ export default function WalletScreen() {
           </View>
         )}
       />
+
+      {/* Pul Yechish Modal */}
+      <Modal visible={withdrawOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWithdrawOpen(false)}>
+        <View style={[styles.modalRoot, { backgroundColor: C.background }]}>
+          <View style={[styles.modalHandle, { backgroundColor: C.border }]} />
+          <View style={[styles.modalHeader, { borderBottomColor: C.border }]}>
+            <Text style={[styles.modalTitle, { color: C.text }]}>Pul yechish</Text>
+            <Pressable onPress={() => setWithdrawOpen(false)}>
+              <Ionicons name="close" size={24} color={C.textSecondary} />
+            </Pressable>
+          </View>
+
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 20 }}>
+            <View style={[{ backgroundColor: "#EFF6FF", borderRadius: 12, padding: 14, borderWidth: 1, borderColor: "#BFDBFE" }]}>
+              <Text style={{ fontSize: 13, color: "#1D4ED8", fontFamily: "Inter_400Regular", lineHeight: 18 }}>
+                Mavjud balans: {fmt(wallet?.balance || 0)}{"\n"}
+                So'rovingiz 1-3 ish kuni ichida ko'rib chiqiladi.
+              </Text>
+            </View>
+
+            <View>
+              <Text style={[styles.fieldLabel, { color: C.text }]}>Miqdor (so'm)</Text>
+              <TextInput
+                style={[styles.bigInput, { backgroundColor: C.card, color: C.text, borderColor: C.border }]}
+                placeholder="0"
+                placeholderTextColor={C.textSecondary}
+                keyboardType="numeric"
+                value={wAmount}
+                onChangeText={setWAmount}
+              />
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 10 }}>
+                <View style={{ flexDirection: "row", gap: 8 }}>
+                  {QUICK.map(q => (
+                    <Pressable key={q} style={[styles.quickChip, { borderColor: C.border, backgroundColor: C.card }]} onPress={() => setWAmount(String(q))}>
+                      <Text style={[styles.quickChipText, { color: C.text }]}>{fmt(q)}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+
+            <View>
+              <Text style={[styles.fieldLabel, { color: C.text }]}>Karta raqami</Text>
+              <TextInput
+                style={[styles.bigInput, { backgroundColor: C.card, color: C.text, borderColor: C.border, fontSize: 20 }]}
+                placeholder="8600 0000 0000 0000"
+                placeholderTextColor={C.textSecondary}
+                keyboardType="numeric"
+                value={wCard}
+                onChangeText={v => {
+                  const digits = v.replace(/\D/g, "").slice(0, 16);
+                  const formatted = digits.replace(/(.{4})/g, "$1 ").trim();
+                  setWCard(formatted);
+                }}
+                maxLength={19}
+              />
+            </View>
+
+            <View>
+              <Text style={[styles.fieldLabel, { color: C.text }]}>Karta egasi (ixtiyoriy)</Text>
+              <TextInput
+                style={[styles.bigInput, { backgroundColor: C.card, color: C.text, borderColor: C.border, fontSize: 16 }]}
+                placeholder="Ism Familiya"
+                placeholderTextColor={C.textSecondary}
+                value={wHolder}
+                onChangeText={setWHolder}
+                autoCapitalize="words"
+              />
+            </View>
+          </ScrollView>
+
+          <View style={{ padding: 20, paddingBottom: insets.bottom + 10 }}>
+            <Pressable
+              style={[styles.actionBtn, { backgroundColor: C.primary, opacity: withdrawing ? 0.7 : 1 }]}
+              onPress={handleWithdraw}
+              disabled={withdrawing}
+            >
+              {withdrawing ? <ActivityIndicator color="#fff" /> : <Ionicons name="arrow-up-circle" size={22} color="#fff" />}
+              <Text style={styles.actionBtnText}>{withdrawing ? "Yuborilmoqda..." : "Pul yechish so'rovi yuborish"}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
 
       {/* Topup Modal */}
       <Modal visible={topupOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setTopupOpen(false)}>

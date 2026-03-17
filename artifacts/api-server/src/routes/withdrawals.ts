@@ -5,12 +5,16 @@ import { authenticate, requireRole } from "../lib/auth.js";
 
 const router = Router();
 
-// ─── Yechib olish so'rovi yaratish (do'kon egasi) ─────────────────────────────
+// ─── Yechib olish so'rovi yaratish (do'kon egasi yoki mijoz) ──────────────────
 router.post("/", authenticate, async (req, res) => {
   try {
     const user = (req as any).user;
-    if (user.role !== "shop_owner" && user.role !== "super_admin") {
-      res.status(403).json({ error: "Faqat do'kon egalari yechib olishi mumkin" });
+    const isCustomer = user.role === "customer";
+    const isShopOwner = user.role === "shop_owner";
+    const isAdmin = user.role === "super_admin";
+
+    if (!isCustomer && !isShopOwner && !isAdmin) {
+      res.status(403).json({ error: "Yechib olish uchun ruxsat yo'q" });
       return;
     }
 
@@ -24,20 +28,21 @@ router.post("/", authenticate, async (req, res) => {
       return;
     }
 
-    // Do'kon va wallet ni topish — faqat o'z do'koniga yechib olish mumkin
-    let shopId = bodyShopId;
-    const ownShop = await db.execute(sql`SELECT id FROM shops WHERE owner_id = ${user.userId} LIMIT 1`);
-    if (!ownShop.rows.length) {
-      res.status(404).json({ error: "Do'kon topilmadi" });
-      return;
+    // shopId — do'kon egalari uchun majburiy, mijozlar uchun null
+    let shopId: number | null = null;
+    if (isShopOwner || isAdmin) {
+      const ownShop = await db.execute(sql`SELECT id FROM shops WHERE owner_id = ${user.userId} LIMIT 1`);
+      if (!ownShop.rows.length) {
+        res.status(404).json({ error: "Do'kon topilmadi" });
+        return;
+      }
+      const ownShopId = (ownShop.rows[0] as any).id;
+      if (bodyShopId && bodyShopId !== ownShopId) {
+        res.status(403).json({ error: "Boshqa do'kondan yechib olish taqiqlangan" });
+        return;
+      }
+      shopId = ownShopId;
     }
-    const ownShopId = (ownShop.rows[0] as any).id;
-    // Agar shopId body'da kelsa, u ham o'ziga tegishli bo'lishi kerak
-    if (shopId && shopId !== ownShopId) {
-      res.status(403).json({ error: "Boshqa do'kondan yechib olish taqiqlangan" });
-      return;
-    }
-    shopId = ownShopId;
 
     // Wallet balansini tekshirish
     const wallet = await db.execute(sql`SELECT * FROM wallets WHERE user_id = ${user.userId} LIMIT 1`);
@@ -47,7 +52,7 @@ router.post("/", authenticate, async (req, res) => {
     }
     const w = wallet.rows[0] as any;
     if (w.balance < amount) {
-      res.status(400).json({ error: `Balans yetarli emas. Mavjud: ${w.balance.toLocaleString()} UZS` });
+      res.status(400).json({ error: `Balans yetarli emas. Mavjud: ${Number(w.balance).toLocaleString()} UZS` });
       return;
     }
 

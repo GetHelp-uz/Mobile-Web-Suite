@@ -463,7 +463,11 @@ export default function ToolDetailScreen() {
                           backgroundColor: paymentMethod === pm.key ? C.primary : C.surfaceSecondary,
                           borderColor: paymentMethod === pm.key ? C.primary : C.border,
                         }]}
-                        onPress={() => { setPaymentMethod(pm.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                        onPress={() => {
+                          setPaymentMethod(pm.key);
+                          if (pm.key === "cash") setVerifyType("passport");
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }}
                       >
                         <Text style={[styles.payChipText, { color: paymentMethod === pm.key ? "#fff" : C.textSecondary }]}>
                           {pm.label}
@@ -471,6 +475,37 @@ export default function ToolDetailScreen() {
                       </Pressable>
                     ))}
                   </View>
+
+                  {paymentMethod === "cash" && (
+                    <View>
+                      <View style={[styles.infoBox, {
+                        backgroundColor: photosReady ? "#ECFDF5" : "#FFF1F2",
+                        borderColor: photosReady ? "#6EE7B7" : "#FECDD3",
+                        marginBottom: 0,
+                      }]}>
+                        <Ionicons
+                          name={photosReady ? "checkmark-circle" : "alert-circle"}
+                          size={18}
+                          color={photosReady ? "#059669" : "#E11D48"}
+                        />
+                        <Text style={[styles.infoBoxText, { color: photosReady ? "#059669" : "#E11D48" }]}>
+                          {photosReady
+                            ? "Hujjatlar yuklangan — naqd to'lovga tayyor"
+                            : "Naqd to'lov uchun ID-karta yoki pasport rasmlari majburiy!"}
+                        </Text>
+                      </View>
+                      {!photosReady && (
+                        <Pressable
+                          style={[styles.uploadDocBtn, { borderColor: "#E11D48" }]}
+                          onPress={() => { setVerifyType("passport"); setModalStep("photos"); }}
+                        >
+                          <Ionicons name="camera-outline" size={18} color="#E11D48" />
+                          <Text style={[styles.uploadDocBtnText, { color: "#E11D48" }]}>Hujjat rasmlarini yuklash</Text>
+                          <Ionicons name="arrow-forward" size={16} color="#E11D48" />
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
 
                   <View style={[styles.summaryBox, { backgroundColor: C.surfaceSecondary }]}>
                     <View style={styles.summaryRow}>
@@ -508,10 +543,17 @@ export default function ToolDetailScreen() {
                   </Pressable>
                   <Pressable
                     style={[styles.nextBtnHalf, {
-                      backgroundColor: rentMutation.isPending ? C.border : C.primary,
+                      backgroundColor: (rentMutation.isPending || (paymentMethod === "cash" && !photosReady)) ? C.border : C.primary,
                     }]}
-                    onPress={() => rentMutation.mutate()}
-                    disabled={rentMutation.isPending}
+                    onPress={() => {
+                      if (paymentMethod === "cash" && !photosReady) {
+                        Alert.alert("Hujjat kerak", "Naqd to'lov uchun ID-karta yoki pasport rasmlarini yuklang");
+                        setModalStep("photos");
+                        return;
+                      }
+                      rentMutation.mutate();
+                    }}
+                    disabled={rentMutation.isPending || (paymentMethod === "cash" && !photosReady)}
                   >
                     <Ionicons name="checkmark-circle" size={16} color="#fff" />
                     <Text style={styles.nextBtnText}>
@@ -649,4 +691,6 @@ const styles = StyleSheet.create({
   summaryTotalVal: { fontSize: 20, fontFamily: "Inter_700Bold" },
   confirmBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, borderRadius: 16, paddingVertical: 16, marginBottom: 16 },
   confirmBtnText: { color: "#fff", fontSize: 17, fontFamily: "Inter_700Bold" },
+  uploadDocBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderWidth: 1.5, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 16, marginTop: 10, borderStyle: "dashed" },
+  uploadDocBtnText: { fontSize: 14, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "center" },
 });
