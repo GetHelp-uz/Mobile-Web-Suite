@@ -1,12 +1,13 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
   useColorScheme,
@@ -14,6 +15,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
+import { checkBiometricAvailability } from "@/lib/biometric";
+import { isBiometricEnabled, setBiometricEnabled } from "@/lib/secure-storage";
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
@@ -67,6 +70,29 @@ export default function ProfileScreen() {
   const C = isDark ? Colors.dark : Colors.light;
   const insets = useSafeAreaInsets();
   const { user, logout } = useAuth();
+  const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [biometricEnabled, setBioEnabled] = useState(false);
+  const [bioLabel, setBioLabel] = useState("Barmoq izi");
+
+  useEffect(() => {
+    (async () => {
+      const info = await checkBiometricAvailability();
+      setBiometricAvailable(info.available);
+      if (info.available) {
+        setBioLabel(info.label);
+        const enabled = await isBiometricEnabled();
+        setBioEnabled(enabled);
+      }
+    })();
+  }, []);
+
+  async function handleBiometricToggle(value: boolean) {
+    await setBiometricEnabled(value);
+    setBioEnabled(value);
+    if (value) {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+  }
 
   async function handleLogout() {
     Alert.alert("Chiqish", "Haqiqatan ham chiqmoqchimisiz?", [
@@ -168,6 +194,25 @@ export default function ProfileScreen() {
             label="Mening ijaralarim"
             onPress={() => router.push("/(tabs)/my-rentals")}
           />
+        </View>
+      )}
+
+      {/* Xavfsizlik sozlamalari */}
+      {biometricAvailable && (
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Xavfsizlik</Text>
+          <View style={[styles.menuItem, { backgroundColor: C.surface, borderColor: C.border }]}>
+            <View style={[styles.menuIcon, { backgroundColor: C.primary + "20" }]}>
+              <Ionicons name="finger-print-outline" size={20} color={C.primary} />
+            </View>
+            <Text style={[styles.menuLabel, { color: C.text }]}>{bioLabel} bilan kirish</Text>
+            <Switch
+              value={biometricEnabled}
+              onValueChange={handleBiometricToggle}
+              trackColor={{ false: C.border, true: C.primary + "80" }}
+              thumbColor={biometricEnabled ? C.primary : C.textMuted}
+            />
+          </View>
         </View>
       )}
 

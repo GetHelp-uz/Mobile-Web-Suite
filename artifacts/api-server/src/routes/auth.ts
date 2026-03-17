@@ -2,8 +2,11 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { generateToken, authenticate } from "../lib/auth.js";
-import { sendTemplateSms, sendSms } from "../lib/sms.js";
+import {
+  generateToken, authenticate, revokeToken, verifyToken,
+  checkLoginAttempts, recordLoginAttempt,
+} from "../lib/auth.js";
+import { sendTemplateSms } from "../lib/sms.js";
 
 const router = Router();
 
@@ -104,10 +107,26 @@ router.post("/register", async (req, res) => {
 
 // ─── Kirish (login) — telefon raqam YOKI username/login ──────────────────────
 router.post("/login", async (req, res) => {
+  const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.socket.remoteAddress || "unknown";
+
   try {
     const { phone: loginId, password } = req.body;
     if (!loginId || !password) {
       res.status(400).json({ error: "Login va parol kiritilishi shart" });
+      return;
+    }
+
+    const identifier = String(loginId).trim().toLowerCase();
+
+    // ── Brute-force tekshirish ──────────────────────────────────────────────
+    const attemptCheck = await checkLoginAttempts(identifier, ip);
+    if (!attemptCheck.allowed) {
+      const mins = Math.ceil((attemptCheck.remainingSeconds || 0) / 60);
+      res.status(429).json({
+        error: `Hisob vaqtincha bloklangan. ${mins} daqiqadan keyin qayta urining.`,
+        code: "ACCOUNT_LOCKED",
+        remainingSeconds: attemptCheck.remainingSeconds,
+      });
       return;
     }
 
@@ -125,23 +144,66 @@ router.post("/login", async (req, res) => {
     }
 
     if (!user) {
-      res.status(401).json({ error: "Login yoki parol noto'g'ri" });
+      await recordLoginAttempt(identifier, ip, false);
+      // Qolgan urinishlar sonini qaytarish
+      const remaining = Math.max(0, 5 - ((await checkLoginAttempts(identifier, ip)).attemptsLeft || 5));
+      res.status(401).json({
+        error: "Login yoki parol noto'g'ri",
+        attemptsLeft: 5 - remaining,
+      });
       return;
     }
+
     const valid = await bcrypt.compare(String(password), user.password);
     if (!valid) {
-      res.status(401).json({ error: "Login yoki parol noto'g'ri" });
+      await recordLoginAttempt(identifier, ip, false);
+      const check = await checkLoginAttempts(identifier, ip);
+      res.status(401).json({
+        error: "Login yoki parol noto'g'ri",
+        attemptsLeft: check.attemptsLeft,
+      });
       return;
     }
+
     if (!user.isActive) {
-      res.status(403).json({ error: "Hisob faol emas. Administratorga murojaat qiling." });
+      res.status(403).json({ error: "Hisob faol emas. Administratorga murojaat qiling.", code: "ACCOUNT_DISABLED" });
       return;
     }
+
+    // Muvaffaqiyatli login
+    await recordLoginAttempt(identifier, ip, true);
     const token = generateToken(user.id, user.role);
+
+    // Audit log
+    await db.execute(sql`
+      INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details)
+      VALUES (${user.id}, 'login', 'user', ${user.id},
+              ${JSON.stringify({ ip, identifier })}::jsonb)
+    `).catch(() => {});
+
     res.json({ token, user: userResponse(user) });
   } catch (err: any) {
     console.error("[Login Error]", err.message);
     res.status(400).json({ error: "Kirish jarayonida xatolik yuz berdi." });
+  }
+});
+
+// ─── Chiqish (logout) — tokenni bekor qilish ────────────────────────────────
+router.post("/logout", authenticate, async (req, res) => {
+  try {
+    const token = (req as any).rawToken;
+    const user = (req as any).user;
+    if (token && user) {
+      const payload = verifyToken(token);
+      const expiresAt = payload.exp
+        ? new Date(payload.exp * 1000)
+        : new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await revokeToken(token, user.userId, expiresAt);
+    }
+    res.json({ ok: true, message: "Tizimdan chiqildi" });
+  } catch (err: any) {
+    console.error("[Logout Error]", err.message);
+    res.json({ ok: true });
   }
 });
 

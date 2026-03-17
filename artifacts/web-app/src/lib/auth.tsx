@@ -52,11 +52,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const currentToken = localStorage.getItem("gethelp_token");
     localStorage.removeItem("gethelp_token");
     localStorage.removeItem("gethelp_user");
     setToken(null);
     setUser(null);
     setLocation("/login");
+
+    // Backend'da tokenni bekor qilish (fire-and-forget)
+    if (currentToken) {
+      const BASE = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+      fetch(`${BASE}/api/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${currentToken}` },
+      }).catch(() => {});
+    }
   };
 
   return (

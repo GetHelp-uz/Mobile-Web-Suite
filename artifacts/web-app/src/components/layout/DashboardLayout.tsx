@@ -4,6 +4,7 @@ import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/hooks/use-theme";
 import { useLiveNotifications } from "@/hooks/use-live-notifications";
 import { useToast } from "@/hooks/use-toast";
+import { useAutoLogout } from "@/hooks/use-auto-logout";
 import { Button } from "@/components/ui/button";
 import {
   Wrench,
@@ -59,6 +60,9 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme, isDark } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { toast } = useToast();
+
+  // 30 daqiqa inaktivlik → avtomatik chiqish
+  useAutoLogout();
 
   const handleNewNotification = useCallback((notif: any) => {
     toast({
