@@ -114,6 +114,16 @@ export const api = {
     scanQr: (qrCode: string): Promise<Tool> => apiRequest(`/tools/scan/${qrCode}`),
     getQr: (id: number): Promise<{ toolId: number; qrCode: string; qrImageUrl: string }> =>
       apiRequest(`/tools/${id}/qr`),
+    create: (data: {
+      shopId: number;
+      name: string;
+      category: string;
+      description?: string;
+      pricePerDay: number;
+      pricePerHour?: number;
+      depositAmount: number;
+    }): Promise<Tool> =>
+      apiRequest("/tools", { method: "POST", body: JSON.stringify(data) }),
   },
   rentals: {
     list: (params?: { status?: string; customerId?: number; shopId?: number }): Promise<{ rentals: Rental[]; total: number }> => {

@@ -93,13 +93,6 @@ function NativeTabLayout({ role }: { role: string }) {
         </NativeTabs.Trigger>
       )}
 
-      {isCustomer && (
-        <NativeTabs.Trigger name="loyalty">
-          <Icon sf={{ default: "star", selected: "star.fill" }} />
-          <Label>Loyallik</Label>
-        </NativeTabs.Trigger>
-      )}
-
       {!isAdmin && (
         <NativeTabs.Trigger name="referral">
           <Icon sf={{ default: "gift", selected: "gift.fill" }} />
@@ -252,7 +245,7 @@ function ClassicTabLayout({ role }: { role: string }) {
         name="loyalty"
         options={{
           title: "Loyallik",
-          href: isCustomer ? undefined : null,
+          href: null,
           tabBarIcon: ({ color }) =>
             isIOS ? <SymbolView name="star" tintColor={color} size={24} /> : <Ionicons name="star-outline" size={22} color={color} />,
         }}
