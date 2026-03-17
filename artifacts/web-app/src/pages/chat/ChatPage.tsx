@@ -203,7 +203,7 @@ export default function ChatPage() {
                   </div>
                 )}
                 {messages.map(msg => {
-                  const isMine = msg.sender_id === user?.userId;
+                  const isMine = msg.sender_id === user?.id;
                   return (
                     <div key={msg.id} className={`flex ${isMine ? "justify-end" : "justify-start"}`}>
                       {!isMine && (

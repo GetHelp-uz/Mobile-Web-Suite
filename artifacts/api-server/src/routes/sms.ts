@@ -97,7 +97,7 @@ router.post("/settings/refresh-token", authenticate, requireRole("super_admin", 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: settings.email, password: settings.password }),
     });
-    const loginData = await loginRes.json();
+    const loginData = await loginRes.json() as any;
     const token = loginData?.data?.token;
 
     if (!token) {

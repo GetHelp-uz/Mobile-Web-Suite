@@ -19,6 +19,7 @@ export default function ProjectsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [projects, setProjects] = useState<any[]>([]);
@@ -37,14 +38,14 @@ export default function ProjectsPage() {
     setLoading(true);
     const q = isShop ? `?shopId=${user?.shopId}` : "";
     try {
-      const r = await fetch(`/api/projects${q}`, { headers: h });
+      const r = await fetch(`${baseUrl}/api/projects${q}`, { headers: h });
       const d = await r.json();
       setProjects(d.projects || []);
     } finally { setLoading(false); }
   };
 
   const loadShops = async () => {
-    const r = await fetch("/api/shops?limit=100", { headers: h });
+    const r = await fetch(`${baseUrl}/api/shops?limit=100`, { headers: h });
     const d = await r.json();
     setShops(d.shops || []);
   };
@@ -54,14 +55,14 @@ export default function ProjectsPage() {
   const openDetail = async (p: any) => {
     setDetailProject(p);
     setDetailOpen(true);
-    const r = await fetch(`/api/projects/${p.id}`, { headers: h });
+    const r = await fetch(`${baseUrl}/api/projects/${p.id}`, { headers: h });
     const d = await r.json();
     setDetailRentals(d.rentals || []);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const r = await fetch("/api/projects", {
+    const r = await fetch(`${baseUrl}/api/projects`, {
       method: "POST", headers: h,
       body: JSON.stringify({ name: form.name, shopId: Number(form.shopId), description: form.description, location: form.location }),
     });
@@ -74,7 +75,7 @@ export default function ProjectsPage() {
   };
 
   const complete = async (id: number) => {
-    await fetch(`/api/projects/${id}`, { method: "PATCH", headers: h, body: JSON.stringify({ status: "completed" }) });
+    await fetch(`${baseUrl}/api/projects/${id}`, { method: "PATCH", headers: h, body: JSON.stringify({ status: "completed" }) });
     toast({ title: "Loyiha tugallandi!" });
     load();
   };

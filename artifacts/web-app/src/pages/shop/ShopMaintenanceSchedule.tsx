@@ -25,6 +25,7 @@ type Stats = { total: number; due: number; warning: number; ok: number };
 export default function ShopMaintenanceSchedule() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [shopId, setShopId] = useState<number | null>(null);
@@ -43,8 +44,8 @@ export default function ShopMaintenanceSchedule() {
   const load = async (sid: number) => {
     setLoading(true);
     try {
-      const r = await fetch(`/api/maintenance/schedule?shopId=${sid}`, { headers: h });
-      const d = await r.json();
+      const r = await fetch(`${baseUrl}/api/maintenance/schedule?shopId=${sid}`, { headers: h });
+      const d = r.ok ? await r.json() : { tools: [], stats: { total: 0, due: 0, warning: 0, ok: 0 } };
       setTools(d.tools || []);
       setStats(d.stats || { total: 0, due: 0, warning: 0, ok: 0 });
     } catch (err: any) {
@@ -56,8 +57,8 @@ export default function ShopMaintenanceSchedule() {
 
   useEffect(() => {
     (async () => {
-      const r = await fetch("/api/shops?mine=true", { headers: h });
-      const d = await r.json();
+      const r = await fetch(`${baseUrl}/api/shops?mine=true`, { headers: h });
+      const d = r.ok ? await r.json() : {};
       const shop = d.shops?.[0] || d[0];
       if (shop) { setShopId(shop.id); load(shop.id); }
       else setLoading(false);
@@ -67,7 +68,7 @@ export default function ShopMaintenanceSchedule() {
   const handleSetInterval = async () => {
     if (!editTool || !newInterval) return;
     try {
-      const r = await fetch(`/api/maintenance/schedule/${editTool.id}`, {
+      const r = await fetch(`${baseUrl}/api/maintenance/schedule/${editTool.id}`, {
         method: "PUT", headers: h, body: JSON.stringify({ maintenanceInterval: Number(newInterval) }),
       });
       if (!r.ok) throw new Error("Xatolik");
@@ -82,7 +83,7 @@ export default function ShopMaintenanceSchedule() {
   const handleMarkDone = async () => {
     if (!doneDialog) return;
     try {
-      const r = await fetch(`/api/maintenance/schedule/${doneDialog.id}/done`, {
+      const r = await fetch(`${baseUrl}/api/maintenance/schedule/${doneDialog.id}/done`, {
         method: "POST", headers: h,
         body: JSON.stringify({ description: doneDesc || "Texnik xizmat bajarildi", cost: Number(doneCost) || 0 }),
       });
@@ -106,8 +107,8 @@ export default function ShopMaintenanceSchedule() {
 
   const statusBadge = (t: ToolMaintenance) => {
     if (t.isDue)     return <Badge variant="destructive" className="gap-1"><AlertTriangle size={10} /> Texnik xizmat kerak</Badge>;
-    if (t.isWarning) return <Badge variant="warning" as any className="gap-1 bg-yellow-100 text-yellow-800"><Clock size={10} /> Yaqinlashmoqda</Badge>;
-    return <Badge variant="success" as any className="gap-1 bg-green-100 text-green-800"><CheckCircle size={10} /> Yaxshi holat</Badge>;
+    if (t.isWarning) return <Badge variant="warning" className="gap-1 bg-yellow-100 text-yellow-800"><Clock size={10} /> Yaqinlashmoqda</Badge>;
+    return <Badge variant="success" className="gap-1 bg-green-100 text-green-800"><CheckCircle size={10} /> Yaxshi holat</Badge>;
   };
 
   if (loading) {

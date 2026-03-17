@@ -28,6 +28,7 @@ export interface RegisterRequest {
   email?: string;
   password: string;
   role: RegisterRequestRole;
+  region?: string;
 }
 
 export interface LoginRequest {

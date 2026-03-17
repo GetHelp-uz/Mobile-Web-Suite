@@ -23,6 +23,7 @@ export default function ShopMaintenance() {
   const { toast } = useToast();
   const shopId = user?.shopId || 0;
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [logs, setLogs] = useState<any[]>([]);
@@ -35,28 +36,29 @@ export default function ShopMaintenance() {
   });
 
   const load = async () => {
+    if (!shopId) { setLoading(false); return; }
     setLoading(true);
     try {
       const [logsR, toolsR] = await Promise.all([
-        fetch(`/api/maintenance/shop/${shopId}`, { headers: h }),
-        fetch(`/api/shops/${shopId}/tools?limit=100`, { headers: h }),
+        fetch(`${baseUrl}/api/maintenance/shop/${shopId}`, { headers: h }),
+        fetch(`${baseUrl}/api/shops/${shopId}/tools?limit=100`, { headers: h }),
       ]);
-      const logsD = await logsR.json();
-      const toolsD = await toolsR.json();
+      const logsD = logsR.ok ? await logsR.json() : { logs: [], upcomingService: [] };
+      const toolsD = toolsR.ok ? await toolsR.json() : { tools: [] };
       setLogs(logsD.logs || []);
       setUpcoming(logsD.upcomingService || []);
       setTools(toolsD.tools || []);
-    } finally { setLoading(false); }
+    } catch { /* ignore */ } finally { setLoading(false); }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (shopId) load(); else setLoading(false); }, [shopId]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.toolId || !form.description) {
       toast({ title: "Xatolik", description: "Asbob va tavsif kerak", variant: "destructive" }); return;
     }
-    const r = await fetch("/api/maintenance", {
+    const r = await fetch(`${baseUrl}/api/maintenance`, {
       method: "POST", headers: h,
       body: JSON.stringify({
         toolId: Number(form.toolId), shopId,

@@ -43,7 +43,7 @@ export default function AIRecommendPage() {
         body: JSON.stringify({
           projectType: selectedType,
           projectDescription: description,
-          userId: user?.userId,
+          userId: user?.id,
         }),
       });
       const d = await r.json();

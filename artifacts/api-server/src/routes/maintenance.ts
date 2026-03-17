@@ -48,7 +48,7 @@ router.get("/shop/:shopId", authenticate, async (req, res) => {
 });
 
 // POST /api/maintenance
-router.post("/", authenticate, requireRole(["shop_owner", "worker", "super_admin"]), async (req, res) => {
+router.post("/", authenticate, requireRole("shop_owner", "worker", "super_admin"), async (req, res) => {
   try {
     const user = (req as any).user;
     const { toolId, shopId, type, description, cost, nextServiceDate, status } = req.body;

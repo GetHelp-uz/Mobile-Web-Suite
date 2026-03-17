@@ -38,12 +38,15 @@ function formatPrice(n: number) {
   return n.toLocaleString("uz-UZ") + " so'm";
 }
 
+type StatusKey = "available" | "rented" | "maintenance";
+const STATUS_CONFIG: Record<StatusKey, { bg: string; text: string; label: string }> = {
+  available: { bg: "#DCFCE7", text: "#16A34A", label: "Bo'sh" },
+  rented: { bg: "#FEF9C3", text: "#CA8A04", label: "Ijarada" },
+  maintenance: { bg: "#FEE2E2", text: "#DC2626", label: "Ta'mirda" },
+};
+
 function StatusBadge({ status }: { status: string }) {
-  const config = {
-    available: { bg: "#DCFCE7", text: "#16A34A", label: "Bo'sh" },
-    rented: { bg: "#FEF9C3", text: "#CA8A04", label: "Ijarada" },
-    maintenance: { bg: "#FEE2E2", text: "#DC2626", label: "Ta'mirda" },
-  }[status as keyof typeof config] || { bg: "#F1F5F9", text: "#64748B", label: status };
+  const config = STATUS_CONFIG[status as StatusKey] || { bg: "#F1F5F9", text: "#64748B", label: status };
 
   return (
     <View style={[styles.badge, { backgroundColor: config.bg }]}>
@@ -249,7 +252,7 @@ function AddToolModal({ visible, onClose, shopId }: { visible: boolean; onClose:
 
             {/* Xulosa */}
             {form.name && form.category && form.pricePerDay ? (
-              <View style={[styles.previewCard, { backgroundColor: C.primaryLight, borderColor: C.primary + "33" }]}>
+              <View style={[styles.previewCard, { backgroundColor: C.primary + "15", borderColor: C.primary + "33" }]}>
                 <MaterialCommunityIcons name="tools" size={28} color={C.primary} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={[styles.previewName, { color: C.text }]}>{form.name}</Text>

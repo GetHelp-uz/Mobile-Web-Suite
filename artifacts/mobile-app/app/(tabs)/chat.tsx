@@ -131,7 +131,7 @@ export default function ChatTab() {
           contentContainerStyle={{ padding: 16, gap: 8 }}
           onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: false })}
           renderItem={({ item: msg }) => {
-            const isMine = msg.sender_id === user?.userId;
+            const isMine = msg.sender_id === user?.id;
             return (
               <View style={[styles.msgRow, isMine ? styles.msgRowMine : styles.msgRowOther]}>
                 {!isMine && <Avatar name={msg.sender_name} size={28} />}

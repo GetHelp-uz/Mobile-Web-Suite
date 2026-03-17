@@ -18,13 +18,14 @@ export default function ShopRatings() {
   const { user } = useAuth();
   const shopId = user?.shopId || 0;
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { Authorization: `Bearer ${token}` };
 
   const [data, setData] = useState<any>({ ratings: [], average: 0, count: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/ratings/shop/${shopId}`, { headers: h })
+    fetch(`${baseUrl}/api/ratings/shop/${shopId}`, { headers: h })
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); });
   }, [shopId]);

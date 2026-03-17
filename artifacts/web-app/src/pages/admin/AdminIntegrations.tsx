@@ -56,6 +56,7 @@ const SERVER_INTEGRATIONS = [
 export default function AdminIntegrations() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [smsSettings, setSmsSettings] = useState<SmsSettings | null>(null);
@@ -86,9 +87,9 @@ export default function AdminIntegrations() {
     setLoading(true);
     try {
       const [s, t, l] = await Promise.all([
-        fetch("/api/sms/settings", { headers: h }).then(r => r.json()),
-        fetch("/api/sms/templates", { headers: h }).then(r => r.json()),
-        fetch("/api/sms/logs?limit=30", { headers: h }).then(r => r.json()),
+        fetch(`${baseUrl}/api/sms/settings`, { headers: h }).then(r => r.json()),
+        fetch(`${baseUrl}/api/sms/templates`, { headers: h }).then(r => r.json()),
+        fetch(`${baseUrl}/api/sms/logs?limit=30`, { headers: h }).then(r => r.json()),
       ]);
       const settings = s.settings?.[0] ?? null;
       setSmsSettings(settings);
@@ -112,7 +113,7 @@ export default function AdminIntegrations() {
     try {
       const body: any = { provider: "eskiz", email: smsForm.email, senderId: smsForm.senderId, isActive: smsForm.isActive };
       if (smsForm.password) body.password = smsForm.password;
-      const r = await fetch("/api/sms/settings", { method: "POST", headers: h, body: JSON.stringify(body) });
+      const r = await fetch(`${baseUrl}/api/sms/settings`, { method: "POST", headers: h, body: JSON.stringify(body) });
       const d = await r.json();
       if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
       toast({ title: "Saqlandi!", description: "SMS sozlamalari yangilandi" });
@@ -126,7 +127,7 @@ export default function AdminIntegrations() {
   const refreshToken = async () => {
     setRefreshingToken(true);
     try {
-      const r = await fetch("/api/sms/settings/refresh-token", { method: "POST", headers: h, body: JSON.stringify({}) });
+      const r = await fetch(`${baseUrl}/api/sms/settings/refresh-token`, { method: "POST", headers: h, body: JSON.stringify({}) });
       const d = await r.json();
       if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
       toast({ title: "Token yangilandi!", description: `Amal qilish muddati: ${new Date(d.expiresAt).toLocaleDateString("uz-UZ")}` });
@@ -143,9 +144,9 @@ export default function AdminIntegrations() {
       const body = { name: editTmpl.name, type: editTmpl.type, message: editTmpl.message, isActive: editTmpl.is_active ?? true };
       let r;
       if (editTmpl.id) {
-        r = await fetch(`/api/sms/templates/${editTmpl.id}`, { method: "PATCH", headers: h, body: JSON.stringify(body) });
+        r = await fetch(`${baseUrl}/api/sms/templates/${editTmpl.id}`, { method: "PATCH", headers: h, body: JSON.stringify(body) });
       } else {
-        r = await fetch("/api/sms/templates", { method: "POST", headers: h, body: JSON.stringify(body) });
+        r = await fetch(`${baseUrl}/api/sms/templates`, { method: "POST", headers: h, body: JSON.stringify(body) });
       }
       const d = await r.json();
       if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
@@ -156,7 +157,7 @@ export default function AdminIntegrations() {
   };
 
   const deleteTmpl = async (id: number) => {
-    await fetch(`/api/sms/templates/${id}`, { method: "DELETE", headers: h });
+    await fetch(`${baseUrl}/api/sms/templates/${id}`, { method: "DELETE", headers: h });
     toast({ title: "O'chirildi" });
     load();
   };
@@ -166,7 +167,7 @@ export default function AdminIntegrations() {
     if (!testPhone || !testMsg) return;
     setTestSending(true);
     try {
-      const r = await fetch("/api/sms/send", { method: "POST", headers: h, body: JSON.stringify({ phone: testPhone, message: testMsg }) });
+      const r = await fetch(`${baseUrl}/api/sms/send`, { method: "POST", headers: h, body: JSON.stringify({ phone: testPhone, message: testMsg }) });
       const d = await r.json();
       if (d.success) {
         toast({ title: "SMS yuborildi!", description: `${testPhone} raqamiga xabar muvaffaqiyatli ketdi` });
@@ -184,7 +185,7 @@ export default function AdminIntegrations() {
   const triggerOverdue = async () => {
     setTriggering(true);
     try {
-      const r = await fetch("/api/sms/trigger-overdue", { method: "POST", headers: h });
+      const r = await fetch(`${baseUrl}/api/sms/trigger-overdue`, { method: "POST", headers: h });
       const d = await r.json();
       toast({ title: "Bajarildi!", description: `${d.sent} ta muddati o'tgan ijara uchun SMS yuborildi` });
       load();

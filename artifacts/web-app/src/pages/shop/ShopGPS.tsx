@@ -82,6 +82,7 @@ export default function ShopGPS() {
   const DEFAULT_CENTER: [number, number] = [41.2995, 69.2401];
 
   const load = useCallback(async () => {
+    if (!shopId) { setLoading(false); return; }
     setLoading(true);
     try {
       const [devR, liveR, toolsR, geoR] = await Promise.all([
@@ -90,18 +91,18 @@ export default function ShopGPS() {
         fetch(`${baseUrl}/api/shops/${shopId}/tools?limit=200`, { headers: h }),
         fetch(`${baseUrl}/api/gps/geofences/shop/${shopId}`, { headers: h }),
       ]);
-      const devD = await devR.json();
-      const liveD = await liveR.json();
-      const toolsD = await toolsR.json();
-      const geoD = await geoR.json();
+      const devD = devR.ok ? await devR.json() : { devices: [] };
+      const liveD = liveR.ok ? await liveR.json() : { devices: [] };
+      const toolsD = toolsR.ok ? await toolsR.json() : { tools: [] };
+      const geoD = geoR.ok ? await geoR.json() : { geofences: [] };
       setDevices(devD.devices || []);
       setLiveDevices(liveD.devices || []);
       setTools(toolsD.tools || []);
       setGeofences(geoD.geofences || []);
-    } finally { setLoading(false); }
+    } catch { /* ignore */ } finally { setLoading(false); }
   }, [shopId, baseUrl]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (shopId) load(); else setLoading(false); }, [load, shopId]);
 
   // Avtomatik yangilash (30 soniyada bir)
   useEffect(() => {

@@ -26,6 +26,7 @@ export default function ShopPricing() {
   const { toast } = useToast();
   const shopId = user?.shopId || 0;
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [rules, setRules] = useState<any[]>([]);
@@ -39,7 +40,7 @@ export default function ShopPricing() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch(`/api/pricing/shop/${shopId}`, { headers: h });
+      const r = await fetch(`${baseUrl}/api/pricing/shop/${shopId}`, { headers: h });
       const d = await r.json();
       setRules(d.rules || []);
     } finally { setLoading(false); }
@@ -52,7 +53,7 @@ export default function ShopPricing() {
     if (!form.ruleName || !form.multiplier) {
       toast({ title: "Xatolik", description: "Barcha maydonlarni to'ldiring", variant: "destructive" }); return;
     }
-    const r = await fetch("/api/pricing", {
+    const r = await fetch(`${baseUrl}/api/pricing`, {
       method: "POST", headers: h,
       body: JSON.stringify({
         shopId, ruleName: form.ruleName, type: form.type,
@@ -71,13 +72,13 @@ export default function ShopPricing() {
   };
 
   const toggleRule = async (id: number, isActive: boolean) => {
-    await fetch(`/api/pricing/${id}`, { method: "PATCH", headers: h, body: JSON.stringify({ isActive: !isActive }) });
+    await fetch(`${baseUrl}/api/pricing/${id}`, { method: "PATCH", headers: h, body: JSON.stringify({ isActive: !isActive }) });
     load();
   };
 
   const deleteRule = async (id: number) => {
     if (!confirm("Qoidani o'chirasizmi?")) return;
-    await fetch(`/api/pricing/${id}`, { method: "DELETE", headers: h });
+    await fetch(`${baseUrl}/api/pricing/${id}`, { method: "DELETE", headers: h });
     load();
   };
 

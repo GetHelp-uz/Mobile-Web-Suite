@@ -24,6 +24,7 @@ type ESignStatus = {
 export default function ESignPage() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [rentals, setRentals] = useState<Rental[]>([]);
@@ -47,8 +48,8 @@ export default function ESignPage() {
     setLoading(true);
     try {
       const [rentalsRes, meRes] = await Promise.all([
-        fetch("/api/rentals?limit=20", { headers: h }),
-        fetch("/api/auth/me", { headers: h }),
+        fetch(`${baseUrl}/api/rentals?limit=20`, { headers: h }),
+        fetch(`${baseUrl}/api/auth/me`, { headers: h }),
       ]);
       const d = await rentalsRes.json();
       const meData = await meRes.json();
@@ -59,7 +60,7 @@ export default function ESignPage() {
       const statusMap: Record<number, ESignStatus> = {};
       await Promise.all(myRentals.slice(0, 10).map(async rental => {
         try {
-          const sr = await fetch(`/api/contracts/rental/${rental.id}/esign`, { headers: h });
+          const sr = await fetch(`${baseUrl}/api/contracts/rental/${rental.id}/esign`, { headers: h });
           if (sr.ok) statusMap[rental.id] = await sr.json();
         } catch { /* ignore */ }
       }));
@@ -75,7 +76,7 @@ export default function ESignPage() {
     if (!passportId.trim()) return;
     setSavingPassport(true);
     try {
-      const r = await fetch("/api/auth/profile", {
+      const r = await fetch(`${baseUrl}/api/auth/profile`, {
         method: "PATCH", headers: h,
         body: JSON.stringify({ passportId: passportId.trim() }),
       });
@@ -145,7 +146,7 @@ export default function ESignPage() {
 
     setSigning(true);
     try {
-      const r = await fetch(`/api/contracts/${signDialog.id}/sign`, {
+      const r = await fetch(`${baseUrl}/api/contracts/${signDialog.id}/sign`, {
         method: "POST", headers: h,
         body: JSON.stringify({ agreed: true, signatureData }),
       });
@@ -301,7 +302,7 @@ export default function ESignPage() {
                         <p className="font-semibold">{rental.tool_name}</p>
                         <p className="text-sm text-muted-foreground">{rental.shop_name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <Badge variant="success" as any className="text-xs bg-green-100 text-green-700">
+                          <Badge variant="success" className="text-xs bg-green-100 text-green-700">
                             <CheckCircle size={10} className="mr-1" /> Imzolangan
                           </Badge>
                           {status?.hasSignature && (

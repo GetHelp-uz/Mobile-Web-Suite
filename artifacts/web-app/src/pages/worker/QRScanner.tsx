@@ -21,7 +21,7 @@ export default function QRScanner() {
   const { toast } = useToast();
 
   const { data: tool, isSuccess: toolFound } = useScanToolQr(scannedCode, {
-    query: { enabled: !!scannedCode, retry: false }
+    query: { enabled: !!scannedCode, retry: false } as any
   });
 
   const startRental = useStartRentalByQr({

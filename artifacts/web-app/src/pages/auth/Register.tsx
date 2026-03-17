@@ -71,6 +71,7 @@ const REGIONS = [
 export default function Register() {
   const [, setLocation] = useLocation();
   const { login } = useAuth();
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const { toast } = useToast();
 
   const [form, setForm] = useState({
@@ -93,7 +94,7 @@ export default function Register() {
         // Do'kon nomini kiritgan bo'lsa, do'kon yaratamiz
         if (form.shopName && data.user) {
           try {
-            await fetch("/api/shops", {
+            await fetch(`${baseUrl}/api/shops`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",

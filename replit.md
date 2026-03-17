@@ -1,11 +1,21 @@
-# ToolRent Platform — Uzbekistan
+# GetHelp.uz Platform — Uzbekistan
 
 ## Loyiha haqida
-To'liq stekli qurilish asboblari ijarasi platformasi. Rollar: super_admin, shop_owner, worker, customer. UI: O'zbek tilida.
+To'liq stekli qurilish asboblari ijarasi platformasi **GetHelp.uz**. Rollar: super_admin, shop_owner, worker, customer. UI: O'zbek tilida.
 
-**Admin login**: im_yakuboff98 / wer5459865
+**Admin login**: phone=998901234567 / wer5459865 (role=super_admin)
 **Shop owner**: phone=998901111111 / password123
 **Worker**: phone=998902222222 / password123
+
+## Muhim texnik eslatmalar
+
+- **Auth keys**: web localStorage: `gethelp_token`, `gethelp_user`; mobile AsyncStorage: `gethelp_token`, `gethelp_user`
+- **BASE_URL**: Barcha web fetch chaqiruvlari `const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "")` ishlatadi
+- **requireRole**: rest params bilan: `requireRole("super_admin", "shop_owner")` — massiv emas
+- **Mobile colors**: `C.primaryLight` yo'q — `C.primary + "15"` ishlatiladi
+- **Mobile StyleSheet**: `background:` yo'q — `backgroundColor:` ishlatiladi
+- **api-client-react**: har safar `src/generated/api.schemas.ts` o'zgarsa `pnpm tsc --build` qayta ishga tushiriladi (lib/api-client-react/)
+- **shopId guard**: API chaqiruvlarda `if (!shopId) return;` va `r.ok ? await r.json() : default` pattern
 
 ## 8 ta yangi funksiya (Mar 2026)
 

@@ -86,6 +86,7 @@ const PROVIDERS = [
 export default function AdminPaymentSettings() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const appUrl = window.location.origin;
 
@@ -99,7 +100,7 @@ export default function AdminPaymentSettings() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/payment-settings", { headers: h });
+      const r = await fetch(`${baseUrl}/api/payment-settings`, { headers: h });
       if (!r.ok) throw new Error("Yuklashda xatolik");
       const rows: ProviderSetting[] = await r.json();
       const map: Record<string, ProviderSetting> = {};
@@ -139,7 +140,7 @@ export default function AdminPaymentSettings() {
       };
       if (fd.secret_key) body.secret_key = fd.secret_key;
 
-      const r = await fetch(`/api/payment-settings/${provider}`, {
+      const r = await fetch(`${baseUrl}/api/payment-settings/${provider}`, {
         method: "PUT", headers: h, body: JSON.stringify(body),
       });
       const d = await r.json();
@@ -156,7 +157,7 @@ export default function AdminPaymentSettings() {
 
   const handleTest = async (provider: string) => {
     try {
-      const r = await fetch("/api/payment-settings/test", {
+      const r = await fetch(`${baseUrl}/api/payment-settings/test`, {
         method: "POST", headers: h, body: JSON.stringify({ provider }),
       });
       const d = await r.json();

@@ -25,6 +25,7 @@ type ShopMetrics = {
 export default function MultiShopDashboard() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [shops, setShops] = useState<Shop[]>([]);
@@ -34,7 +35,7 @@ export default function MultiShopDashboard() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/shops?mine=true", { headers: h });
+      const r = await fetch(`${baseUrl}/api/shops?mine=true`, { headers: h });
       const d = await r.json();
       const myShops: Shop[] = d.shops || d || [];
       setShops(myShops);
@@ -43,7 +44,7 @@ export default function MultiShopDashboard() {
       const metricsMap: Record<number, ShopMetrics> = {};
       await Promise.all(myShops.map(async (shop) => {
         try {
-          const ar = await fetch(`/api/analytics/dashboard?shopId=${shop.id}`, { headers: h });
+          const ar = await fetch(`${baseUrl}/api/analytics/dashboard?shopId=${shop.id}`, { headers: h });
           if (ar.ok) {
             const ad = await ar.json();
             metricsMap[shop.id] = {
@@ -144,8 +145,8 @@ export default function MultiShopDashboard() {
                       <div>
                         <CardTitle className="text-lg leading-tight">{shop.name}</CardTitle>
                         <div className="flex items-center gap-1 mt-0.5">
-                          {shop.is_verified && <Badge variant="success" as any className="text-xs bg-green-100 text-green-700">Tasdiqlangan</Badge>}
-                          <Badge variant={shop.is_active ? "success" as any : "secondary"} className={`text-xs ${shop.is_active ? "bg-green-100 text-green-700" : ""}`}>
+                          {shop.is_verified && <Badge variant="success" className="text-xs bg-green-100 text-green-700">Tasdiqlangan</Badge>}
+                          <Badge variant={shop.is_active ? "success" : "secondary"} className={`text-xs ${shop.is_active ? "bg-green-100 text-green-700" : ""}`}>
                             {shop.is_active ? "Faol" : "Nofaol"}
                           </Badge>
                           <Badge variant="outline" className="text-xs">{shop.subscription_status}</Badge>

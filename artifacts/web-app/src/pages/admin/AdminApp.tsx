@@ -29,12 +29,13 @@ export default function AdminApp() {
   const [featuresText, setFeaturesText] = useState("");
 
   const token = localStorage.getItem("gethelp_token");
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const loadPlans = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/plans");
+      const res = await fetch(`${baseUrl}/api/plans`);
       const data = await res.json();
       setPlans(data.plans || []);
     } catch {
@@ -64,9 +65,9 @@ export default function AdminApp() {
     try {
       let res;
       if (editPlan.id) {
-        res = await fetch(`/api/plans/${editPlan.id}`, { method: "PATCH", headers, body: JSON.stringify(body) });
+        res = await fetch(`${baseUrl}/api/plans/${editPlan.id}`, { method: "PATCH", headers, body: JSON.stringify(body) });
       } else {
-        res = await fetch("/api/plans", { method: "POST", headers, body: JSON.stringify(body) });
+        res = await fetch(`${baseUrl}/api/plans`, { method: "POST", headers, body: JSON.stringify(body) });
       }
       if (!res.ok) {
         const d = await res.json();
@@ -83,7 +84,7 @@ export default function AdminApp() {
 
   const toggleActive = async (plan: Plan) => {
     try {
-      await fetch(`/api/plans/${plan.id}`, {
+      await fetch(`${baseUrl}/api/plans/${plan.id}`, {
         method: "PATCH",
         headers,
         body: JSON.stringify({ isActive: !plan.is_active }),

@@ -53,7 +53,7 @@ export default function AITab() {
     try {
       const r = await fetch(`${baseUrl}/ai/recommend`, {
         method: "POST", headers: h,
-        body: JSON.stringify({ projectType: selectedType, projectDescription: description, userId: user?.userId }),
+        body: JSON.stringify({ projectType: selectedType, projectDescription: description, userId: user?.id }),
       });
       const d = await r.json();
       setResult(d);

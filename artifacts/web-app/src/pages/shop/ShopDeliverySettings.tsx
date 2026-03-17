@@ -37,6 +37,7 @@ const DEFAULT_SLOTS = ["09:00-12:00", "12:00-15:00", "15:00-18:00", "18:00-21:00
 export default function ShopDeliverySettings() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [shopId, setShopId] = useState<number | null>(null);
@@ -53,8 +54,8 @@ export default function ShopDeliverySettings() {
   const load = async (sid: number) => {
     try {
       const [sRes, oRes] = await Promise.all([
-        fetch(`/api/delivery/settings/${sid}`, { headers: h }),
-        fetch(`/api/delivery/orders?shopId=${sid}`, { headers: h }),
+        fetch(`${baseUrl}/api/delivery/settings/${sid}`, { headers: h }),
+        fetch(`${baseUrl}/api/delivery/orders?shopId=${sid}`, { headers: h }),
       ]);
       const sData = await sRes.json();
       const oData = await oRes.json();
@@ -69,7 +70,7 @@ export default function ShopDeliverySettings() {
 
   useEffect(() => {
     (async () => {
-      const r = await fetch("/api/shops?mine=true", { headers: h });
+      const r = await fetch(`${baseUrl}/api/shops?mine=true`, { headers: h });
       const d = await r.json();
       const shop = d.shops?.[0] || d[0];
       if (shop) { setShopId(shop.id); load(shop.id); }
@@ -81,7 +82,7 @@ export default function ShopDeliverySettings() {
     if (!shopId) return;
     setSaving(true);
     try {
-      const r = await fetch(`/api/delivery/settings/${shopId}`, {
+      const r = await fetch(`${baseUrl}/api/delivery/settings/${shopId}`, {
         method: "PUT", headers: h, body: JSON.stringify(settings),
       });
       const d = await r.json();
@@ -113,7 +114,7 @@ export default function ShopDeliverySettings() {
   };
 
   const updateOrderStatus = async (orderId: number, status: string) => {
-    await fetch(`/api/delivery/orders/${orderId}/status`, {
+    await fetch(`${baseUrl}/api/delivery/orders/${orderId}/status`, {
       method: "PATCH", headers: h, body: JSON.stringify({ status }),
     });
     load(shopId!);

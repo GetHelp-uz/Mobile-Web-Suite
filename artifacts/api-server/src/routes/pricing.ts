@@ -17,7 +17,7 @@ router.get("/shop/:shopId", async (req, res) => {
 });
 
 // POST /api/pricing
-router.post("/", authenticate, requireRole(["shop_owner","super_admin"]), async (req, res) => {
+router.post("/", authenticate, requireRole("shop_owner","super_admin"), async (req, res) => {
   try {
     const { shopId, ruleName, type, multiplier, startDate, endDate, daysOfWeek } = req.body;
     if (!shopId || !ruleName || !multiplier) { res.status(400).json({ error: "shopId, ruleName, multiplier kerak" }); return; }

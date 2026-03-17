@@ -13,6 +13,7 @@ export default function ReferralPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [data, setData] = useState<any>(null);
@@ -26,8 +27,8 @@ export default function ReferralPage() {
     setLoading(true);
     try {
       const [myR, lbR] = await Promise.all([
-        fetch("/api/referrals/my", { headers: h }),
-        fetch("/api/referrals/leaderboard"),
+        fetch(`${baseUrl}/api/referrals/my`, { headers: h }),
+        fetch(`${baseUrl}/api/referrals/leaderboard`),
       ]);
       const myD = await myR.json();
       const lbD = await lbR.json();
@@ -60,7 +61,7 @@ export default function ReferralPage() {
     if (!applyCode.trim()) return;
     setApplying(true);
     try {
-      const r = await fetch("/api/referrals/apply", {
+      const r = await fetch(`${baseUrl}/api/referrals/apply`, {
         method: "POST", headers: h,
         body: JSON.stringify({ referralCode: applyCode.trim() }),
       });

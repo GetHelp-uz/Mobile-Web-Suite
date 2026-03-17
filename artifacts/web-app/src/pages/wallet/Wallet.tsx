@@ -59,6 +59,7 @@ const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000];
 export default function WalletPage() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [wallet, setWallet] = useState<WalletData | null>(null);
@@ -77,7 +78,7 @@ export default function WalletPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/wallet/me", { headers: h });
+      const r = await fetch(`${baseUrl}/api/wallet/me`, { headers: h });
       const d = await r.json();
       setWallet(d.wallet);
       setTransactions(d.transactions || []);
@@ -101,7 +102,7 @@ export default function WalletPage() {
     }
     setTopping(true);
     try {
-      const r = await fetch("/api/wallet/topup", {
+      const r = await fetch(`${baseUrl}/api/wallet/topup`, {
         method: "POST", headers: h,
         body: JSON.stringify({ amount: Number(amount), provider, phone }),
       });
@@ -117,7 +118,7 @@ export default function WalletPage() {
 
   // Test uchun: to'lovni tasdiqlash
   const confirmTestPayment = async (refId: string) => {
-    await fetch("/api/wallet/topup/confirm", {
+    await fetch(`${baseUrl}/api/wallet/topup/confirm`, {
       method: "POST", headers: h,
       body: JSON.stringify({ referenceId: refId, providerTxId: "TEST_" + Date.now() }),
     });

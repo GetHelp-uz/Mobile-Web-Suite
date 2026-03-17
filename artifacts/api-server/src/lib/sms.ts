@@ -15,7 +15,7 @@ async function getEskizToken(email: string, password: string): Promise<string | 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
-    const data = await res.json();
+    const data = await res.json() as any;
     return data?.data?.token ?? null;
   } catch {
     return null;
@@ -44,7 +44,7 @@ async function sendViaEskiz(
         callback_url: "",
       }),
     });
-    const data = await res.json();
+    const data = await res.json() as any;
     if (data?.status === "waiting" || data?.id) {
       return { success: true, messageId: String(data.id || data.message_id || "") };
     }

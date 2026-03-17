@@ -19,6 +19,7 @@ type SmsLog = { id: number; phone: string; message: string; status: string; sent
 export default function ShopSms() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [rentals, setRentals] = useState<Rental[]>([]);
@@ -43,9 +44,9 @@ export default function ShopSms() {
     setLoading(true);
     try {
       const [rd, td, ld] = await Promise.all([
-        fetch("/api/rentals?status=active&limit=50", { headers: h }).then(r => r.json()),
-        fetch("/api/sms/templates", { headers: h }).then(r => r.json()),
-        fetch("/api/sms/logs?limit=20", { headers: h }).then(r => r.json()),
+        fetch(`${baseUrl}/api/rentals?status=active&limit=50`, { headers: h }).then(r => r.json()),
+        fetch(`${baseUrl}/api/sms/templates`, { headers: h }).then(r => r.json()),
+        fetch(`${baseUrl}/api/sms/logs?limit=20`, { headers: h }).then(r => r.json()),
       ]);
 
       // Ijaralar ma'lumotlari
@@ -82,7 +83,7 @@ export default function ShopSms() {
     if (!singlePhone || !singleMsg) return;
     setSending(true);
     try {
-      const r = await fetch("/api/sms/send", {
+      const r = await fetch(`${baseUrl}/api/sms/send`, {
         method: "POST", headers: h,
         body: JSON.stringify({ phone: singlePhone, message: singleMsg, shopId, rentalId: singleRentalId })
       });
@@ -103,7 +104,7 @@ export default function ShopSms() {
     if (!selectedPhones.length || !bulkMsg) return;
     setBulkSending(true);
     try {
-      const r = await fetch("/api/sms/send-bulk", {
+      const r = await fetch(`${baseUrl}/api/sms/send-bulk`, {
         method: "POST", headers: h,
         body: JSON.stringify({ phones: selectedPhones, message: bulkMsg, shopId })
       });

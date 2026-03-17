@@ -21,6 +21,7 @@ export default function BookingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [bookings, setBookings] = useState<any[]>([]);
@@ -39,7 +40,7 @@ export default function BookingsPage() {
     setLoading(true);
     try {
       const q = isShop ? `?shopId=${user?.shopId}` : "";
-      const r = await fetch(`/api/bookings${q}`, { headers: h });
+      const r = await fetch(`${baseUrl}/api/bookings${q}`, { headers: h });
       const d = await r.json();
       setBookings(d.bookings || []);
     } finally { setLoading(false); }
@@ -47,7 +48,7 @@ export default function BookingsPage() {
 
   const loadTools = async () => {
     if (!isCustomer) return;
-    const r = await fetch(`/api/tools?limit=100`, { headers: h });
+    const r = await fetch(`${baseUrl}/api/tools?limit=100`, { headers: h });
     const d = await r.json();
     setTools(d.tools || []);
   };
@@ -62,7 +63,7 @@ export default function BookingsPage() {
     const selectedTool = tools.find(t => t.id === Number(form.toolId));
     if (!selectedTool) return;
 
-    const r = await fetch("/api/bookings", {
+    const r = await fetch(`${baseUrl}/api/bookings`, {
       method: "POST", headers: h,
       body: JSON.stringify({
         toolId: Number(form.toolId),
@@ -82,7 +83,7 @@ export default function BookingsPage() {
   };
 
   const handleStatusChange = async (id: number, status: string) => {
-    const r = await fetch(`/api/bookings/${id}/status`, {
+    const r = await fetch(`${baseUrl}/api/bookings/${id}/status`, {
       method: "PATCH", headers: h, body: JSON.stringify({ status }),
     });
     if (r.ok) { toast({ title: "Yangilandi" }); load(); }
@@ -90,7 +91,7 @@ export default function BookingsPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm("Bronni bekor qilasizmi?")) return;
-    await fetch(`/api/bookings/${id}`, { method: "DELETE", headers: h });
+    await fetch(`${baseUrl}/api/bookings/${id}`, { method: "DELETE", headers: h });
     toast({ title: "Bekor qilindi" });
     load();
   };

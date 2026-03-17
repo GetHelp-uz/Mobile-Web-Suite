@@ -9,6 +9,7 @@ import { Bell, Send, Users, Megaphone } from "lucide-react";
 export default function AdminNotifications() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [broadcastForm, setBroadcastForm] = useState({ title: "", body: "", role: "" });
@@ -22,7 +23,7 @@ export default function AdminNotifications() {
     }
     setSending(true);
     try {
-      const r = await fetch("/api/notifications/broadcast", {
+      const r = await fetch(`${baseUrl}/api/notifications/broadcast`, {
         method: "POST", headers: h,
         body: JSON.stringify(broadcastForm),
       });

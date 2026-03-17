@@ -32,6 +32,7 @@ const PERIOD_OPTIONS = [
 export default function WorkerPerformance() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [shopId, setShopId] = useState<number | null>(null);
@@ -43,8 +44,8 @@ export default function WorkerPerformance() {
   const load = async (sid: number, p: string) => {
     setLoading(true);
     try {
-      const r = await fetch(`/api/worker-performance?shopId=${sid}&period=${p}`, { headers: h });
-      const d = await r.json();
+      const r = await fetch(`${baseUrl}/api/worker-performance?shopId=${sid}&period=${p}`, { headers: h });
+      const d = r.ok ? await r.json() : { workers: [], shopStats: null };
       setWorkers(d.workers || []);
       setShopStats(d.shopStats || null);
     } catch (err: any) {
@@ -56,8 +57,8 @@ export default function WorkerPerformance() {
 
   useEffect(() => {
     (async () => {
-      const r = await fetch("/api/shops?mine=true", { headers: h });
-      const d = await r.json();
+      const r = await fetch(`${baseUrl}/api/shops?mine=true`, { headers: h });
+      const d = r.ok ? await r.json() : {};
       const shop = d.shops?.[0] || d[0];
       if (shop) { setShopId(shop.id); load(shop.id, "month"); }
       else setLoading(false);

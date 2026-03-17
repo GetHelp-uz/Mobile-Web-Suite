@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 export default function ShopOwnerSignature() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -24,7 +25,7 @@ export default function ShopOwnerSignature() {
   const { data: me } = useQuery({
     queryKey: ["me"],
     queryFn: async () => {
-      const r = await fetch("/api/auth/me", { headers: h });
+      const r = await fetch(`${baseUrl}/api/auth/me`, { headers: h });
       return r.json();
     },
   });
@@ -35,7 +36,7 @@ export default function ShopOwnerSignature() {
     queryKey: ["shop-sig", shopId],
     enabled: !!shopId,
     queryFn: async () => {
-      const r = await fetch(`/api/shops/${shopId}/owner-signature`, { headers: h });
+      const r = await fetch(`${baseUrl}/api/shops/${shopId}/owner-signature`, { headers: h });
       if (!r.ok) return { hasSignature: false };
       return r.json();
     },
@@ -111,7 +112,7 @@ export default function ShopOwnerSignature() {
     const signatureData = canvas.toDataURL("image/png");
     setSaving(true);
     try {
-      const r = await fetch(`/api/shops/${shopId}/owner-signature`, {
+      const r = await fetch(`${baseUrl}/api/shops/${shopId}/owner-signature`, {
         method: "PUT",
         headers: h,
         body: JSON.stringify({ signatureData }),

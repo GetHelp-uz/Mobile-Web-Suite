@@ -28,6 +28,7 @@ type Shop = { id: number; name: string };
 export default function ShopPaymentSettings() {
   const { toast } = useToast();
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const appUrl = window.location.origin;
 
@@ -49,17 +50,17 @@ export default function ShopPaymentSettings() {
     setLoading(true);
     try {
       // Avval do'kon ma'lumotini olamiz
-      const meRes = await fetch("/api/users/me", { headers: h });
+      const meRes = await fetch(`${baseUrl}/api/users/me`, { headers: h });
       const meData = await meRes.json();
 
-      const shopsRes = await fetch("/api/shops?mine=true", { headers: h });
+      const shopsRes = await fetch(`${baseUrl}/api/shops?mine=true`, { headers: h });
       const shopsData = await shopsRes.json();
       const myShop = shopsData.shops?.[0] || shopsData[0];
       if (!myShop) { setLoading(false); return; }
       setShop(myShop);
 
       // Do'kon to'lov sozlamalarini olamiz
-      const settingsRes = await fetch(`/api/payment-settings/shop/${myShop.id}`, { headers: h });
+      const settingsRes = await fetch(`${baseUrl}/api/payment-settings/shop/${myShop.id}`, { headers: h });
       if (settingsRes.ok) {
         const rows: ShopPaymentSetting[] = await settingsRes.json();
         setSettings(rows);
@@ -91,7 +92,7 @@ export default function ShopPaymentSettings() {
       const body: any = { ...formData };
       if (!body.secret_key) delete body.secret_key;
 
-      const r = await fetch(`/api/payment-settings/shop/${shop.id}`, {
+      const r = await fetch(`${baseUrl}/api/payment-settings/shop/${shop.id}`, {
         method: "PUT", headers: h, body: JSON.stringify(body),
       });
       const d = await r.json();

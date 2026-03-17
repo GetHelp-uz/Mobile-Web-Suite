@@ -21,14 +21,17 @@ function formatPrice(n: number) {
   return n.toLocaleString("uz-UZ") + " so'm";
 }
 
+type StatusKey = "available" | "rented" | "maintenance";
+const STATUS_CONFIG: Record<StatusKey, { bg: string; text: string; label: string }> = {
+  available: { bg: "#DCFCE7", text: "#16A34A", label: "Bo'sh" },
+  rented: { bg: "#FEF9C3", text: "#CA8A04", label: "Ijarada" },
+  maintenance: { bg: "#F1F5F9", text: "#64748B", label: "Ta'mirda" },
+};
+
 function StatusBadge({ status }: { status: string }) {
   const isDark = useColorScheme() === "dark";
   const C = isDark ? Colors.dark : Colors.light;
-  const config = {
-    available: { bg: "#DCFCE7", text: "#16A34A", label: "Bo'sh" },
-    rented: { bg: "#FEF9C3", text: "#CA8A04", label: "Ijarada" },
-    maintenance: { bg: "#F1F5F9", text: "#64748B", label: "Ta'mirda" },
-  }[status as keyof typeof config] || { bg: C.surfaceSecondary, text: C.textSecondary, label: status };
+  const config = STATUS_CONFIG[status as StatusKey] || { bg: C.surfaceSecondary, text: C.textSecondary, label: status };
 
   return (
     <View style={[styles.badge, { backgroundColor: config.bg }]}>

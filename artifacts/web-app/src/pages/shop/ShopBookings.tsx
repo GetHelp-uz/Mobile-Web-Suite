@@ -19,6 +19,7 @@ export default function ShopBookings() {
   const { toast } = useToast();
   const shopId = user?.shopId || 0;
   const token = localStorage.getItem("gethelp_token") || "";
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [bookings, setBookings] = useState<any[]>([]);
@@ -27,7 +28,7 @@ export default function ShopBookings() {
 
   const load = async () => {
     setLoading(true);
-    const r = await fetch(`/api/bookings?shopId=${shopId}`, { headers: h });
+    const r = await fetch(`${baseUrl}/api/bookings?shopId=${shopId}`, { headers: h });
     const d = await r.json();
     setBookings(d.bookings || []);
     setLoading(false);
@@ -36,7 +37,7 @@ export default function ShopBookings() {
   useEffect(() => { load(); }, []);
 
   const handleStatus = async (id: number, status: string) => {
-    const r = await fetch(`/api/bookings/${id}/status`, {
+    const r = await fetch(`${baseUrl}/api/bookings/${id}/status`, {
       method: "PATCH", headers: h, body: JSON.stringify({ status }),
     });
     if (r.ok) { toast({ title: status === "confirmed" ? "Tasdiqlandi!" : "Rad etildi" }); load(); }
