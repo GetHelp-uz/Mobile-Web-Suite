@@ -71,6 +71,30 @@ router.patch("/:id", authenticate, requireRole("super_admin", "shop_owner"), asy
   }
 });
 
+// PUT /api/shops/:id/owner-signature — do'kon egasi imzosini saqlash
+router.put("/:id/owner-signature", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
+  try {
+    const { signatureData } = req.body;
+    if (!signatureData) { res.status(400).json({ error: "Imzo ma'lumoti kerak" }); return; }
+    await db.execute(sql`UPDATE shops SET owner_signature_data = ${signatureData} WHERE id = ${Number(req.params.id)}`);
+    res.json({ success: true, message: "Do'kon imzosi saqlandi" });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/shops/:id/owner-signature — imzo mavjudligini tekshirish
+router.get("/:id/owner-signature", authenticate, async (req, res) => {
+  try {
+    const row = await db.execute(sql`
+      SELECT CASE WHEN owner_signature_data IS NOT NULL THEN true ELSE false END as has_signature,
+             updated_at
+      FROM shops WHERE id = ${Number(req.params.id)} LIMIT 1
+    `);
+    if (!row.rows.length) { res.status(404).json({ error: "Do'kon topilmadi" }); return; }
+    const r = row.rows[0] as any;
+    res.json({ hasSignature: r.has_signature });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 // GET /api/shops/:id/public — ommaviy do'kon profili (auth shart emas)
 router.get("/:id/public", async (req, res) => {
   try {

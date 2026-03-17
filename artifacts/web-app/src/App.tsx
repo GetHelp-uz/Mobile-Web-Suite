@@ -45,6 +45,7 @@ import AdminAuditLog from "@/pages/admin/AdminAuditLog";
 import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
 import ShopDeliverySettings from "@/pages/shop/ShopDeliverySettings";
 import ShopMaintenanceSchedule from "@/pages/shop/ShopMaintenanceSchedule";
+import ShopOwnerSignature from "@/pages/shop/ShopOwnerSignature";
 import WorkerPerformance from "@/pages/shop/WorkerPerformance";
 import MultiShopDashboard from "@/pages/shop/MultiShopDashboard";
 import ESignPage from "@/pages/customer/ESignPage";
@@ -225,6 +226,9 @@ function Router() {
       </Route>
       <Route path="/esign">
         {() => <ProtectedRoute component={ESignPage} allowedRoles={['customer', 'shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shop/owner-signature">
+        {() => <ProtectedRoute component={ShopOwnerSignature} allowedRoles={['shop_owner', 'super_admin']} />}
       </Route>
       <Route path="/admin/notifications">
         {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}

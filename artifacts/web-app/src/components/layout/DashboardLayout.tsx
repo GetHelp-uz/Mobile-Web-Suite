@@ -86,6 +86,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Xodim samaradorligi", path: "/shop/worker-performance", icon: BarChart2 },
       { name: "Do'konlar tarmog'i", path: "/shop/network", icon: Network },
       { name: "Ta'minotchilar", path: "/shop/suppliers", icon: Truck },
+      { name: "Do'kon imzosi", path: "/shop/owner-signature", icon: PenLine },
       { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
       { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },

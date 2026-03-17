@@ -3,11 +3,12 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   FileText, PenLine, CheckCircle, XCircle, Download,
-  RotateCcw, Shield, Clock, ExternalLink,
+  RotateCcw, Shield, Clock, Save, CreditCard,
 } from "lucide-react";
 
 type Rental = {
@@ -32,6 +33,11 @@ export default function ESignPage() {
   const [agreed, setAgreed] = useState(false);
   const [signing, setSigning] = useState(false);
 
+  // Pasport ID
+  const [passportId, setPassportId] = useState("");
+  const [editingPassport, setEditingPassport] = useState(false);
+  const [savingPassport, setSavingPassport] = useState(false);
+
   // Canvas imzo
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isDrawing = useRef(false);
@@ -40,12 +46,16 @@ export default function ESignPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const r = await fetch("/api/rentals?limit=20", { headers: h });
-      const d = await r.json();
+      const [rentalsRes, meRes] = await Promise.all([
+        fetch("/api/rentals?limit=20", { headers: h }),
+        fetch("/api/auth/me", { headers: h }),
+      ]);
+      const d = await rentalsRes.json();
+      const meData = await meRes.json();
       const myRentals: Rental[] = d.rentals || [];
       setRentals(myRentals);
+      if (meData.passportId) setPassportId(meData.passportId);
 
-      // Har bir ijara uchun imzo holatini olamiz
       const statusMap: Record<number, ESignStatus> = {};
       await Promise.all(myRentals.slice(0, 10).map(async rental => {
         try {
@@ -58,6 +68,25 @@ export default function ESignPage() {
       toast({ title: "Xatolik", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const savePassportId = async () => {
+    if (!passportId.trim()) return;
+    setSavingPassport(true);
+    try {
+      const r = await fetch("/api/auth/profile", {
+        method: "PATCH", headers: h,
+        body: JSON.stringify({ passportId: passportId.trim() }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error);
+      setEditingPassport(false);
+      toast({ title: "Saqlandi!", description: "Pasport/ID ma'lumoti shartnomaga kiritiladi" });
+    } catch (err: any) {
+      toast({ title: "Xatolik", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingPassport(false);
     }
   };
 
@@ -160,6 +189,50 @@ export default function ESignPage() {
         <h1 className="text-4xl font-display font-bold mb-2">Elektron imzo</h1>
         <p className="text-muted-foreground">Ijara shartnomalarini raqamli imzolang</p>
       </div>
+
+      {/* Pasport / ID ma'lumoti */}
+      <Card className={`mb-6 ${passportId && !editingPassport ? "border-green-200 bg-green-50/40" : "border-orange-200 bg-orange-50/30"}`}>
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${passportId && !editingPassport ? "bg-green-100" : "bg-orange-100"}`}>
+                <CreditCard size={18} className={passportId && !editingPassport ? "text-green-600" : "text-orange-600"} />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">
+                  Pasport / ID raqami
+                  {passportId && !editingPassport && (
+                    <span className="ml-2 text-green-700 font-bold">{passportId}</span>
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {passportId ? "Shartnoma PDFga avtomatik kiritiladi" : "Shartnoma PDF uchun pasport yoki ID raqamingizni kiriting"}
+                </p>
+              </div>
+            </div>
+            {!editingPassport ? (
+              <Button size="sm" variant="outline" onClick={() => setEditingPassport(true)} className="gap-1">
+                <PenLine size={13} /> {passportId ? "Tahrirlash" : "Qo'shish"}
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2 flex-1 min-w-[220px]">
+                <Input
+                  value={passportId}
+                  onChange={e => setPassportId(e.target.value.toUpperCase())}
+                  placeholder="AA1234567"
+                  className="h-8 text-sm font-mono flex-1"
+                  maxLength={20}
+                  autoFocus
+                />
+                <Button size="sm" onClick={savePassportId} disabled={savingPassport || !passportId.trim()} className="gap-1 shrink-0">
+                  <Save size={13} /> {savingPassport ? "..." : "Saqlash"}
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingPassport(false)} className="shrink-0">Bekor</Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Imzolanmagan shartnomalar */}
       {unsignedRentals.length > 0 && (

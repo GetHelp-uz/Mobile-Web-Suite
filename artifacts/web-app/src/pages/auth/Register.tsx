@@ -3,11 +3,62 @@ import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Hammer, Lock, Phone, User, Building2, ArrowLeft } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Hammer, Lock, Phone, User, Building2, ArrowLeft, ScrollText, ExternalLink, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useRegister } from "@workspace/api-client-react";
+
+const OFERTA_TEXT = `TOOLRENT PLATFORMASI UCHUN OMMAVIY OFERTA SHARTLARI
+VA SHAXSIY MA'LUMOTLARNI QAYTA ISHLASHGA ROZILIK
+
+1. Umumiy qoidalar
+
+Ushbu ommaviy oferta (keyingi o'rinlarda "Oferta") ToolRent platformasi orqali qurilish asbob-uskunalarini ijaraga berish xizmatidan foydalanish tartibini belgilaydi.
+
+Platformada ro'yxatdan o'tgan foydalanuvchi (keyingi o'rinlarda "Mijoz") ushbu Oferta shartlari bilan tanishib chiqib, ularga to'liq rozilik bildirgan hisoblanadi.
+
+2. Xizmat tavsifi
+
+ToolRent platformasi mijozlarga quyidagi imkoniyatlarni taqdim etadi:
+- qurilish asbob-uskunalarini tanlash
+- uskunalarni ijaraga olish
+- QR kod orqali uskunani olish va qaytarish
+- onlayn to'lovlarni amalga oshirish (Click, Payme, Paynet)
+- ijara tarixini kuzatish
+
+3. Mijoz majburiyatlari
+
+Mijoz quyidagilarni tasdiqlaydi va majburiyat sifatida qabul qiladi:
+1. Ro'yxatdan o'tishda to'g'ri va haqqoniy ma'lumotlarni taqdim etish.
+2. Platforma orqali olingan uskunalardan ehtiyotkorlik bilan foydalanish.
+3. Uskunani uchinchi shaxslarga bermaslik.
+4. Uskunani belgilangan muddatda qaytarish.
+5. Uskunaga yetkazilgan har qanday zarar uchun javobgar bo'lish.
+
+4. Depozit va to'lovlar
+
+Ba'zi uskunalarni ijaraga olishda depozit (garov puli) talab qilinishi mumkin.
+Mijoz quyidagilarga rozilik bildiradi: ijara to'lovini amalga oshirish, depozit qoldirish, uskuna shikastlangan yoki yo'qolgan taqdirda depozitdan zararni qoplash.
+
+5. Javobgarlik
+
+Agar mijoz tomonidan olingan uskuna shikastlansa, buzilsa yoki yo'qolsa, mijoz yetkazilgan zararni to'liq qoplash majburiyatini oladi. Platforma uskunaning noto'g'ri foydalanilishi natijasida yuzaga kelgan zarar uchun javobgar emas.
+
+6. Shaxsiy ma'lumotlarni qayta ishlashga rozilik
+
+Mijoz platformada ro'yxatdan o'tish jarayonida quyidagi shaxsiy ma'lumotlarini taqdim etadi: ism va familiya, telefon raqami, identifikatsiya ma'lumotlari, ijara tarixi, to'lov ma'lumotlari.
+
+Mijoz ushbu ma'lumotlarning quyidagi maqsadlarda qayta ishlanishiga rozilik beradi: foydalanuvchini identifikatsiya qilish, xizmat ko'rsatish, to'lovlarni amalga oshirish, xavfsizlikni ta'minlash, mijozlarga xizmat sifatini yaxshilash.
+
+7. Ma'lumotlarni himoya qilish
+
+ToolRent platformasi mijozlarning shaxsiy ma'lumotlarini himoya qilish uchun zarur texnik va tashkiliy choralarni ko'radi. Mijoz ma'lumotlari uchinchi shaxslarga faqat qonunchilik talablariga muvofiq yoki to'lov tizimlari orqali tranzaksiyalarni amalga oshirish uchun taqdim etilishi mumkin.
+
+8. Yakuniy qoidalar
+
+ToolRent platformasi ushbu Oferta shartlariga o'zgartirish kiritish huquqiga ega. Yangilangan shartlar platformada e'lon qilingan paytdan boshlab kuchga kiradi. Platformadan foydalanishda davom etish foydalanuvchining yangilangan shartlarga roziligini anglatadi.`;
 
 const REGIONS = [
   "Toshkent shahri", "Toshkent viloyati", "Samarqand viloyati",
@@ -30,6 +81,8 @@ export default function Register() {
     shopName: "",
     region: "",
   });
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [ofertaOpen, setOfertaOpen] = useState(false);
 
   const registerMutation = useRegister({
     mutation: {
@@ -185,13 +238,63 @@ export default function Register() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={registerMutation.isPending}>
+              {/* Oferta roziligi */}
+              <div className={`flex items-start gap-3 p-4 rounded-xl border-2 transition-colors cursor-pointer ${agreedToTerms ? "border-green-400 bg-green-50/60" : "border-border bg-secondary/40"}`}
+                onClick={() => setAgreedToTerms(v => !v)}>
+                <div className={`mt-0.5 w-5 h-5 rounded flex-shrink-0 flex items-center justify-center border-2 transition-all ${agreedToTerms ? "bg-green-500 border-green-500" : "border-muted-foreground"}`}>
+                  {agreedToTerms && <Check size={12} strokeWidth={3} color="white" aria-label="Belgilandi" />}
+                </div>
+                <p className="text-sm leading-relaxed select-none">
+                  Men{" "}
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); setOfertaOpen(true); }}
+                    className="text-primary font-semibold underline underline-offset-2 hover:text-primary/80 inline-flex items-center gap-0.5"
+                  >
+                    ToolRent platformasining ommaviy oferta shartlari
+                    <ExternalLink size={12} />
+                  </button>
+                  {" "}bilan tanishdim va ularga roziman hamda shaxsiy ma'lumotlarimni qayta ishlashga rozilik bildiraman.
+                </p>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={registerMutation.isPending || !agreedToTerms}
+              >
                 {registerMutation.isPending ? "Ro'yhatdan o'tilmoqda..." : "Ro'yhatdan o'tish"}
               </Button>
             </form>
           </Card>
         </motion.div>
       </div>
+
+      {/* Oferta matni dialogi */}
+      <Dialog open={ofertaOpen} onOpenChange={setOfertaOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ScrollText size={20} /> Ommaviy Oferta Shartlari
+            </DialogTitle>
+          </DialogHeader>
+          <div className="overflow-y-auto flex-1 pr-2">
+            <pre className="whitespace-pre-wrap text-sm text-muted-foreground font-sans leading-relaxed">
+              {OFERTA_TEXT}
+            </pre>
+          </div>
+          <div className="pt-4 border-t flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setOfertaOpen(false)}>
+              Yopish
+            </Button>
+            <Button className="flex-1 gap-2" onClick={() => { setAgreedToTerms(true); setOfertaOpen(false); }}>
+              <Check size={16} strokeWidth={2.5} />
+              Roziman va yopish
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

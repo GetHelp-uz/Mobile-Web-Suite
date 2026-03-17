@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
   useColorScheme,
   FlatList,
@@ -20,6 +21,52 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { REGIONS, Region, District, getDistrictsByRegion } from "@/constants/regions";
+
+const OFERTA_TEXT = `TOOLRENT PLATFORMASI UCHUN OMMAVIY OFERTA SHARTLARI
+VA SHAXSIY MA'LUMOTLARNI QAYTA ISHLASHGA ROZILIK
+
+1. Umumiy qoidalar
+
+Ushbu ommaviy oferta ToolRent platformasi orqali qurilish asbob-uskunalarini ijaraga berish xizmatidan foydalanish tartibini belgilaydi.
+
+Platformada ro'yxatdan o'tgan foydalanuvchi ushbu Oferta shartlari bilan tanishib chiqib, ularga to'liq rozilik bildirgan hisoblanadi.
+
+2. Xizmat tavsifi
+
+ToolRent platformasi quyidagi imkoniyatlarni taqdim etadi:
+- qurilish asbob-uskunalarini tanlash
+- uskunalarni ijaraga olish
+- QR kod orqali uskunani olish va qaytarish
+- onlayn to'lovlar (Click, Payme, Paynet)
+- ijara tarixini kuzatish
+
+3. Mijoz majburiyatlari
+
+1. Ro'yxatdan o'tishda to'g'ri ma'lumotlarni taqdim etish.
+2. Uskunalardan ehtiyotkorlik bilan foydalanish.
+3. Uskunani uchinchi shaxslarga bermaslik.
+4. Uskunani belgilangan muddatda qaytarish.
+5. Zarar uchun javobgar bo'lish.
+
+4. Depozit va to'lovlar
+
+Ba'zi uskunalar uchun depozit talab qilinadi. Uskuna shikastlanganda depozitdan zarar qoplanadi.
+
+5. Javobgarlik
+
+Uskuna shikastlansa yoki yo'qolsa, mijoz zararni to'liq qoplaydi. Platforma noto'g'ri foydalanish natijasidagi zarar uchun javobgar emas.
+
+6. Shaxsiy ma'lumotlarni qayta ishlash
+
+Ro'yxatdan o'tishda taqdim etilgan ma'lumotlar (ism, telefon, ijara tarixi) xizmat ko'rsatish, to'lovlarni amalga oshirish va xavfsizlikni ta'minlash maqsadida qayta ishlanadi.
+
+7. Ma'lumotlarni himoya
+
+Shaxsiy ma'lumotlar uchinchi shaxslarga faqat qonun talabi yoki to'lov tizimlari orqali tranzaksiya uchun taqdim etilishi mumkin.
+
+8. Yakuniy qoidalar
+
+ToolRent oferta shartlariga o'zgartirish kiritish huquqiga ega. Platformadan foydalanish yangilangan shartlarga rozilikni anglatadi.`;
 
 type Step = "info" | "location";
 
@@ -42,6 +89,8 @@ export default function RegisterScreen() {
 
   const [regionModalVisible, setRegionModalVisible] = useState(false);
   const [districtModalVisible, setDistrictModalVisible] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  const [ofertaVisible, setOfertaVisible] = useState(false);
 
   function validateInfo(): boolean {
     if (!name.trim() || name.trim().length < 3) {
@@ -76,6 +125,10 @@ export default function RegisterScreen() {
     }
     if (!district) {
       Alert.alert("Xato", "Tumanni tanlang");
+      return false;
+    }
+    if (!agreedToTerms) {
+      Alert.alert("Xato", "Oferta shartlarini qabul qilishingiz kerak");
       return false;
     }
     return true;
@@ -290,13 +343,56 @@ export default function RegisterScreen() {
               </View>
             )}
 
+            {/* Oferta roziligi */}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={() => setAgreedToTerms(v => !v)}
+              style={[
+                styles.ofertaRow,
+                {
+                  backgroundColor: agreedToTerms ? "#16a34a15" : C.surfaceSecondary,
+                  borderColor: agreedToTerms ? "#16a34a" : C.border,
+                }
+              ]}
+            >
+              <View style={[
+                styles.checkbox,
+                {
+                  backgroundColor: agreedToTerms ? "#16a34a" : "transparent",
+                  borderColor: agreedToTerms ? "#16a34a" : C.textMuted,
+                }
+              ]}>
+                {agreedToTerms && (
+                  <Ionicons name="checkmark" size={13} color="#fff" />
+                )}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.ofertaText, { color: C.text }]}>
+                  {"Men "}
+                  <Text
+                    style={[styles.ofertaLink, { color: C.primary }]}
+                    onPress={(e) => {
+                      e.stopPropagation?.();
+                      setOfertaVisible(true);
+                    }}
+                  >
+                    ToolRent platformasining ommaviy oferta shartlari
+                  </Text>
+                  {" bilan tanishdim va ularga roziman hamda shaxsiy ma'lumotlarimni qayta ishlashga rozilik bildiraman."}
+                </Text>
+              </View>
+            </TouchableOpacity>
+
             <Pressable
               style={({ pressed }) => [
                 styles.btn,
-                { backgroundColor: C.primary, opacity: (pressed && !isLoading) ? 0.88 : isLoading ? 0.7 : 1 }
+                {
+                  backgroundColor: agreedToTerms ? C.primary : C.border,
+                  opacity: (pressed && !isLoading && agreedToTerms) ? 0.88 : isLoading ? 0.7 : 1,
+                }
               ]}
               onPress={onRegister}
-              disabled={isLoading}
+              disabled={isLoading || !agreedToTerms}
             >
               {isLoading ? (
                 <Text style={styles.btnText}>Ro'yhatdan o'tilmoqda...</Text>
@@ -416,6 +512,50 @@ export default function RegisterScreen() {
           />
         </View>
       </Modal>
+
+      {/* Oferta matni modali */}
+      <Modal
+        visible={ofertaVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setOfertaVisible(false)}
+      >
+        <View style={[styles.modal, { backgroundColor: C.background }]}>
+          <View style={[styles.modalHeader, { borderBottomColor: C.border }]}>
+            <Text style={[styles.modalTitle, { color: C.text }]}>Ommaviy Oferta Shartlari</Text>
+            <Pressable onPress={() => setOfertaVisible(false)}>
+              <Ionicons name="close" size={24} color={C.text} />
+            </Pressable>
+          </View>
+          <ScrollView
+            contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 16 }}
+            showsVerticalScrollIndicator={true}
+          >
+            <Text style={[styles.ofertaContent, { color: C.textSecondary }]}>
+              {OFERTA_TEXT}
+            </Text>
+          </ScrollView>
+          <View style={[styles.ofertaActions, { borderTopColor: C.border, paddingBottom: insets.bottom + 16 }]}>
+            <Pressable
+              style={[styles.ofertaBtn, { backgroundColor: C.surfaceSecondary, borderColor: C.border }]}
+              onPress={() => setOfertaVisible(false)}
+            >
+              <Text style={[styles.ofertaBtnText, { color: C.text }]}>Yopish</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.ofertaBtn, { backgroundColor: "#16a34a", flex: 1.5 }]}
+              onPress={() => {
+                setAgreedToTerms(true);
+                setOfertaVisible(false);
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }}
+            >
+              <Ionicons name="checkmark-circle" size={18} color="#fff" />
+              <Text style={[styles.ofertaBtnText, { color: "#fff" }]}>Roziman</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -446,6 +586,16 @@ const styles = StyleSheet.create({
   pickerText: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
   locationPreview: { flexDirection: "row", alignItems: "center", gap: 8, padding: 12, borderRadius: 10, borderWidth: 1, marginBottom: 4 },
   locationText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  ofertaRow: {
+    flexDirection: "row", alignItems: "flex-start", gap: 12,
+    padding: 14, borderRadius: 12, borderWidth: 1.5, marginTop: 6, marginBottom: 8,
+  },
+  checkbox: {
+    width: 22, height: 22, borderRadius: 6, borderWidth: 2,
+    justifyContent: "center", alignItems: "center", marginTop: 1, flexShrink: 0,
+  },
+  ofertaText: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
+  ofertaLink: { fontSize: 13, fontFamily: "Inter_600SemiBold", textDecorationLine: "underline" },
   btn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
     gap: 8, borderRadius: 14, height: 52, marginTop: 8,
@@ -454,7 +604,6 @@ const styles = StyleSheet.create({
   loginRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 8 },
   loginText: { fontSize: 14, fontFamily: "Inter_400Regular" },
   loginLink: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
-  // Modal
   modal: { flex: 1 },
   modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
   modalTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
@@ -464,4 +613,11 @@ const styles = StyleSheet.create({
   },
   modalItemText: { flex: 1, fontSize: 15, fontFamily: "Inter_500Medium" },
   modalItemSub: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  ofertaContent: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 22 },
+  ofertaActions: { flexDirection: "row", gap: 12, padding: 16, borderTopWidth: 1 },
+  ofertaBtn: {
+    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
+    gap: 8, borderRadius: 12, height: 48, borderWidth: 1,
+  },
+  ofertaBtnText: { fontSize: 15, fontFamily: "Inter_600SemiBold" },
 });

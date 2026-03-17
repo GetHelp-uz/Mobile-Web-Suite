@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { generateToken, authenticate } from "../lib/auth.js";
 
 const router = Router();
@@ -19,6 +19,7 @@ function userResponse(user: any) {
     district: user.district ?? null,
     isActive: user.isActive,
     createdAt: user.createdAt,
+    passportId: user.passport_id ?? user.passportId ?? null,
   };
 }
 
@@ -133,6 +134,22 @@ router.get("/me", authenticate, async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
+});
+
+// PATCH /api/auth/profile — profil ma'lumotlarini yangilash (pasport, ism)
+router.patch("/profile", authenticate, async (req, res) => {
+  try {
+    const userId = (req as any).user.userId;
+    const { passportId, name } = req.body;
+    if (passportId !== undefined) {
+      await db.execute(sql`UPDATE users SET passport_id = ${String(passportId).trim()} WHERE id = ${userId}`);
+    }
+    if (name !== undefined && String(name).trim().length >= 2) {
+      await db.execute(sql`UPDATE users SET name = ${String(name).trim()} WHERE id = ${userId}`);
+    }
+    const [updated] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    res.json(userResponse(updated));
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
 export default router;
