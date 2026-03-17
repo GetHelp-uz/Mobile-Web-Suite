@@ -46,8 +46,8 @@ const SLIDES = [
     id: 3,
     gradient: ["#12B76A", "#0A8050"] as [string, string],
     accentColor: "#fff",
-    image: "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=700&q=85",
-    icon: "location-outline" as const,
+    image: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=700&q=85",
+    icon: "notifications-outline" as const,
     badge: "Real vaqt",
     title: "Qaytarish sanasini\nhech unutmang",
     description:

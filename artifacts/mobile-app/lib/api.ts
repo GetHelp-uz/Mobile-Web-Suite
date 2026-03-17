@@ -85,11 +85,12 @@ export const api = {
       name: string;
       phone: string;
       password: string;
+      role?: string;
       region?: string;
       district?: string;
       email?: string;
     }): Promise<AuthResponse> =>
-      apiRequest("/auth/register", { method: "POST", body: JSON.stringify({ ...data, role: "customer" }) }),
+      apiRequest("/auth/register", { method: "POST", body: JSON.stringify(data) }),
     me: (): Promise<User> => apiRequest("/auth/me"),
   },
   tools: {
