@@ -10,6 +10,9 @@ interface RegisterData {
   role?: string;
   region?: string;
   district?: string;
+  address?: string;
+  homeLat?: string;
+  homeLng?: string;
 }
 
 interface AuthContextValue {

@@ -89,6 +89,9 @@ export const api = {
       region?: string;
       district?: string;
       email?: string;
+      address?: string;
+      homeLat?: string;
+      homeLng?: string;
     }): Promise<AuthResponse> =>
       apiRequest("/auth/register", { method: "POST", body: JSON.stringify(data) }),
     me: (): Promise<User> => apiRequest("/auth/me"),

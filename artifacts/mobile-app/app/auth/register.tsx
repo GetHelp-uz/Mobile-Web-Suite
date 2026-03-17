@@ -229,13 +229,32 @@ export default function RegisterScreen() {
         address: address.trim(),
         homeLat: homeLat || undefined,
         homeLng: homeLng || undefined,
-      } as any);
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch (err: any) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       const msg = err.message || "Ro'yhatdan o'tishda xatolik yuz berdi";
-      Alert.alert("Xato", msg);
+      const isAlreadyRegistered =
+        msg.includes("allaqachon") || msg.includes("already") || msg.includes("phone");
+      if (isAlreadyRegistered) {
+        Alert.alert(
+          "Raqam allaqachon ro'yhatdan o'tgan",
+          "Bu telefon raqam bilan avval ro'yhatdan o'tilgan.\n\nHisobingizga kirishni xohlaysizmi?",
+          [
+            { text: "Bekor qilish", style: "cancel" },
+            {
+              text: "Kirish",
+              onPress: () => {
+                setStep("info");
+                router.replace("/auth/login");
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Xato", msg);
+      }
     } finally {
       setIsLoading(false);
     }
