@@ -58,7 +58,7 @@ export interface AuthResponse {
 }
 
 async function getToken(): Promise<string | null> {
-  return AsyncStorage.getItem("tool_rent_token");
+  return AsyncStorage.getItem("gethelp_token");
 }
 
 async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {

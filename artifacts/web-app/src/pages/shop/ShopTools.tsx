@@ -79,7 +79,7 @@ export default function ShopTools() {
 
   useEffect(() => {
     if (!shopId) return;
-    const token = localStorage.getItem("tool_rent_token") || "";
+    const token = localStorage.getItem("gethelp_token") || "";
     const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
     fetch(`${baseUrl}/api/gps/devices/shop/${shopId}`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -96,7 +96,7 @@ export default function ShopTools() {
       onSuccess: async (data: any) => {
         // GPS qurilma ulash (agar tanlangan bo'lsa)
         if (form.gpsDeviceId && data?.tool?.id) {
-          const token = localStorage.getItem("tool_rent_token") || "";
+          const token = localStorage.getItem("gethelp_token") || "";
           const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
           await fetch(`${baseUrl}/api/gps/devices/${form.gpsDeviceId}/link`, {
             method: "PATCH",
@@ -119,7 +119,7 @@ export default function ShopTools() {
     }
   });
 
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
 
   // Shtrix kod o'zgarganda unique tekshirish
@@ -241,7 +241,7 @@ export default function ShopTools() {
       <p>${selectedTool?.category} | Kunlik: ${formatCurrency(selectedTool?.pricePerDay||0)} | Depozit: ${formatCurrency(selectedTool?.depositAmount||0)}</p>
       <hr/>${qrEl?.outerHTML || ""}
       <hr/>${barEl?.outerHTML || ""}
-      <p style="margin-top:12px;font-size:11px">ToolRent | ID:${selectedTool?.id}</p>
+      <p style="margin-top:12px;font-size:11px">GetHelp.uz | ID:${selectedTool?.id}</p>
     </body></html>`);
     pw.print();
     pw.close();

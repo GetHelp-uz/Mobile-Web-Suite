@@ -136,7 +136,7 @@ export default function WalletScreen() {
                 <View style={styles.cardIcon}>
                   <Ionicons name="wallet" size={22} color="#fff" />
                 </View>
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 15 }}>ToolRent Hamyon</Text>
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 15 }}>GetHelp.uz Hamyon</Text>
               </View>
               <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: 13, marginBottom: 6 }}>Asosiy balans</Text>
               <Text style={styles.balanceText}>{fmt(wallet?.balance || 0)}</Text>

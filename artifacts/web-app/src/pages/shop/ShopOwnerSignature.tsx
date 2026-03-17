@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function ShopOwnerSignature() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const canvasRef = useRef<HTMLCanvasElement>(null);

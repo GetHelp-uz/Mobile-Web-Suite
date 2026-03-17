@@ -8,7 +8,7 @@ import { Bell, Send, Users, Megaphone } from "lucide-react";
 
 export default function AdminNotifications() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [broadcastForm, setBroadcastForm] = useState({ title: "", body: "", role: "" });
@@ -34,9 +34,9 @@ export default function AdminNotifications() {
   };
 
   const TEMPLATES = [
-    { title: "Yangi funksiya!", body: "ToolRent ilovasida yangi imkoniyatlar paydo bo'ldi. Ko'ring!" },
+    { title: "Yangi funksiya!", body: "GetHelp.uz ilovasida yangi imkoniyatlar paydo bo'ldi. Ko'ring!" },
     { title: "Maxsus taklif", body: "Bu hafta barcha do'konlarda 10% chegirma! Tez foydalaning." },
-    { title: "Xizmat yangilandi", body: "ToolRent xizmati yangilandi. Yaxshilangan tezlik va yangi imkoniyatlar." },
+    { title: "Xizmat yangilandi", body: "GetHelp.uz xizmati yangilandi. Yaxshilangan tezlik va yangi imkoniyatlar." },
     { title: "Eslatma", body: "Ijara muddatingiz yaqin. Iltimos, asbobni o'z vaqtida qaytaring." },
   ];
 

@@ -17,7 +17,7 @@ function StarRating({ rating, max = 5 }: { rating: number; max?: number }) {
 export default function ShopRatings() {
   const { user } = useAuth();
   const shopId = user?.shopId || 0;
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { Authorization: `Bearer ${token}` };
 
   const [data, setData] = useState<any>({ ratings: [], average: 0, count: 0 });

@@ -195,7 +195,7 @@ export default function ProfileScreen() {
       {/* Footer */}
       <View style={styles.footer}>
         <MaterialCommunityIcons name="toolbox" size={20} color={C.textMuted} />
-        <Text style={[styles.footerText, { color: C.textMuted }]}>ToolRent — Qurilish asbob-uskunalari</Text>
+        <Text style={[styles.footerText, { color: C.textMuted }]}>GetHelp.uz — Qurilish asbob-uskunalari</Text>
       </View>
     </ScrollView>
   );

@@ -36,7 +36,7 @@ const DEFAULT_SLOTS = ["09:00-12:00", "12:00-15:00", "15:00-18:00", "18:00-21:00
 
 export default function ShopDeliverySettings() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [shopId, setShopId] = useState<number | null>(null);

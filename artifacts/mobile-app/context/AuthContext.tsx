@@ -31,8 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function loadAuth() {
       try {
         const [savedToken, savedUser] = await Promise.all([
-          AsyncStorage.getItem("tool_rent_token"),
-          AsyncStorage.getItem("tool_rent_user"),
+          AsyncStorage.getItem("gethelp_token"),
+          AsyncStorage.getItem("gethelp_user"),
         ]);
         if (savedToken && savedUser) {
           setToken(savedToken);
@@ -61,8 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function login(phone: string, password: string) {
     const res = await api.auth.login(phone, password);
     await Promise.all([
-      AsyncStorage.setItem("tool_rent_token", res.token),
-      AsyncStorage.setItem("tool_rent_user", JSON.stringify(res.user)),
+      AsyncStorage.setItem("gethelp_token", res.token),
+      AsyncStorage.setItem("gethelp_user", JSON.stringify(res.user)),
     ]);
     setToken(res.token);
     setUser(res.user);
@@ -72,8 +72,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function register(data: RegisterData) {
     const res = await api.auth.register(data);
     await Promise.all([
-      AsyncStorage.setItem("tool_rent_token", res.token),
-      AsyncStorage.setItem("tool_rent_user", JSON.stringify(res.user)),
+      AsyncStorage.setItem("gethelp_token", res.token),
+      AsyncStorage.setItem("gethelp_user", JSON.stringify(res.user)),
     ]);
     setToken(res.token);
     setUser(res.user);
@@ -82,8 +82,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function logout() {
     await Promise.all([
-      AsyncStorage.removeItem("tool_rent_token"),
-      AsyncStorage.removeItem("tool_rent_user"),
+      AsyncStorage.removeItem("gethelp_token"),
+      AsyncStorage.removeItem("gethelp_user"),
     ]);
     setToken(null);
     setUser(null);

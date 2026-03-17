@@ -42,7 +42,7 @@ export default function ReferralScreen() {
 
   const shareCode = async () => {
     await Share.share({
-      message: `ToolRent — qurilish asboblari ijarasi! Ro'yxatdan o'ting va kodimdan foydalaning: ${data?.referralCode}. Ikkovimiz ham 20,000 so'm bonus olamiz!`,
+      message: `GetHelp.uz — qurilish asboblari ijarasi! Ro'yxatdan o'ting va kodimdan foydalaning: ${data?.referralCode}. Ikkovimiz ham 20,000 so'm bonus olamiz!`,
     });
   };
 

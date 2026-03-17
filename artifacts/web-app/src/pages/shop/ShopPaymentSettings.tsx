@@ -27,7 +27,7 @@ type Shop = { id: number; name: string };
 
 export default function ShopPaymentSettings() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const appUrl = window.location.origin;
 

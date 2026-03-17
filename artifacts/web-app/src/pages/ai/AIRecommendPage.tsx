@@ -19,7 +19,7 @@ export default function AIRecommendPage() {
   const { user } = useAuth();
   const [, navigate] = useLocation();
   const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [projectTypes, setProjectTypes] = useState<any[]>([]);

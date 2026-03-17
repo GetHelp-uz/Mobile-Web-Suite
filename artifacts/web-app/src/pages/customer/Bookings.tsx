@@ -20,7 +20,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 export default function BookingsPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [bookings, setBookings] = useState<any[]>([]);

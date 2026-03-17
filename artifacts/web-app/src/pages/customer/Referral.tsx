@@ -12,7 +12,7 @@ import { Users, Gift, Copy, Check, Trophy, TrendingUp, Share2 } from "lucide-rea
 export default function ReferralPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [data, setData] = useState<any>(null);
@@ -47,9 +47,9 @@ export default function ReferralPage() {
   };
 
   const shareLink = () => {
-    const text = `ToolRent — qurilish asboblari ijarasi! Qo'shiling va mening kodimdan foydalaning: ${data?.referralCode}. Har ikkovingiz 20,000 so'm bonus olasiz!`;
+    const text = `GetHelp.uz — qurilish asboblari ijarasi! Qo'shiling va mening kodimdan foydalaning: ${data?.referralCode}. Har ikkovingiz 20,000 so'm bonus olasiz!`;
     if (navigator.share) {
-      navigator.share({ title: "ToolRent", text });
+      navigator.share({ title: "GetHelp.uz", text });
     } else {
       navigator.clipboard.writeText(text);
       toast({ title: "Havola nusxalandi!" });

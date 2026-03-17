@@ -20,24 +20,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem("tool_rent_token");
-    const storedUser = localStorage.getItem("tool_rent_user");
+    const storedToken = localStorage.getItem("gethelp_token");
+    const storedUser = localStorage.getItem("gethelp_user");
 
     if (storedToken && storedUser) {
       setToken(storedToken);
       try {
         setUser(JSON.parse(storedUser));
       } catch (e) {
-        localStorage.removeItem("tool_rent_user");
-        localStorage.removeItem("tool_rent_token");
+        localStorage.removeItem("gethelp_user");
+        localStorage.removeItem("gethelp_token");
       }
     }
     setIsLoading(false);
   }, []);
 
   const login = (newToken: string, newUser: User) => {
-    localStorage.setItem("tool_rent_token", newToken);
-    localStorage.setItem("tool_rent_user", JSON.stringify(newUser));
+    localStorage.setItem("gethelp_token", newToken);
+    localStorage.setItem("gethelp_user", JSON.stringify(newUser));
     setToken(newToken);
     setUser(newUser);
     
@@ -52,8 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    localStorage.removeItem("tool_rent_token");
-    localStorage.removeItem("tool_rent_user");
+    localStorage.removeItem("gethelp_token");
+    localStorage.removeItem("gethelp_user");
     setToken(null);
     setUser(null);
     setLocation("/login");

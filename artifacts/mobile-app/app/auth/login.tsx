@@ -82,7 +82,7 @@ export default function LoginScreen() {
             <View style={[styles.logoBox, { backgroundColor: C.primary }]}>
               <MaterialCommunityIcons name="toolbox" size={38} color="#fff" />
             </View>
-            <Text style={[styles.brandName, { color: C.text }]}>ToolRent</Text>
+            <Text style={[styles.brandName, { color: C.text }]}>GetHelp.uz</Text>
             <Text style={[styles.brandTagline, { color: C.textSecondary }]}>
               Qurilish asbob-uskunalari ijarasi
             </Text>

@@ -33,7 +33,7 @@ function StatCard({ title, value, icon: Icon, color = "text-primary", sub }: {
 export default function ShopStats() {
   const { user } = useAuth();
   const shopId = user?.shopId || 0;
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { Authorization: `Bearer ${token}` };
 

@@ -58,7 +58,7 @@ const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000];
 
 export default function WalletPage() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [wallet, setWallet] = useState<WalletData | null>(null);
@@ -170,7 +170,7 @@ export default function WalletPage() {
               <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
                 <Wallet size={24} />
               </div>
-              <span className="text-primary-foreground/80 font-medium">ToolRent Hamyon</span>
+              <span className="text-primary-foreground/80 font-medium">GetHelp.uz Hamyon</span>
             </div>
             <p className="text-primary-foreground/70 text-sm mb-2">Asosiy balans</p>
             <p className="text-5xl font-bold font-display mb-6">

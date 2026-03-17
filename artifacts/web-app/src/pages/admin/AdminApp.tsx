@@ -28,7 +28,7 @@ export default function AdminApp() {
   const [editPlan, setEditPlan] = useState<Partial<Plan> | null>(null);
   const [featuresText, setFeaturesText] = useState("");
 
-  const token = localStorage.getItem("tool_rent_token");
+  const token = localStorage.getItem("gethelp_token");
   const headers = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const loadPlans = async () => {
@@ -183,7 +183,7 @@ export default function AdminApp() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-4 bg-secondary rounded-xl">
               <p className="text-sm text-muted-foreground mb-1">Platforma versiyasi</p>
-              <p className="font-bold text-lg">ToolRent v1.0</p>
+              <p className="font-bold text-lg">GetHelp.uz v1.0</p>
             </div>
             <div className="p-4 bg-secondary rounded-xl">
               <p className="text-sm text-muted-foreground mb-1">To'lov tizimlari</p>

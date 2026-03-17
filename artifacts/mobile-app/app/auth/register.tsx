@@ -22,18 +22,18 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { REGIONS, Region, District, getDistrictsByRegion } from "@/constants/regions";
 
-const OFERTA_TEXT = `TOOLRENT PLATFORMASI UCHUN OMMAVIY OFERTA SHARTLARI
+const OFERTA_TEXT = `GETHELP.UZ PLATFORMASI UCHUN OMMAVIY OFERTA SHARTLARI
 VA SHAXSIY MA'LUMOTLARNI QAYTA ISHLASHGA ROZILIK
 
 1. Umumiy qoidalar
 
-Ushbu ommaviy oferta ToolRent platformasi orqali qurilish asbob-uskunalarini ijaraga berish xizmatidan foydalanish tartibini belgilaydi.
+Ushbu ommaviy oferta GetHelp.uz platformasi orqali qurilish asbob-uskunalarini ijaraga berish xizmatidan foydalanish tartibini belgilaydi.
 
 Platformada ro'yxatdan o'tgan foydalanuvchi ushbu Oferta shartlari bilan tanishib chiqib, ularga to'liq rozilik bildirgan hisoblanadi.
 
 2. Xizmat tavsifi
 
-ToolRent platformasi quyidagi imkoniyatlarni taqdim etadi:
+GetHelp.uz platformasi quyidagi imkoniyatlarni taqdim etadi:
 - qurilish asbob-uskunalarini tanlash
 - uskunalarni ijaraga olish
 - QR kod orqali uskunani olish va qaytarish
@@ -66,7 +66,7 @@ Shaxsiy ma'lumotlar uchinchi shaxslarga faqat qonun talabi yoki to'lov tizimlari
 
 8. Yakuniy qoidalar
 
-ToolRent oferta shartlariga o'zgartirish kiritish huquqiga ega. Platformadan foydalanish yangilangan shartlarga rozilikni anglatadi.`;
+GetHelp.uz oferta shartlariga o'zgartirish kiritish huquqiga ega. Platformadan foydalanish yangilangan shartlarga rozilikni anglatadi.`;
 
 type Step = "info" | "location";
 
@@ -376,7 +376,7 @@ export default function RegisterScreen() {
                       setOfertaVisible(true);
                     }}
                   >
-                    ToolRent platformasining ommaviy oferta shartlari
+                    GetHelp.uz platformasining ommaviy oferta shartlari
                   </Text>
                   {" bilan tanishdim va ularga roziman hamda shaxsiy ma'lumotlarimni qayta ishlashga rozilik bildiraman."}
                 </Text>

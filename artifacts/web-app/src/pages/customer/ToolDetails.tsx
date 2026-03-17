@@ -47,7 +47,7 @@ export default function ToolDetails() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { Authorization: `Bearer ${token}` };
 
   const createRental = useCreateRental({

@@ -64,7 +64,7 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
     doc.fillColor("white").fontSize(18).font("Helvetica-Bold")
       .text("QURILISH ASBOB-USKUNALARINI IJARAGA BERISH SHARTNOMASI", 55, 18, { align: "center", width: doc.page.width - 110 });
     doc.fontSize(10).font("Helvetica")
-      .text(`ToolRent Platformasi  •  Shartnoma: ${contractNum}  •  Sana: ${today}`, 55, 58, { align: "center", width: doc.page.width - 110 });
+      .text(`GetHelp.uz Platformasi  •  Shartnoma: ${contractNum}  •  Sana: ${today}`, 55, 58, { align: "center", width: doc.page.width - 110 });
 
     doc.fillColor("#1e293b");
 
@@ -240,7 +240,7 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
     doc.rect(0, footerY, doc.page.width, 38).fill("#f1f5f9");
     doc.fillColor("#94a3b8").fontSize(7.5).font("Helvetica")
       .text(
-        `ToolRent Platformasi tomonidan yaratildi  •  ${today}  •  ${contractNum}`,
+        `GetHelp.uz Platformasi tomonidan yaratildi  •  ${today}  •  ${contractNum}`,
         55, footerY + 14, { align: "center", width: doc.page.width - 110 }
       );
 

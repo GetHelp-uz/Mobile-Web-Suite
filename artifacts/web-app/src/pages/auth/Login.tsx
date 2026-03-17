@@ -57,7 +57,7 @@ export default function Login() {
               <Hammer size={32} className="text-white" />
             </div>
             <h1 className="text-5xl font-display font-bold mb-6 leading-tight">
-              Keyingi loyihangizni <span className="text-accent">ToolRent</span> bilan boshlang.
+              Keyingi loyihangizni <span className="text-accent">GetHelp.uz</span> bilan boshlang.
             </h1>
             <p className="text-xl text-primary-foreground/80 leading-relaxed">
               O'zbekistonda qurilish asbob-uskunalari ijarasining yetakchi platformasi.

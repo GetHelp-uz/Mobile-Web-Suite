@@ -32,7 +32,7 @@ export default function ShopDocuments() {
   const { user } = useAuth();
   const { toast } = useToast();
   const shopId = user?.shopId || 0;
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [docs, setDocs] = useState<any[]>([]);

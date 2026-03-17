@@ -84,11 +84,11 @@ router.post("/topup", authenticate, async (req, res) => {
 
     const returnUrl = process.env.APP_URL
       ? `${process.env.APP_URL}/wallet/success`
-      : `https://toolrent.uz/wallet/success`;
+      : `https://gethelp.uz/wallet/success`;
 
     if (provider === "click") {
       const serviceId = pSettings?.service_id || process.env.CLICK_SERVICE_ID || "12345";
-      const merchantId = pSettings?.merchant_id || process.env.CLICK_MERCHANT_ID || "toolrent";
+      const merchantId = pSettings?.merchant_id || process.env.CLICK_MERCHANT_ID || "gethelp";
       const base = isTest ? "https://my.click.uz/services/pay" : "https://my.click.uz/services/pay";
       paymentUrl = `${base}?service_id=${serviceId}&merchant_id=${merchantId}&amount=${amount}&transaction_param=${refId}&return_url=${encodeURIComponent(returnUrl)}`;
     } else if (provider === "payme") {
@@ -97,7 +97,7 @@ router.post("/topup", authenticate, async (req, res) => {
       const base = isTest ? "https://checkout.paycom.uz" : "https://checkout.paycom.uz";
       paymentUrl = `${base}/${base64Param}`;
     } else if (provider === "paynet") {
-      const paynetMerchant = pSettings?.merchant_id || process.env.PAYNET_MERCHANT_ID || "toolrent";
+      const paynetMerchant = pSettings?.merchant_id || process.env.PAYNET_MERCHANT_ID || "gethelp";
       const serviceId = pSettings?.service_id || process.env.PAYNET_SERVICE_ID || "";
       const base = isTest ? "https://test.paynet.uz/processing/order" : "https://paynet.uz/processing/order";
       paymentUrl = `${base}?merchantId=${paynetMerchant}&orderId=${refId}&amount=${amount}&currency=860&returnUrl=${encodeURIComponent(returnUrl)}${serviceId ? `&serviceId=${serviceId}` : ""}`;

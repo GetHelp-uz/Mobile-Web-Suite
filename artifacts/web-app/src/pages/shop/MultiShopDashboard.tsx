@@ -24,7 +24,7 @@ type ShopMetrics = {
 
 export default function MultiShopDashboard() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [shops, setShops] = useState<Shop[]>([]);

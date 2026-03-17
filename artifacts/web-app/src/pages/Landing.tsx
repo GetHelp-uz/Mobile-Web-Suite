@@ -48,7 +48,7 @@ export default function Landing() {
             <div className="w-10 h-10 bg-accent rounded-xl flex items-center justify-center shadow-lg shadow-accent/20">
               <Hammer size={20} className="text-white" />
             </div>
-            <span className="font-display font-bold text-xl">ToolRent<span className="text-accent">.</span></span>
+            <span className="font-display font-bold text-xl">GetHelp.uz<span className="text-accent">.</span></span>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login">
@@ -80,7 +80,7 @@ export default function Landing() {
               <span className="text-accent">daromad oling</span>
             </h1>
             <p className="text-xl md:text-2xl text-primary-foreground/80 max-w-3xl mx-auto mb-10 leading-relaxed">
-              ToolRent orqali do'koningizni raqamlashtiring. QR kod, to'lov integratsiyasi va real vaqt boshqaruvi bilan.
+              GetHelp.uz orqali do'koningizni raqamlashtiring. QR kod, to'lov integratsiyasi va real vaqt boshqaruvi bilan.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/register">
@@ -120,7 +120,7 @@ export default function Landing() {
       {/* Xususiyatlar */}
       <section className="py-24 max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
-          <h2 className="text-4xl font-display font-bold mb-4">Nima uchun ToolRent?</h2>
+          <h2 className="text-4xl font-display font-bold mb-4">Nima uchun GetHelp.uz?</h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Qurilish asboblarini ijaraga berish uchun zarur bo'lgan hamma narsa bir platformada
           </p>
@@ -219,9 +219,9 @@ export default function Landing() {
             <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
               <Hammer size={16} className="text-white" />
             </div>
-            <span className="font-display font-bold">ToolRent<span className="text-accent">.</span></span>
+            <span className="font-display font-bold">GetHelp.uz<span className="text-accent">.</span></span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2025 ToolRent. Barcha huquqlar himoyalangan.</p>
+          <p className="text-sm text-muted-foreground">© 2025 GetHelp.uz. Barcha huquqlar himoyalangan.</p>
         </div>
       </footer>
     </div>

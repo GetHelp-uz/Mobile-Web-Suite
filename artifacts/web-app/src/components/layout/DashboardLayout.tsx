@@ -133,7 +133,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <Hammer size={20} />
           </div>
           <span className="font-display font-bold text-xl tracking-tight text-foreground">
-            ToolRent<span className="text-primary">.</span>
+            GetHelp.uz
           </span>
         </div>
         <button onClick={toggleTheme} className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center transition-colors" title={isDark ? "Yorug' rejim" : "Qorang'i rejim"}>
@@ -207,7 +207,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
             <Hammer size={16} />
           </div>
-          <span className="font-display font-bold text-lg">ToolRent.</span>
+          <span className="font-display font-bold text-lg">GetHelp.uz</span>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={toggleTheme} className="w-8 h-8 rounded-full hover:bg-secondary flex items-center justify-center">
@@ -229,7 +229,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
               transition={{ type: "spring", damping: 25 }}
               className="fixed left-0 top-0 bottom-0 w-72 bg-card border-r border-border flex flex-col z-50 md:hidden">
               <div className="flex items-center justify-between p-4 border-b border-border">
-                <span className="font-bold text-lg">ToolRent.</span>
+                <span className="font-bold text-lg">GetHelp.uz</span>
                 <Button variant="ghost" size="icon" onClick={() => setMobileOpen(false)}><X size={18} /></Button>
               </div>
               <div className="flex-1 overflow-y-auto">

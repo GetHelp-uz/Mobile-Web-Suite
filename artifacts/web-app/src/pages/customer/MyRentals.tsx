@@ -40,7 +40,7 @@ export default function MyRentals() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { data, isLoading } = useListRentals({ customerId: user?.id });
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 

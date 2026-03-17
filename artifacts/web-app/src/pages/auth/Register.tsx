@@ -10,18 +10,18 @@ import { motion } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useRegister } from "@workspace/api-client-react";
 
-const OFERTA_TEXT = `TOOLRENT PLATFORMASI UCHUN OMMAVIY OFERTA SHARTLARI
+const OFERTA_TEXT = `GETHELP.UZ PLATFORMASI UCHUN OMMAVIY OFERTA SHARTLARI
 VA SHAXSIY MA'LUMOTLARNI QAYTA ISHLASHGA ROZILIK
 
 1. Umumiy qoidalar
 
-Ushbu ommaviy oferta (keyingi o'rinlarda "Oferta") ToolRent platformasi orqali qurilish asbob-uskunalarini ijaraga berish xizmatidan foydalanish tartibini belgilaydi.
+Ushbu ommaviy oferta (keyingi o'rinlarda "Oferta") GetHelp.uz platformasi orqali qurilish asbob-uskunalarini ijaraga berish xizmatidan foydalanish tartibini belgilaydi.
 
 Platformada ro'yxatdan o'tgan foydalanuvchi (keyingi o'rinlarda "Mijoz") ushbu Oferta shartlari bilan tanishib chiqib, ularga to'liq rozilik bildirgan hisoblanadi.
 
 2. Xizmat tavsifi
 
-ToolRent platformasi mijozlarga quyidagi imkoniyatlarni taqdim etadi:
+GetHelp.uz platformasi mijozlarga quyidagi imkoniyatlarni taqdim etadi:
 - qurilish asbob-uskunalarini tanlash
 - uskunalarni ijaraga olish
 - QR kod orqali uskunani olish va qaytarish
@@ -54,11 +54,11 @@ Mijoz ushbu ma'lumotlarning quyidagi maqsadlarda qayta ishlanishiga rozilik bera
 
 7. Ma'lumotlarni himoya qilish
 
-ToolRent platformasi mijozlarning shaxsiy ma'lumotlarini himoya qilish uchun zarur texnik va tashkiliy choralarni ko'radi. Mijoz ma'lumotlari uchinchi shaxslarga faqat qonunchilik talablariga muvofiq yoki to'lov tizimlari orqali tranzaksiyalarni amalga oshirish uchun taqdim etilishi mumkin.
+GetHelp.uz platformasi mijozlarning shaxsiy ma'lumotlarini himoya qilish uchun zarur texnik va tashkiliy choralarni ko'radi. Mijoz ma'lumotlari uchinchi shaxslarga faqat qonunchilik talablariga muvofiq yoki to'lov tizimlari orqali tranzaksiyalarni amalga oshirish uchun taqdim etilishi mumkin.
 
 8. Yakuniy qoidalar
 
-ToolRent platformasi ushbu Oferta shartlariga o'zgartirish kiritish huquqiga ega. Yangilangan shartlar platformada e'lon qilingan paytdan boshlab kuchga kiradi. Platformadan foydalanishda davom etish foydalanuvchining yangilangan shartlarga roziligini anglatadi.`;
+GetHelp.uz platformasi ushbu Oferta shartlariga o'zgartirish kiritish huquqiga ega. Yangilangan shartlar platformada e'lon qilingan paytdan boshlab kuchga kiradi. Platformadan foydalanishda davom etish foydalanuvchining yangilangan shartlarga roziligini anglatadi.`;
 
 const REGIONS = [
   "Toshkent shahri", "Toshkent viloyati", "Samarqand viloyati",
@@ -88,7 +88,7 @@ export default function Register() {
     mutation: {
       onSuccess: async (data) => {
         // Token'ni avval localStorage'ga saqlaymiz
-        localStorage.setItem("tool_rent_token", data.token);
+        localStorage.setItem("gethelp_token", data.token);
 
         // Do'kon nomini kiritgan bo'lsa, do'kon yaratamiz
         if (form.shopName && data.user) {
@@ -157,7 +157,7 @@ export default function Register() {
             <div className="w-16 h-16 bg-accent rounded-2xl flex items-center justify-center mb-8 shadow-2xl">
               <Hammer size={32} className="text-white" />
             </div>
-            <h1 className="text-4xl font-display font-bold mb-4">Do'koningizni ToolRent'ga qo'shing</h1>
+            <h1 className="text-4xl font-display font-bold mb-4">Do'koningizni GetHelp.uz'ga qo'shing</h1>
             <p className="text-primary-foreground/80 text-lg leading-relaxed">
               Minglab qurilish kompaniyalari bilan birga ishlang. Asboblaringizni ijaraga bering va daromad oling.
             </p>
@@ -251,7 +251,7 @@ export default function Register() {
                     onClick={e => { e.stopPropagation(); setOfertaOpen(true); }}
                     className="text-primary font-semibold underline underline-offset-2 hover:text-primary/80 inline-flex items-center gap-0.5"
                   >
-                    ToolRent platformasining ommaviy oferta shartlari
+                    GetHelp.uz platformasining ommaviy oferta shartlari
                     <ExternalLink size={12} />
                   </button>
                   {" "}bilan tanishdim va ularga roziman hamda shaxsiy ma'lumotlarimni qayta ishlashga rozilik bildiraman.

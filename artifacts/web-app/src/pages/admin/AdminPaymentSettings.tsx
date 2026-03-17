@@ -40,8 +40,8 @@ const PROVIDERS = [
       { key: "secret_key", label: "Secret Key", placeholder: "••••••••••••••••", hint: "Click kabineti → Xizmatlar → Secret Key", secret: true },
     ],
     webhooks: [
-      { method: "POST", path: "/api/pay/click/prepare", desc: "Prepare (Click → ToolRent)" },
-      { method: "POST", path: "/api/pay/click/complete", desc: "Complete (Click → ToolRent)" },
+      { method: "POST", path: "/api/pay/click/prepare", desc: "Prepare (Click → GetHelp.uz)" },
+      { method: "POST", path: "/api/pay/click/complete", desc: "Complete (Click → GetHelp.uz)" },
     ],
     docs: "https://docs.click.uz",
   },
@@ -58,7 +58,7 @@ const PROVIDERS = [
       { key: "secret_key", label: "Secret Key", placeholder: "••••••••••••••••", hint: "Payme kabineti → Sozlamalar → Key", secret: true },
     ],
     webhooks: [
-      { method: "POST", path: "/api/pay/payme", desc: "Payme JSON-RPC API (Payme → ToolRent)" },
+      { method: "POST", path: "/api/pay/payme", desc: "Payme JSON-RPC API (Payme → GetHelp.uz)" },
     ],
     docs: "https://developer.help.paycom.uz",
   },
@@ -71,7 +71,7 @@ const PROVIDERS = [
     textColor: "text-orange-700",
     logo: "",
     fields: [
-      { key: "merchant_id", label: "Merchant ID", placeholder: "toolrent", hint: "Paynet tomonidan berilgan merchant identifikator" },
+      { key: "merchant_id", label: "Merchant ID", placeholder: "gethelp", hint: "Paynet tomonidan berilgan merchant identifikator" },
       { key: "service_id", label: "Service ID", placeholder: "12345", hint: "Paynet xizmat ID raqami" },
       { key: "secret_key", label: "Secret Key", placeholder: "••••••••••••••••", hint: "Paynet tomonidan berilgan maxfiy kalit", secret: true },
     ],
@@ -85,7 +85,7 @@ const PROVIDERS = [
 
 export default function AdminPaymentSettings() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
   const appUrl = window.location.origin;
 

@@ -18,7 +18,7 @@ type SmsLog = { id: number; phone: string; message: string; status: string; sent
 
 export default function ShopSms() {
   const { toast } = useToast();
-  const token = localStorage.getItem("tool_rent_token") || "";
+  const token = localStorage.getItem("gethelp_token") || "";
   const h = { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
 
   const [rentals, setRentals] = useState<Rental[]>([]);
