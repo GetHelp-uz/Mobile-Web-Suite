@@ -87,4 +87,88 @@ router.put("/:id", authenticate, async (req, res) => {
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
+// ─── Texnik xizmat jadvali ────────────────────────────────────────────────────
+
+// GET /api/maintenance/schedule?shopId=X — barcha asboblar texnik holati
+router.get("/schedule", authenticate, async (req, res) => {
+  try {
+    const shopId = Number(req.query.shopId);
+    if (!shopId) { res.status(400).json({ error: "shopId talab qilinadi" }); return; }
+
+    const tools = await db.execute(sql`
+      SELECT
+        t.id, t.name, t.category, t.status, t.image_url,
+        COALESCE(t.rental_count, 0) as rental_count,
+        COALESCE(t.maintenance_interval, 10) as maintenance_interval,
+        t.last_maintained_at,
+        COALESCE(t.rental_count, 0) - COALESCE(
+          (SELECT COUNT(*) FROM rentals r2 WHERE r2.tool_id = t.id AND r2.returned_at > COALESCE(t.last_maintained_at, '2000-01-01'::timestamp)),
+          0
+        ) as rentals_since_maintenance,
+        (SELECT COUNT(*) FROM maintenance_logs ml WHERE ml.tool_id = t.id) as total_maintenance_count,
+        (SELECT ml.created_at FROM maintenance_logs ml WHERE ml.tool_id = t.id ORDER BY ml.created_at DESC LIMIT 1) as last_maintenance_log_at
+      FROM tools t
+      WHERE t.shop_id = ${shopId} AND t.status != 'deleted'
+      ORDER BY
+        (COALESCE(t.rental_count, 0) - COALESCE(
+          (SELECT COUNT(*) FROM rentals r2 WHERE r2.tool_id = t.id AND r2.returned_at > COALESCE(t.last_maintained_at, '2000-01-01'::timestamp)),
+          0
+        )) * 100 / GREATEST(COALESCE(t.maintenance_interval, 10), 1) DESC
+    `);
+
+    const result = (tools.rows as any[]).map(t => {
+      const sinceLastMaint = Number(t.rentals_since_maintenance) || 0;
+      const interval = Number(t.maintenance_interval) || 10;
+      const pct = Math.min(100, Math.round((sinceLastMaint / interval) * 100));
+      const isDue = sinceLastMaint >= interval;
+      const isWarning = pct >= 75 && !isDue;
+      return { ...t, percentageDone: pct, isDue, isWarning, sinceLastMaint };
+    });
+
+    const due = result.filter(t => t.isDue).length;
+    const warning = result.filter(t => t.isWarning).length;
+
+    res.json({ tools: result, stats: { total: result.length, due, warning, ok: result.length - due - warning } });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// PUT /api/maintenance/schedule/:toolId — intervalini belgilash
+router.put("/schedule/:toolId", authenticate, async (req, res) => {
+  try {
+    const { maintenanceInterval } = req.body;
+    if (!maintenanceInterval || maintenanceInterval < 1) {
+      res.status(400).json({ error: "Interval kamida 1 bo'lishi kerak" }); return;
+    }
+    await db.execute(sql`
+      UPDATE tools SET maintenance_interval = ${Number(maintenanceInterval)} WHERE id = ${Number(req.params.toolId)}
+    `);
+    res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/maintenance/schedule/:toolId/done — texnik xizmat bajarildi
+router.post("/schedule/:toolId/done", authenticate, async (req, res) => {
+  try {
+    const { description, cost, performedBy } = req.body;
+    const toolId = Number(req.params.toolId);
+    const user = (req as any).user;
+
+    // Texnik xizmat logini yozish
+    const toolRow = await db.execute(sql`SELECT shop_id FROM tools WHERE id = ${toolId} LIMIT 1`);
+    const shopId = (toolRow.rows[0] as any)?.shop_id;
+
+    await db.execute(sql`
+      INSERT INTO maintenance_logs (tool_id, shop_id, description, cost, status, performed_by, created_at)
+      VALUES (${toolId}, ${shopId}, ${description || "Texnik xizmat bajarildi"}, ${Number(cost) || 0}, 'completed', ${performedBy || user.userId}, NOW())
+    `);
+
+    // Asbobning last_maintained_at ni yangilash
+    await db.execute(sql`
+      UPDATE tools SET last_maintained_at = NOW(), status = 'available' WHERE id = ${toolId}
+    `);
+
+    res.json({ success: true, message: "Texnik xizmat bajarildi deb belgilandi" });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export default router;

@@ -43,6 +43,11 @@ import AdminPaymentSettings from "@/pages/admin/AdminPaymentSettings";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
 import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
+import ShopDeliverySettings from "@/pages/shop/ShopDeliverySettings";
+import ShopMaintenanceSchedule from "@/pages/shop/ShopMaintenanceSchedule";
+import WorkerPerformance from "@/pages/shop/WorkerPerformance";
+import MultiShopDashboard from "@/pages/shop/MultiShopDashboard";
+import ESignPage from "@/pages/customer/ESignPage";
 import WalletPage from "@/pages/wallet/Wallet";
 import NotificationsCenter from "@/pages/NotificationsCenter";
 import NotFound from "@/pages/not-found";
@@ -205,6 +210,21 @@ function Router() {
       </Route>
       <Route path="/shop/payment-settings">
         {() => <ProtectedRoute component={ShopPaymentSettings} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shop/delivery-settings">
+        {() => <ProtectedRoute component={ShopDeliverySettings} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shop/maintenance-schedule">
+        {() => <ProtectedRoute component={ShopMaintenanceSchedule} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shop/worker-performance">
+        {() => <ProtectedRoute component={WorkerPerformance} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/shop/network">
+        {() => <ProtectedRoute component={MultiShopDashboard} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+      <Route path="/esign">
+        {() => <ProtectedRoute component={ESignPage} allowedRoles={['customer', 'shop_owner', 'super_admin']} />}
       </Route>
       <Route path="/admin/notifications">
         {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}

@@ -34,6 +34,8 @@ import chatRouter from "./chat.js";
 import aiRecommendRouter from "./ai-recommend.js";
 import paymentSettingsRouter from "./payment-settings.js";
 import paymentWebhooksRouter from "./payment-webhooks.js";
+import deliveryRouter from "./delivery.js";
+import workerPerformanceRouter from "./worker-performance.js";
 
 const router: IRouter = Router();
 
@@ -72,5 +74,7 @@ router.use("/chat", chatRouter);
 router.use("/ai", aiRecommendRouter);
 router.use("/payment-settings", paymentSettingsRouter);
 router.use("/pay", paymentWebhooksRouter);
+router.use("/delivery", deliveryRouter);
+router.use("/worker-performance", workerPerformanceRouter);
 
 export default router;

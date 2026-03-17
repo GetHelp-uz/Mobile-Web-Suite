@@ -175,3 +175,36 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+
+## 6 ta yangi funksiya (Mar 2026 - 2-navbat)
+
+### 1. Yetkazib berish xizmati
+- DB: `delivery_settings` (shop_id, is_active, base_price, price_per_km, min_km, max_km, free_km, time_slots JSONB)
+- DB: `delivery_orders` (rental_id, shop_id, customer_id, address, distance_km, delivery_price, time_slot, status)
+- API: `GET/PUT /api/delivery/settings/:shopId`, `POST /api/delivery/calculate`, `POST/GET /api/delivery/orders`, `PATCH /api/delivery/orders/:id/status`
+- Web: `/shop/delivery-settings` — ShopDeliverySettings.tsx (km narx sozlash, kalkulyator, vaqt oynalari, buyurtmalar)
+
+### 2. Texnik xizmat jadvali
+- DB: `tools` jadvaliga `maintenance_interval`, `rental_count`, `last_maintained_at` ustunlari
+- API: `GET /api/maintenance/schedule?shopId=X` (asboblar texnik holati), `PUT /api/maintenance/schedule/:toolId`, `POST /api/maintenance/schedule/:toolId/done`
+- Web: `/shop/maintenance-schedule` — ShopMaintenanceSchedule.tsx (progress bar, statistika, interval belgilash, bajarildi dialog)
+
+### 3. Xodim ish samaradorligi
+- API: `GET /api/worker-performance?shopId=X&period=week|month|year|all`, `GET /api/worker-performance/:workerId`
+- Web: `/shop/worker-performance` — WorkerPerformance.tsx (reyting, statistika kartalar, completion rate progress bar)
+
+### 4. Ko'p do'kon tarmoqi boshqaruvi
+- API: `/api/shops?mine=true` + `/api/analytics/dashboard?shopId=X`
+- Web: `/shop/network` — MultiShopDashboard.tsx (barcha do'konlar umumiy ko'rinish, per-shop metrikalar)
+
+### 5. Elektron imzo (eSign)
+- DB: `contracts` jadvaliga `signature_data` (base64 canvas), `signature_ip` ustunlari
+- API: `POST /api/contracts/:rentalId/sign` (signatureData qabul qiladi), `GET /api/contracts/rental/:rentalId/esign`
+- Web: `/esign` — ESignPage.tsx (canvas imzo chizish, rozilik checkbox, imzo tarixi)
+
+### 6. Yangi route va nav
+- `delivery.ts` route fayli yaratildi
+- `worker-performance.ts` route fayli yaratildi
+- `routes/index.ts` ga delivery + worker-performance ro'yxatdan o'tkazildi
+- DashboardLayout.tsx: shop_owner uchun "Yetkazib berish", "Texnik jadval", "Xodim samaradorligi", "Do'konlar tarmog'i" nav elementlari
+- Customer uchun "Elektron imzo" nav elementi

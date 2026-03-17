@@ -40,6 +40,9 @@ import {
   BarChart2,
   Package,
   CreditCard,
+  Network,
+  PenLine,
+  Gauge,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -61,6 +64,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
       { name: "Referal", path: "/referral", icon: Gift },
+      { name: "Elektron imzo", path: "/esign", icon: PenLine },
       { name: "Bildirishnomalar", path: "/notifications-center", icon: Bell },
     ],
     shop_owner: [
@@ -79,6 +83,10 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "GPS Monitoring", path: "/shop/gps", icon: MapPin },
       { name: "Filiallar", path: "/shop/branches", icon: Building2 },
       { name: "To'lov ulash", path: "/shop/payment-settings", icon: CreditCard },
+      { name: "Yetkazib berish", path: "/shop/delivery-settings", icon: Truck },
+      { name: "Texnik jadval", path: "/shop/maintenance-schedule", icon: Gauge },
+      { name: "Xodim samaradorligi", path: "/shop/worker-performance", icon: BarChart2 },
+      { name: "Do'konlar tarmog'i", path: "/shop/network", icon: Network },
       { name: "Ta'minotchilar", path: "/shop/suppliers", icon: Truck },
       { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
       { name: "Chat", path: "/chat", icon: MessageSquare },

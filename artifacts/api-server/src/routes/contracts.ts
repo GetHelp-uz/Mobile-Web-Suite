@@ -218,13 +218,42 @@ router.get("/rental/:rentalId", authenticate, async (req, res) => {
 // POST /api/contracts/:rentalId/sign — raqamli imzolash
 router.post("/:rentalId/sign", authenticate, async (req, res) => {
   try {
-    const { agreed } = req.body;
+    const { agreed, signatureData } = req.body;
     if (!agreed) { res.status(400).json({ error: "Shartlarga rozilik talab etiladi" }); return; }
+    const user = (req as any).user;
+    const ip = req.ip || req.socket.remoteAddress || "";
+
     await db.execute(sql`
       UPDATE rentals SET contract_signed = TRUE, contract_signed_at = NOW()
       WHERE id = ${Number(req.params.rentalId)}
     `);
-    res.json({ success: true, message: "Shartnoma raqamli imzolandi" });
+
+    // Imzo ma'lumotini kontrakt jadvaliga saqlash
+    if (signatureData) {
+      await db.execute(sql`
+        UPDATE contracts SET
+          signed_at = NOW(),
+          signature_data = ${signatureData},
+          signature_ip = ${ip}
+        WHERE rental_id = ${Number(req.params.rentalId)}
+      `);
+    }
+
+    res.json({ success: true, message: "Shartnoma raqamli imzolandi", signedAt: new Date().toISOString() });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/contracts/rental/:rentalId/esign — imzo holatini tekshirish
+router.get("/rental/:rentalId/esign", authenticate, async (req, res) => {
+  try {
+    const row = await db.execute(sql`
+      SELECT signed_at, signature_ip,
+             CASE WHEN signature_data IS NOT NULL THEN true ELSE false END as has_signature
+      FROM contracts WHERE rental_id = ${Number(req.params.rentalId)} LIMIT 1
+    `);
+    if (!row.rows.length) { res.json({ signed: false }); return; }
+    const r = row.rows[0] as any;
+    res.json({ signed: !!r.signed_at, signedAt: r.signed_at, hasSignature: r.has_signature, ip: r.signature_ip });
   } catch (err: any) { res.status(500).json({ error: err.message }); }
 });
 
