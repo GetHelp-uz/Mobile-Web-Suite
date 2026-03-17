@@ -134,6 +134,17 @@ export const api = {
       if (params?.shopId) q.set("shopId", String(params.shopId));
       return apiRequest(`/rentals?${q.toString()}`);
     },
+    create: (data: {
+      toolId: number;
+      customerId: number;
+      dueDate: string;
+      paymentMethod: string;
+      verificationType?: string;
+      idFrontUrl?: string;
+      idBackUrl?: string;
+      selfieUrl?: string;
+    }): Promise<Rental> =>
+      apiRequest("/rentals", { method: "POST", body: JSON.stringify(data) }),
     startByQr: (data: { qrCode: string; customerId: number; dueDate: string; paymentMethod: string }): Promise<Rental> =>
       apiRequest("/rentals/start-by-qr", { method: "POST", body: JSON.stringify(data) }),
     returnByQr: (data: { qrCode: string; damageNote?: string; damageCost?: number }): Promise<Rental> =>

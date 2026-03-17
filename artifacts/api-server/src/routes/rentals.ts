@@ -49,29 +49,42 @@ router.get("/", authenticate, async (req, res) => {
 // Create rental
 router.post("/", authenticate, async (req, res) => {
   try {
-    const body = CreateRentalBody.parse(req.body);
-    const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.id, body.toolId));
+    const body = req.body;
+    const toolId = Number(body.toolId);
+    const customerId = Number(body.customerId);
+    const paymentMethod = body.paymentMethod || "cash";
+    if (!toolId || !customerId || !body.dueDate) {
+      res.status(400).json({ error: "toolId, customerId va dueDate majburiy" });
+      return;
+    }
+    const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.id, toolId));
     if (!tool) {
       res.status(404).json({ error: "Tool not found" });
       return;
     }
     if (tool.status !== "available") {
-      res.status(400).json({ error: "Tool is not available" });
+      res.status(400).json({ error: "Asbob hozirda mavjud emas (ijarada yoki ta'mirda)" });
       return;
     }
-    const totalAmount = tool.pricePerDay + tool.depositAmount;
+    const rentalDays = body.rentalDays ? Number(body.rentalDays) : 1;
+    const totalAmount = tool.pricePerDay * rentalDays + tool.depositAmount;
     const [rental] = await db.insert(rentalsTable).values({
-      toolId: body.toolId,
-      customerId: body.customerId,
+      toolId,
+      customerId,
       shopId: tool.shopId,
       workerId: (req as any).user.userId,
-      rentalPrice: tool.pricePerDay,
+      rentalPrice: tool.pricePerDay * rentalDays,
       depositAmount: tool.depositAmount,
       totalAmount,
-      paymentMethod: body.paymentMethod as any,
+      paymentMethod: paymentMethod as any,
       dueDate: new Date(body.dueDate),
       status: "active",
-    }).returning();
+      verificationType: body.verificationType || null,
+      idFrontUrl: body.idFrontUrl || null,
+      idBackUrl: body.idBackUrl || null,
+      selfieUrl: body.selfieUrl || null,
+      verificationStatus: body.verificationType === "passport" ? "pending" : "approved",
+    } as any).returning();
 
     await db.update(toolsTable).set({ status: "rented" }).where(eq(toolsTable.id, body.toolId));
 

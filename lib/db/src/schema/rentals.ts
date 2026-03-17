@@ -21,6 +21,11 @@ export const rentalsTable = pgTable("rentals", {
   dueDate: timestamp("due_date").notNull(),
   damageNote: text("damage_note"),
   damageCost: real("damage_cost"),
+  verificationType: text("verification_type"),
+  idFrontUrl: text("id_front_url"),
+  idBackUrl: text("id_back_url"),
+  selfieUrl: text("selfie_url"),
+  verificationStatus: text("verification_status").default("pending"),
 });
 
 export const insertRentalSchema = createInsertSchema(rentalsTable).omit({ id: true, startedAt: true });

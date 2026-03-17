@@ -72,6 +72,9 @@ router.post("/register", async (req, res) => {
       role: role as any,
       region: body.region ? String(body.region) : undefined,
       district: body.district ? String(body.district) : undefined,
+      address: body.address ? String(body.address) : undefined,
+      homeLat: body.homeLat ? String(body.homeLat) : undefined,
+      homeLng: body.homeLng ? String(body.homeLng) : undefined,
     }).returning();
 
     const token = generateToken(user.id, user.role);

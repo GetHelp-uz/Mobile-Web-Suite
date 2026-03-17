@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Location from "expo-location";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -17,6 +18,7 @@ import {
   View,
   useColorScheme,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -113,6 +115,10 @@ export default function RegisterScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [region, setRegion] = useState<Region | null>(null);
   const [district, setDistrict] = useState<District | null>(null);
+  const [address, setAddress] = useState("");
+  const [homeLat, setHomeLat] = useState<string | null>(null);
+  const [homeLng, setHomeLng] = useState<string | null>(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -170,11 +176,35 @@ export default function RegisterScreen() {
       Alert.alert("Xato", "Tumanni tanlang");
       return false;
     }
+    if (!address.trim()) {
+      Alert.alert("Xato", "Yashash manzilingizni kiriting");
+      return false;
+    }
     if (!agreedToTerms) {
       Alert.alert("Xato", "Oferta shartlarini qabul qilishingiz kerak");
       return false;
     }
     return true;
+  }
+
+  async function getGpsLocation() {
+    setGpsLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Ruxsat kerak", "GPS joylashuvni aniqlash uchun ruxsat bering");
+        return;
+      }
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      setHomeLat(String(loc.coords.latitude));
+      setHomeLng(String(loc.coords.longitude));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Muvaffaqiyat", "GPS joylashuvingiz aniqlandi!");
+    } catch {
+      Alert.alert("Xato", "GPS joylashuvni aniqlab bo'lmadi. Internetingizni tekshiring.");
+    } finally {
+      setGpsLoading(false);
+    }
   }
 
   function onInfoNext() {
@@ -196,7 +226,10 @@ export default function RegisterScreen() {
         role: selectedRole || "customer",
         region: region!.name,
         district: district!.name,
-      });
+        address: address.trim(),
+        homeLat: homeLat || undefined,
+        homeLng: homeLng || undefined,
+      } as any);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)");
     } catch (err: any) {
@@ -211,7 +244,7 @@ export default function RegisterScreen() {
   function goBack() {
     if (step === "location") { setStep("info"); return; }
     if (step === "info") { setStep("role"); return; }
-    router.back();
+    router.replace("/auth/login");
   }
 
   const stepIndex = step === "role" ? 0 : step === "info" ? 1 : 2;
@@ -577,6 +610,66 @@ export default function RegisterScreen() {
                 </View>
               )}
 
+              {/* Yashash manzili */}
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.label, { color: C.text }]}>Yashash manzili</Text>
+                <View style={[styles.inputWrap, { borderColor: address.trim() ? C.primary : C.border, backgroundColor: C.surfaceSecondary }]}>
+                  <Ionicons name="home-outline" size={18} color={address.trim() ? C.primary : C.textMuted} style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, { color: C.text }]}
+                    placeholder="Ko'cha, uy raqami..."
+                    placeholderTextColor={C.textMuted}
+                    value={address}
+                    onChangeText={setAddress}
+                    autoCapitalize="sentences"
+                    returnKeyType="done"
+                  />
+                  {address.trim().length > 0 && (
+                    <Ionicons name="checkmark-circle" size={18} color="#12B76A" />
+                  )}
+                </View>
+              </View>
+
+              {/* GPS joylashuv */}
+              <View style={styles.fieldGroup}>
+                <Text style={[styles.label, { color: C.text }]}>GPS joylashuv</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.gpsBtn,
+                    {
+                      backgroundColor: homeLat ? "#12B76A15" : C.surfaceSecondary,
+                      borderColor: homeLat ? "#12B76A" : C.border,
+                      opacity: pressed || gpsLoading ? 0.85 : 1,
+                    }
+                  ]}
+                  onPress={getGpsLocation}
+                  disabled={gpsLoading}
+                >
+                  {gpsLoading ? (
+                    <ActivityIndicator size="small" color={C.primary} />
+                  ) : (
+                    <Ionicons
+                      name={homeLat ? "location" : "location-outline"}
+                      size={20}
+                      color={homeLat ? "#12B76A" : C.textMuted}
+                    />
+                  )}
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.gpsText, { color: homeLat ? "#12B76A" : C.text }]}>
+                      {gpsLoading ? "Aniqlanmoqda..." : homeLat ? "GPS aniqlandi" : "GPS joylashuvni aniqlash"}
+                    </Text>
+                    {homeLat && homeLng ? (
+                      <Text style={[styles.gpsCoords, { color: C.textMuted }]}>
+                        {parseFloat(homeLat).toFixed(4)}, {parseFloat(homeLng).toFixed(4)}
+                      </Text>
+                    ) : (
+                      <Text style={[styles.gpsHint, { color: C.textMuted }]}>Ixtiyoriy — yaqin do'konlarni topish uchun</Text>
+                    )}
+                  </View>
+                  {homeLat && <Ionicons name="checkmark-circle" size={20} color="#12B76A" />}
+                </Pressable>
+              </View>
+
               {/* Oferta roziligi */}
               <TouchableOpacity
                 activeOpacity={0.85}
@@ -891,6 +984,14 @@ const styles = StyleSheet.create({
     padding: 10, borderRadius: 10, borderWidth: 1, marginBottom: 14,
   },
   locationText: { fontSize: 13, fontFamily: "Inter_600SemiBold" },
+
+  gpsBtn: {
+    flexDirection: "row", alignItems: "center", gap: 12,
+    borderWidth: 1.5, borderRadius: 12, padding: 14,
+  },
+  gpsText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  gpsCoords: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
+  gpsHint: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
 
   ofertaRow: {
     flexDirection: "row", alignItems: "flex-start", gap: 10,

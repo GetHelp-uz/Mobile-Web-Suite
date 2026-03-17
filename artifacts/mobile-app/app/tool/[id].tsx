@@ -1,11 +1,13 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useQuery } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -32,18 +34,8 @@ const PAYMENT_METHODS = [
   { key: "paynet", label: "Paynet" },
 ] as const;
 
-const CATEGORY_ICONS: Record<string, string> = {
-  "Drel": "drill",
-  "Bolgarka": "angle-grinder",
-  "Shurpayor": "screwdriver",
-  "Perforator": "hammer",
-  "Arra": "saw-blade",
-  "O'lchov": "ruler",
-  "Payvandlash": "gas-cylinder",
-  "Silliqlash": "buffer",
-  "Kompressor": "air-filter",
-  "Narvon": "ladder",
-};
+type ModalStep = "verify_choice" | "photos" | "details" | "confirm";
+type VerifyType = "passport" | "deposit";
 
 export default function ToolDetailScreen() {
   const isDark = useColorScheme() === "dark";
@@ -53,8 +45,14 @@ export default function ToolDetailScreen() {
   const { user } = useAuth();
 
   const [showRentModal, setShowRentModal] = useState(false);
+  const [modalStep, setModalStep] = useState<ModalStep>("verify_choice");
+  const [verifyType, setVerifyType] = useState<VerifyType | null>(null);
   const [daysCount, setDaysCount] = useState("1");
   const [paymentMethod, setPaymentMethod] = useState<"click" | "payme" | "paynet" | "cash">("cash");
+
+  const [idFront, setIdFront] = useState<string | null>(null);
+  const [idBack, setIdBack] = useState<string | null>(null);
+  const [selfie, setSelfie] = useState<string | null>(null);
 
   const { data: tool, isLoading } = useQuery({
     queryKey: ["tool", id],
@@ -62,27 +60,76 @@ export default function ToolDetailScreen() {
     enabled: !!id,
   });
 
+  function openRentModal() {
+    setModalStep("verify_choice");
+    setVerifyType(null);
+    setDaysCount("1");
+    setPaymentMethod("cash");
+    setIdFront(null);
+    setIdBack(null);
+    setSelfie(null);
+    setShowRentModal(true);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }
+
+  async function pickPhoto(setter: (uri: string) => void) {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      const cam = await ImagePicker.requestCameraPermissionsAsync();
+      if (cam.status !== "granted") {
+        Alert.alert("Ruxsat kerak", "Rasm olish uchun kamera ruxsatini bering");
+        return;
+      }
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: "images",
+        quality: 0.6,
+        base64: true,
+      });
+      if (!result.canceled && result.assets[0]) {
+        setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
+      }
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: "images",
+      quality: 0.6,
+      base64: true,
+      allowsEditing: true,
+    });
+    if (!result.canceled && result.assets[0]) {
+      setter(`data:image/jpeg;base64,${result.assets[0].base64}`);
+    }
+  }
+
   const rentMutation = useMutation({
     mutationFn: () => {
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + Number(daysCount || 1));
-      return api.rentals.startByQr({
-        qrCode: tool!.qrCode,
+      return api.rentals.create({
+        toolId: tool!.id,
         customerId: user!.id,
         dueDate: dueDate.toISOString(),
         paymentMethod,
-      });
+        rentalDays: Number(daysCount || 1),
+        verificationType: verifyType || "deposit",
+        idFrontUrl: idFront || undefined,
+        idBackUrl: idBack || undefined,
+        selfieUrl: selfie || undefined,
+      } as any);
     },
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowRentModal(false);
-      Alert.alert("Muvaffaqiyat", "Ijara muvaffaqiyatli boshlandi!", [
+      const msg = verifyType === "passport"
+        ? "Ijara so'rovi yuborildi! Do'kon egasi hujjatlaringizni ko'rib tasdiqlanishini kuting."
+        : "Ijara muvaffaqiyatli boshlandi!";
+      Alert.alert("Muvaffaqiyat", msg, [
         { text: "OK", onPress: () => router.back() },
       ]);
     },
     onError: (err: any) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert("Xato", err.message);
+      Alert.alert("Xato", err.message || "Ijara boshlanmadi");
     },
   });
 
@@ -110,9 +157,10 @@ export default function ToolDetailScreen() {
   const days = Number(daysCount || 1);
   const totalCost = tool.pricePerDay * days + tool.depositAmount;
 
+  const photosReady = verifyType === "deposit" || (idFront && idBack && selfie);
+
   return (
     <View style={[styles.root, { backgroundColor: C.background }]}>
-      {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 8, borderBottomColor: C.border }]}>
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Ionicons name="chevron-back" size={24} color={C.text} />
@@ -125,7 +173,6 @@ export default function ToolDetailScreen() {
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero card */}
         <View style={[styles.heroCard, { backgroundColor: C.surface, borderColor: C.border }]}>
           <View style={[styles.toolIconHero, { backgroundColor: C.surfaceSecondary }]}>
             <MaterialCommunityIcons name="tools" size={52} color={C.primary} />
@@ -141,7 +188,6 @@ export default function ToolDetailScreen() {
           )}
         </View>
 
-        {/* Pricing */}
         <View style={[styles.priceCard, { backgroundColor: C.surface, borderColor: C.border }]}>
           <Text style={[styles.cardTitle, { color: C.text }]}>Narxlar</Text>
           <View style={styles.priceRow}>
@@ -157,7 +203,6 @@ export default function ToolDetailScreen() {
           </View>
         </View>
 
-        {/* QR code info */}
         <View style={[styles.infoCard, { backgroundColor: C.surface, borderColor: C.border }]}>
           <Text style={[styles.cardTitle, { color: C.text }]}>Texnik ma'lumot</Text>
           <View style={styles.infoRow}>
@@ -178,12 +223,11 @@ export default function ToolDetailScreen() {
         </View>
       </ScrollView>
 
-      {/* CTA button */}
       {canRent && (
         <View style={[styles.ctaBar, { backgroundColor: C.surface, borderTopColor: C.border, paddingBottom: insets.bottom + 8 }]}>
           <Pressable
             style={({ pressed }) => [styles.ctaBtn, { backgroundColor: C.primary, opacity: pressed ? 0.9 : 1 }]}
-            onPress={() => { setShowRentModal(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); }}
+            onPress={openRentModal}
           >
             <Ionicons name="cart-outline" size={20} color="#fff" />
             <Text style={styles.ctaBtnText}>Ijaraga olish</Text>
@@ -191,81 +235,338 @@ export default function ToolDetailScreen() {
         </View>
       )}
 
-      {/* Rent modal */}
+      {/* ===== RENT MODAL ===== */}
       <Modal visible={showRentModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowRentModal(false)}>
         <View style={[styles.modalRoot, { backgroundColor: C.background }]}>
           <View style={[styles.modalHandle, { backgroundColor: C.border }]} />
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            <View style={styles.modalHeader}>
+
+          {/* Modal header */}
+          <View style={styles.modalHeader}>
+            <View>
               <Text style={[styles.modalTitle, { color: C.text }]}>Ijaraga olish</Text>
-              <Pressable onPress={() => setShowRentModal(false)}>
-                <Ionicons name="close" size={24} color={C.textSecondary} />
-              </Pressable>
+              <Text style={[styles.modalSub, { color: C.textSecondary }]}>{tool.name}</Text>
             </View>
+            <Pressable onPress={() => setShowRentModal(false)} style={[styles.closeBtn, { backgroundColor: C.surfaceSecondary }]}>
+              <Ionicons name="close" size={20} color={C.textSecondary} />
+            </Pressable>
+          </View>
 
-            <Text style={[styles.toolNameModal, { color: C.text }]}>{tool.name}</Text>
+          {/* Step indicator */}
+          <View style={styles.stepRow}>
+            {(["verify_choice", "photos", "details"] as ModalStep[]).map((s, i) => {
+              const steps: ModalStep[] = verifyType === "deposit"
+                ? ["verify_choice", "details"]
+                : ["verify_choice", "photos", "details"];
+              const currentIndex = steps.indexOf(modalStep);
+              const stepIndex = verifyType === "deposit" ? [0, 1][i < 1 ? 0 : 1] : i;
+              const isActive = verifyType === "deposit"
+                ? (modalStep === "verify_choice" && i === 0) || (modalStep === "details" && i >= 1)
+                : (modalStep === "verify_choice" && i === 0) || (modalStep === "photos" && i === 1) || (modalStep === "details" && i === 2);
+              const isDone = verifyType === "deposit"
+                ? (modalStep === "details" && i === 0)
+                : (modalStep === "photos" && i === 0) || (modalStep === "details" && i <= 1);
+              if (verifyType === "deposit" && i === 1) return null;
+              return (
+                <React.Fragment key={s}>
+                  <View style={[styles.stepDot, {
+                    backgroundColor: isDone ? "#12B76A" : isActive ? C.primary : C.border,
+                    width: isActive ? 28 : 10,
+                  }]} />
+                  {i < 2 && <View style={[styles.stepLine, { backgroundColor: isDone ? "#12B76A" : C.border }]} />}
+                </React.Fragment>
+              );
+            })}
+          </View>
 
-            <View style={[styles.formSection, { backgroundColor: C.surface, borderColor: C.border }]}>
-              <Text style={[styles.formLabel, { color: C.textSecondary }]}>Ijara muddati (kun)</Text>
-              <TextInput
-                style={[styles.formInput, { backgroundColor: C.inputBg, borderColor: C.border, color: C.text }]}
-                value={daysCount}
-                onChangeText={setDaysCount}
-                keyboardType="number-pad"
-                placeholder="1"
-                placeholderTextColor={C.textMuted}
-              />
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
 
-              <Text style={[styles.formLabel, { color: C.textSecondary, marginTop: 16 }]}>To'lov usuli</Text>
-              <View style={styles.paymentGrid}>
-                {PAYMENT_METHODS.map(pm => (
+            {/* ===== STEP 1: TASDIQLASH USULINI TANLASH ===== */}
+            {modalStep === "verify_choice" && (
+              <View style={styles.stepContent}>
+                <Text style={[styles.stepTitle, { color: C.text }]}>Tasdiqlash usuli</Text>
+                <Text style={[styles.stepDesc, { color: C.textSecondary }]}>
+                  Ijaraga olish uchun o'zingizni tasdiqlang
+                </Text>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.verifyCard,
+                    {
+                      borderColor: verifyType === "passport" ? C.primary : C.border,
+                      backgroundColor: verifyType === "passport" ? C.primary + "10" : C.surface,
+                      opacity: pressed ? 0.9 : 1,
+                    }
+                  ]}
+                  onPress={() => { setVerifyType("passport"); Haptics.selectionAsync(); }}
+                >
+                  <View style={[styles.verifyIcon, { backgroundColor: C.primary + "15" }]}>
+                    <Ionicons name="card-outline" size={28} color={C.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.verifyTitle, { color: C.text }]}>ID-karta / Pasport</Text>
+                    <Text style={[styles.verifySub, { color: C.textSecondary }]}>
+                      Oldi, orqa rasm va selfi yuklang. Do'kon egasi tasdiqlaydi.
+                    </Text>
+                  </View>
+                  <View style={[styles.radioCircle, {
+                    borderColor: verifyType === "passport" ? C.primary : C.border,
+                    backgroundColor: verifyType === "passport" ? C.primary : "transparent",
+                  }]}>
+                    {verifyType === "passport" && <Ionicons name="checkmark" size={12} color="#fff" />}
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.verifyCard,
+                    {
+                      borderColor: verifyType === "deposit" ? "#12B76A" : C.border,
+                      backgroundColor: verifyType === "deposit" ? "#12B76A10" : C.surface,
+                      opacity: pressed ? 0.9 : 1,
+                    }
+                  ]}
+                  onPress={() => { setVerifyType("deposit"); Haptics.selectionAsync(); }}
+                >
+                  <View style={[styles.verifyIcon, { backgroundColor: "#12B76A15" }]}>
+                    <Ionicons name="cash-outline" size={28} color="#12B76A" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.verifyTitle, { color: C.text }]}>Depozit bilan</Text>
+                    <Text style={[styles.verifySub, { color: C.textSecondary }]}>
+                      Hujjat kerak emas. Depozit: {formatPrice(tool.depositAmount)}
+                    </Text>
+                  </View>
+                  <View style={[styles.radioCircle, {
+                    borderColor: verifyType === "deposit" ? "#12B76A" : C.border,
+                    backgroundColor: verifyType === "deposit" ? "#12B76A" : "transparent",
+                  }]}>
+                    {verifyType === "deposit" && <Ionicons name="checkmark" size={12} color="#fff" />}
+                  </View>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.nextBtn, { backgroundColor: verifyType ? C.primary : C.border }]}
+                  onPress={() => {
+                    if (!verifyType) { Alert.alert("Xato", "Tasdiqlash usulini tanlang"); return; }
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setModalStep(verifyType === "passport" ? "photos" : "details");
+                  }}
+                  disabled={!verifyType}
+                >
+                  <Text style={styles.nextBtnText}>Davom etish</Text>
+                  <Ionicons name="arrow-forward" size={18} color="#fff" />
+                </Pressable>
+              </View>
+            )}
+
+            {/* ===== STEP 2: HUJJAT RASMLARI (PASPORT) ===== */}
+            {modalStep === "photos" && (
+              <View style={styles.stepContent}>
+                <Text style={[styles.stepTitle, { color: C.text }]}>Hujjat rasmlari</Text>
+                <Text style={[styles.stepDesc, { color: C.textSecondary }]}>
+                  ID-karta yoki pasportingizning oldi, orqa rasmi va selfingizni yuklang
+                </Text>
+
+                <PhotoPicker
+                  label="ID/Pasport — old tomon"
+                  icon="card-outline"
+                  value={idFront}
+                  onPick={() => pickPhoto(setIdFront)}
+                  C={C}
+                />
+                <PhotoPicker
+                  label="ID/Pasport — orqa tomon"
+                  icon="card-outline"
+                  value={idBack}
+                  onPick={() => pickPhoto(setIdBack)}
+                  C={C}
+                />
+                <PhotoPicker
+                  label="Selfie (yuzingiz ko'rinsin)"
+                  icon="camera-outline"
+                  value={selfie}
+                  onPick={async () => {
+                    const cam = await ImagePicker.requestCameraPermissionsAsync();
+                    if (cam.status !== "granted") {
+                      Alert.alert("Ruxsat kerak", "Selfi uchun kamera ruxsatini bering");
+                      return;
+                    }
+                    const result = await ImagePicker.launchCameraAsync({
+                      mediaTypes: "images",
+                      quality: 0.6,
+                      base64: true,
+                      cameraType: ImagePicker.CameraType.front,
+                    });
+                    if (!result.canceled && result.assets[0]) {
+                      setSelfie(`data:image/jpeg;base64,${result.assets[0].base64}`);
+                    }
+                  }}
+                  C={C}
+                />
+
+                <View style={[styles.infoBox, { backgroundColor: C.primary + "12", borderColor: C.primary + "30" }]}>
+                  <Ionicons name="information-circle-outline" size={18} color={C.primary} />
+                  <Text style={[styles.infoBoxText, { color: C.primary }]}>
+                    Hujjatlar do'kon egasiga yuboriladi va 1-2 soat ichida tasdiqlanadi
+                  </Text>
+                </View>
+
+                <View style={styles.twoButtons}>
                   <Pressable
-                    key={pm.key}
-                    style={[styles.payChip, {
-                      backgroundColor: paymentMethod === pm.key ? C.primary : C.surfaceSecondary,
-                      borderColor: paymentMethod === pm.key ? C.primary : C.border,
-                    }]}
-                    onPress={() => { setPaymentMethod(pm.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                    style={[styles.backBtnSmall, { borderColor: C.border }]}
+                    onPress={() => setModalStep("verify_choice")}
                   >
-                    <Text style={[styles.payChipText, { color: paymentMethod === pm.key ? "#fff" : C.textSecondary }]}>
-                      {pm.label}
+                    <Ionicons name="arrow-back" size={16} color={C.textSecondary} />
+                    <Text style={[styles.backBtnText, { color: C.textSecondary }]}>Orqaga</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.nextBtnHalf, { backgroundColor: idFront && idBack && selfie ? C.primary : C.border }]}
+                    onPress={() => {
+                      if (!idFront || !idBack || !selfie) {
+                        Alert.alert("Xato", "Barcha 3 ta rasmni yuklang");
+                        return;
+                      }
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setModalStep("details");
+                    }}
+                    disabled={!idFront || !idBack || !selfie}
+                  >
+                    <Text style={styles.nextBtnText}>Davom etish</Text>
+                    <Ionicons name="arrow-forward" size={16} color="#fff" />
+                  </Pressable>
+                </View>
+              </View>
+            )}
+
+            {/* ===== STEP 3: IJARA MUDDATI VA TO'LOV ===== */}
+            {modalStep === "details" && (
+              <View style={styles.stepContent}>
+                <Text style={[styles.stepTitle, { color: C.text }]}>Ijara tafsilotlari</Text>
+
+                <View style={[styles.formSection, { backgroundColor: C.surface, borderColor: C.border }]}>
+                  <Text style={[styles.formLabel, { color: C.textSecondary }]}>Ijara muddati (kun)</Text>
+                  <TextInput
+                    style={[styles.formInput, { backgroundColor: C.inputBg, borderColor: C.border, color: C.text }]}
+                    value={daysCount}
+                    onChangeText={v => setDaysCount(v.replace(/\D/g, ""))}
+                    keyboardType="number-pad"
+                    placeholder="1"
+                    placeholderTextColor={C.textMuted}
+                  />
+
+                  <Text style={[styles.formLabel, { color: C.textSecondary, marginTop: 16 }]}>To'lov usuli</Text>
+                  <View style={styles.paymentGrid}>
+                    {PAYMENT_METHODS.map(pm => (
+                      <Pressable
+                        key={pm.key}
+                        style={[styles.payChip, {
+                          backgroundColor: paymentMethod === pm.key ? C.primary : C.surfaceSecondary,
+                          borderColor: paymentMethod === pm.key ? C.primary : C.border,
+                        }]}
+                        onPress={() => { setPaymentMethod(pm.key); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
+                      >
+                        <Text style={[styles.payChipText, { color: paymentMethod === pm.key ? "#fff" : C.textSecondary }]}>
+                          {pm.label}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <View style={[styles.summaryBox, { backgroundColor: C.surfaceSecondary }]}>
+                    <View style={styles.summaryRow}>
+                      <Text style={[styles.summaryLabel, { color: C.textSecondary }]}>{days} kun x {formatPrice(tool.pricePerDay)}</Text>
+                      <Text style={[styles.summaryVal, { color: C.text }]}>{formatPrice(tool.pricePerDay * days)}</Text>
+                    </View>
+                    <View style={styles.summaryRow}>
+                      <Text style={[styles.summaryLabel, { color: C.textSecondary }]}>Depozit</Text>
+                      <Text style={[styles.summaryVal, { color: C.text }]}>{formatPrice(tool.depositAmount)}</Text>
+                    </View>
+                    <View style={[styles.summaryDivider, { backgroundColor: C.border }]} />
+                    <View style={styles.summaryRow}>
+                      <Text style={[styles.summaryTotal, { color: C.text }]}>Jami</Text>
+                      <Text style={[styles.summaryTotalVal, { color: C.primary }]}>{formatPrice(totalCost)}</Text>
+                    </View>
+                  </View>
+
+                  {verifyType === "passport" && (
+                    <View style={[styles.infoBox, { backgroundColor: "#FFF7ED", borderColor: "#FDBA74" }]}>
+                      <Ionicons name="time-outline" size={16} color="#EA580C" />
+                      <Text style={[styles.infoBoxText, { color: "#EA580C" }]}>
+                        Hujjatlar tekshirilgandan so'ng ijara faollashadi
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.twoButtons}>
+                  <Pressable
+                    style={[styles.backBtnSmall, { borderColor: C.border }]}
+                    onPress={() => setModalStep(verifyType === "passport" ? "photos" : "verify_choice")}
+                  >
+                    <Ionicons name="arrow-back" size={16} color={C.textSecondary} />
+                    <Text style={[styles.backBtnText, { color: C.textSecondary }]}>Orqaga</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.nextBtnHalf, {
+                      backgroundColor: rentMutation.isPending ? C.border : C.primary,
+                    }]}
+                    onPress={() => rentMutation.mutate()}
+                    disabled={rentMutation.isPending}
+                  >
+                    <Ionicons name="checkmark-circle" size={16} color="#fff" />
+                    <Text style={styles.nextBtnText}>
+                      {rentMutation.isPending ? "Yuklanmoqda..." : "Tasdiqlash"}
                     </Text>
                   </Pressable>
-                ))}
+                </View>
+                <View style={{ height: 40 }} />
               </View>
-
-              <View style={[styles.summaryBox, { backgroundColor: C.surfaceSecondary }]}>
-                <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: C.textSecondary }]}>{days} kun × {formatPrice(tool.pricePerDay)}</Text>
-                  <Text style={[styles.summaryVal, { color: C.text }]}>{formatPrice(tool.pricePerDay * days)}</Text>
-                </View>
-                <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryLabel, { color: C.textSecondary }]}>Depozit</Text>
-                  <Text style={[styles.summaryVal, { color: C.text }]}>{formatPrice(tool.depositAmount)}</Text>
-                </View>
-                <View style={[styles.summaryDivider, { backgroundColor: C.border }]} />
-                <View style={styles.summaryRow}>
-                  <Text style={[styles.summaryTotal, { color: C.text }]}>Jami</Text>
-                  <Text style={[styles.summaryTotalVal, { color: C.primary }]}>{formatPrice(totalCost)}</Text>
-                </View>
-              </View>
-            </View>
-
-            <Pressable
-              style={({ pressed }) => [styles.confirmBtn, { backgroundColor: C.primary, opacity: pressed || rentMutation.isPending ? 0.85 : 1 }]}
-              onPress={() => rentMutation.mutate()}
-              disabled={rentMutation.isPending}
-            >
-              <Ionicons name="checkmark-circle" size={20} color="#fff" />
-              <Text style={styles.confirmBtnText}>
-                {rentMutation.isPending ? "Saqlanmoqda..." : "Ijarani tasdiqlash"}
-              </Text>
-            </Pressable>
-            <View style={{ height: 40 }} />
+            )}
           </ScrollView>
         </View>
       </Modal>
     </View>
+  );
+}
+
+function PhotoPicker({ label, icon, value, onPick, C }: {
+  label: string;
+  icon: any;
+  value: string | null;
+  onPick: () => void;
+  C: any;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.photoPicker,
+        {
+          borderColor: value ? "#12B76A" : C.border,
+          backgroundColor: value ? "#12B76A08" : C.surface,
+          opacity: pressed ? 0.85 : 1,
+        }
+      ]}
+      onPress={onPick}
+    >
+      {value ? (
+        <Image source={{ uri: value }} style={styles.photoThumb} resizeMode="cover" />
+      ) : (
+        <View style={[styles.photoPlaceholder, { backgroundColor: C.surfaceSecondary }]}>
+          <Ionicons name={icon} size={28} color={C.textMuted} />
+        </View>
+      )}
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.photoLabel, { color: C.text }]}>{label}</Text>
+        <Text style={[styles.photoHint, { color: C.textMuted }]}>
+          {value ? "Rasm yuklandi — o'zgartirish uchun bosing" : "Rasm tanlash uchun bosing"}
+        </Text>
+      </View>
+      {value ? (
+        <Ionicons name="checkmark-circle" size={22} color="#12B76A" />
+      ) : (
+        <Ionicons name="camera-outline" size={20} color={C.textMuted} />
+      )}
+    </Pressable>
   );
 }
 
@@ -300,12 +601,42 @@ const styles = StyleSheet.create({
   // Modal
   modalRoot: { flex: 1, paddingHorizontal: 20 },
   modalHandle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginTop: 12, marginBottom: 8 },
-  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 16 },
+  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 12 },
   modalTitle: { fontSize: 20, fontFamily: "Inter_700Bold" },
-  toolNameModal: { fontSize: 16, fontFamily: "Inter_600SemiBold", marginBottom: 16 },
-  formSection: { borderRadius: 16, padding: 18, borderWidth: 1, marginBottom: 16 },
+  modalSub: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: "center", alignItems: "center" },
+  stepRow: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 0, marginBottom: 20 },
+  stepDot: { height: 8, borderRadius: 4 },
+  stepLine: { flex: 1, height: 2, maxWidth: 40 },
+  stepContent: { paddingTop: 4 },
+  stepTitle: { fontSize: 18, fontFamily: "Inter_700Bold", marginBottom: 6 },
+  stepDesc: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 18, marginBottom: 20 },
+  // Verify cards
+  verifyCard: { flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 1.5, borderRadius: 16, padding: 16, marginBottom: 12 },
+  verifyIcon: { width: 52, height: 52, borderRadius: 14, justifyContent: "center", alignItems: "center" },
+  verifyTitle: { fontSize: 15, fontFamily: "Inter_700Bold", marginBottom: 4 },
+  verifySub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  radioCircle: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, justifyContent: "center", alignItems: "center" },
+  // Photo picker
+  photoPicker: { flexDirection: "row", alignItems: "center", gap: 14, borderWidth: 1.5, borderRadius: 14, padding: 14, marginBottom: 12 },
+  photoThumb: { width: 56, height: 56, borderRadius: 10 },
+  photoPlaceholder: { width: 56, height: 56, borderRadius: 10, justifyContent: "center", alignItems: "center" },
+  photoLabel: { fontSize: 14, fontFamily: "Inter_600SemiBold", marginBottom: 3 },
+  photoHint: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  // Info box
+  infoBox: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderWidth: 1, borderRadius: 12, padding: 12, marginTop: 12 },
+  infoBoxText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17 },
+  // Two buttons
+  twoButtons: { flexDirection: "row", gap: 12, marginTop: 20, marginBottom: 8 },
+  backBtnSmall: { flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16 },
+  backBtnText: { fontSize: 14, fontFamily: "Inter_500Medium" },
+  nextBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 16, paddingVertical: 16, marginTop: 8 },
+  nextBtnHalf: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, paddingVertical: 14 },
+  nextBtnText: { color: "#fff", fontSize: 15, fontFamily: "Inter_700Bold" },
+  // Form
+  formSection: { borderRadius: 16, padding: 18, borderWidth: 1, marginBottom: 8 },
   formLabel: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 8 },
-  formInput: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontFamily: "Inter_400Regular" },
+  formInput: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontFamily: "Inter_400Regular", marginBottom: 4 },
   paymentGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   payChip: { paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, borderWidth: 1 },
   payChipText: { fontSize: 14, fontFamily: "Inter_600SemiBold" },

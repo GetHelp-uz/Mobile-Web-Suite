@@ -59,7 +59,7 @@ export default function LoginScreen() {
           {/* Orqaga tugma */}
           <Pressable
             style={styles.backBtn}
-            onPress={() => router.back()}
+            onPress={() => router.replace("/onboarding")}
           >
             <Ionicons name="chevron-back" size={22} color={C.textSecondary} />
             <Text style={[styles.backText, { color: C.textSecondary }]}>Orqaga</Text>

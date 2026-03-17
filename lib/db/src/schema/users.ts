@@ -15,6 +15,9 @@ export const usersTable = pgTable("users", {
   shopId: integer("shop_id"),
   region: text("region"),
   district: text("district"),
+  address: text("address"),
+  homeLat: text("home_lat"),
+  homeLng: text("home_lng"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
