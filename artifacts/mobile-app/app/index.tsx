@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
@@ -8,13 +9,19 @@ export default function Index() {
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading) {
+    if (isLoading) return;
+    (async () => {
       if (user) {
         router.replace("/(tabs)");
-      } else {
-        router.replace("/auth/login");
+        return;
       }
-    }
+      const done = await AsyncStorage.getItem("onboarding_done");
+      if (done) {
+        router.replace("/auth/login");
+      } else {
+        router.replace("/onboarding");
+      }
+    })();
   }, [user, isLoading]);
 
   return (
