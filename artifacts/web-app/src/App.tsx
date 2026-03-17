@@ -8,6 +8,7 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
+import ForgotPassword from "@/pages/auth/ForgotPassword";
 import BrowseTools from "@/pages/customer/BrowseTools";
 import ToolDetails from "@/pages/customer/ToolDetails";
 import MyRentals from "@/pages/customer/MyRentals";
@@ -112,6 +113,7 @@ function Router() {
       <Route path="/" component={RootRedirect} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
+      <Route path="/forgot-password" component={ForgotPassword} />
 
       {/* Mijoz yo'llari */}
       <Route path="/browse">

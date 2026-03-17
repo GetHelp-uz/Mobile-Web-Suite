@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { generateToken, authenticate } from "../lib/auth.js";
-import { sendTemplateSms } from "../lib/sms.js";
+import { sendTemplateSms, sendSms } from "../lib/sms.js";
 
 const router = Router();
 
@@ -43,6 +43,14 @@ function validateRegisterBody(body: any): { valid: boolean; error?: string } {
   return { valid: true };
 }
 
+function normalizePhone(raw: string): string {
+  const digits = String(raw).replace(/\D/g, "");
+  if (digits.startsWith("998") && digits.length === 12) return digits;
+  if (digits.length === 9) return `998${digits}`;
+  return digits;
+}
+
+// ─── Ro'yxatdan o'tish ────────────────────────────────────────────────────────
 router.post("/register", async (req, res) => {
   try {
     const body = req.body;
@@ -52,8 +60,7 @@ router.post("/register", async (req, res) => {
       return;
     }
 
-    const phoneRaw = String(body.phone).replace(/\D/g, "");
-    const phone = phoneRaw.startsWith("998") ? phoneRaw : `998${phoneRaw}`;
+    const phone = normalizePhone(body.phone);
     const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
     if (existing.length > 0) {
       res.status(400).json({ error: "Bu telefon raqam allaqachon ro'yhatdan o'tgan" });
@@ -95,6 +102,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// ─── Kirish (login) — telefon raqam YOKI username/login ──────────────────────
 router.post("/login", async (req, res) => {
   try {
     const { phone: loginId, password } = req.body;
@@ -105,14 +113,13 @@ router.post("/login", async (req, res) => {
 
     let user: any = null;
 
-    // Try username login first (for admins with special usernames)
+    // 1. Username orqali (admin, maxsus foydalanuvchilar)
     const byUsername = await db.select().from(usersTable).where(eq(usersTable.username, String(loginId)));
     if (byUsername.length > 0) {
       user = byUsername[0];
     } else {
-      // Try phone login
-      const phoneRaw = String(loginId).replace(/\D/g, "");
-      const phone = phoneRaw.startsWith("998") ? phoneRaw : phoneRaw.length === 9 ? `998${phoneRaw}` : phoneRaw;
+      // 2. Telefon raqam orqali
+      const phone = normalizePhone(String(loginId));
       const byPhone = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
       if (byPhone.length > 0) user = byPhone[0];
     }
@@ -127,7 +134,7 @@ router.post("/login", async (req, res) => {
       return;
     }
     if (!user.isActive) {
-      res.status(403).json({ error: "Hisob faol emas" });
+      res.status(403).json({ error: "Hisob faol emas. Administratorga murojaat qiling." });
       return;
     }
     const token = generateToken(user.id, user.role);
@@ -138,21 +145,139 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ─── Parolni tiklash — 1-qadam: telefon raqam yuborish ──────────────────────
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { phone: rawPhone, lang = "uz" } = req.body;
+    if (!rawPhone) {
+      res.status(400).json({ error: "Telefon raqamni kiriting" });
+      return;
+    }
+
+    const phone = normalizePhone(String(rawPhone));
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
+
+    // Xavfsizlik: hatto topilmasa ham xuddi shunday javob qaytaramiz
+    if (!user) {
+      res.json({ ok: true, message: "Agar bu raqam ro'yxatda bo'lsa, SMS yuboriladi" });
+      return;
+    }
+
+    // Avvalgi kodlarni o'chirish (bir telefonga bir vaqtda faqat bitta aktiv kod)
+    await db.execute(sql`DELETE FROM password_reset_codes WHERE phone = ${phone}`);
+
+    // 6 xonali tasodifiy kod
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 daqiqa
+
+    await db.execute(sql`
+      INSERT INTO password_reset_codes (phone, code, expires_at, used)
+      VALUES (${phone}, ${code}, ${expiresAt.toISOString()}, false)
+    `);
+
+    // SMS yuborish
+    const smsResult = await sendTemplateSms(phone, "password_reset", { kod: code }, { lang });
+    if (!smsResult.success) {
+      // SMS sozlanmagan bo'lsa — development uchun console ga chiqaramiz
+      console.log(`[Reset Code] ${phone}: ${code}`);
+    }
+
+    res.json({ ok: true, message: "SMS yuborildi. Kodning amal qilish muddati 10 daqiqa." });
+  } catch (err: any) {
+    console.error("[ForgotPassword Error]", err.message);
+    res.status(500).json({ error: "Kod yuborishda xatolik yuz berdi. Qayta urining." });
+  }
+});
+
+// ─── Parolni tiklash — 2-qadam: kodni tekshirish ─────────────────────────────
+router.post("/verify-reset-code", async (req, res) => {
+  try {
+    const { phone: rawPhone, code } = req.body;
+    if (!rawPhone || !code) {
+      res.status(400).json({ error: "Telefon va kod kiritilishi shart" });
+      return;
+    }
+
+    const phone = normalizePhone(String(rawPhone));
+    const result = await db.execute(sql`
+      SELECT * FROM password_reset_codes
+      WHERE phone = ${phone} AND code = ${String(code)} AND used = false
+        AND expires_at > NOW()
+      ORDER BY created_at DESC LIMIT 1
+    `);
+
+    if (!result.rows.length) {
+      res.status(400).json({ error: "Kod noto'g'ri yoki muddati o'tgan" });
+      return;
+    }
+
+    // Bir martalik token (sessiya uchun)
+    const resetToken = `rst_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    await db.execute(sql`
+      UPDATE password_reset_codes SET code = ${resetToken}
+      WHERE phone = ${phone} AND code = ${String(code)} AND used = false
+    `);
+
+    res.json({ ok: true, resetToken });
+  } catch (err: any) {
+    console.error("[VerifyCode Error]", err.message);
+    res.status(500).json({ error: "Server xatosi. Qayta urining." });
+  }
+});
+
+// ─── Parolni tiklash — 3-qadam: yangi parol o'rnatish ───────────────────────
+router.post("/reset-password", async (req, res) => {
+  try {
+    const { phone: rawPhone, resetToken, newPassword } = req.body;
+    if (!rawPhone || !resetToken || !newPassword) {
+      res.status(400).json({ error: "Barcha maydonlar to'ldirilishi shart" });
+      return;
+    }
+    if (String(newPassword).length < 6) {
+      res.status(400).json({ error: "Yangi parol kamida 6 ta belgi bo'lishi kerak" });
+      return;
+    }
+
+    const phone = normalizePhone(String(rawPhone));
+    const result = await db.execute(sql`
+      SELECT * FROM password_reset_codes
+      WHERE phone = ${phone} AND code = ${String(resetToken)} AND used = false
+        AND expires_at > NOW()
+      LIMIT 1
+    `);
+
+    if (!result.rows.length) {
+      res.status(400).json({ error: "Noto'g'ri yoki muddati o'tgan so'rov" });
+      return;
+    }
+
+    const hashed = await bcrypt.hash(String(newPassword), 10);
+    await db.execute(sql`UPDATE users SET password = ${hashed} WHERE phone = ${phone}`);
+    await db.execute(sql`
+      UPDATE password_reset_codes SET used = true
+      WHERE phone = ${phone} AND code = ${String(resetToken)}
+    `);
+
+    res.json({ ok: true, message: "Parol muvaffaqiyatli yangilandi" });
+  } catch (err: any) {
+    console.error("[ResetPassword Error]", err.message);
+    res.status(500).json({ error: "Parol yangilashda xatolik. Qayta urining." });
+  }
+});
+
+// ─── Joriy foydalanuvchi ma'lumotlari ────────────────────────────────────────
 router.get("/me", authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
-    if (!user) {
-      res.status(404).json({ error: "User not found" });
-      return;
-    }
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
     res.json(userResponse(user));
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
-// PATCH /api/auth/profile — profil ma'lumotlarini yangilash (pasport, ism)
+// ─── Profil tahrirlash ────────────────────────────────────────────────────────
 router.patch("/profile", authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.userId;
@@ -165,7 +290,9 @@ router.patch("/profile", authenticate, async (req, res) => {
     }
     const [updated] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
     res.json(userResponse(updated));
-  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
+  }
 });
 
 export default router;

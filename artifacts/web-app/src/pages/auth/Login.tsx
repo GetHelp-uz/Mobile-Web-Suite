@@ -3,7 +3,7 @@ import { useAuth } from "@/lib/auth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Hammer, Lock, Phone, ArrowLeft } from "lucide-react";
+import { Hammer, Lock, Phone, ArrowLeft, User } from "lucide-react";
 import { useLogin } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -81,24 +81,30 @@ export default function Login() {
           <p className="text-muted-foreground mb-8">Hisobingizga kirish uchun ma'lumotlaringizni kiriting</p>
 
           <Card className="p-8 shadow-xl border-border/50">
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-2">
                 <label className="text-sm font-semibold">Telefon raqam yoki login</label>
                 <div className="relative">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <Input 
                     type="text" 
-                    placeholder="+998 90 123 45 67" 
+                    placeholder="+998 90 123 45 67 yoki username" 
                     className="pl-12"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     required
                   />
                 </div>
+                <p className="text-xs text-muted-foreground">Telefon raqam (998XXXXXXXXX) yoki username bilan kiring</p>
               </div>
               
               <div className="space-y-2">
-                <label className="text-sm font-semibold">Parol</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold">Parol</label>
+                  <Link href="/forgot-password" className="text-xs text-primary hover:underline font-medium">
+                    Parolni unutdingizmi?
+                  </Link>
+                </div>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                   <Input 
@@ -117,13 +123,21 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-6 pt-6 border-t border-border text-center">
-              <p className="text-sm text-muted-foreground">
-                Do'kon egasimisiz?{" "}
-                <Link href="/register" className="text-primary font-semibold hover:underline">
-                  Ro'yhatdan o'ting
-                </Link>
-              </p>
+            <div className="mt-6 pt-6 border-t border-border">
+              <div className="flex flex-col gap-2 text-center">
+                <p className="text-sm text-muted-foreground">
+                  Hisobingiz yo'qmi?{" "}
+                  <Link href="/register" className="text-primary font-semibold hover:underline">
+                    Ro'yhatdan o'ting
+                  </Link>
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Parolni unutdingizmi?{" "}
+                  <Link href="/forgot-password" className="text-primary font-semibold hover:underline">
+                    Tiklash
+                  </Link>
+                </p>
+              </div>
             </div>
           </Card>
         </motion.div>

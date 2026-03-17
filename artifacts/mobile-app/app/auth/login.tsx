@@ -84,24 +84,32 @@ export default function LoginScreen() {
             </Text>
 
             <View style={styles.field}>
-              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Telefon raqam</Text>
+              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Telefon raqam yoki login</Text>
               <View style={[styles.inputRow, { backgroundColor: C.inputBg, borderColor: C.border }]}>
                 <Ionicons name="call-outline" size={18} color={C.textMuted} style={{ marginRight: 8 }} />
                 <TextInput
                   style={[styles.input, { color: C.text }]}
                   value={phone}
                   onChangeText={setPhone}
-                  placeholder="998XXXXXXXXX"
+                  placeholder="998XXXXXXXXX yoki username"
                   placeholderTextColor={C.textMuted}
-                  keyboardType="phone-pad"
+                  keyboardType="default"
                   autoCapitalize="none"
                   returnKeyType="next"
                 />
               </View>
+              <Text style={[styles.fieldHint, { color: C.textMuted }]}>
+                Telefon raqam yoki username bilan kiring
+              </Text>
             </View>
 
             <View style={styles.field}>
-              <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Parol</Text>
+              <View style={styles.labelRow}>
+                <Text style={[styles.fieldLabel, { color: C.textSecondary }]}>Parol</Text>
+                <Pressable onPress={() => router.push("/auth/forgot-password")}>
+                  <Text style={[styles.forgotLink, { color: C.primary }]}>Parolni unutdingizmi?</Text>
+                </Pressable>
+              </View>
               <View style={[styles.inputRow, { backgroundColor: C.inputBg, borderColor: C.border }]}>
                 <Ionicons name="lock-closed-outline" size={18} color={C.textMuted} style={{ marginRight: 8 }} />
                 <TextInput
@@ -140,7 +148,6 @@ export default function LoginScreen() {
             </Pressable>
           </View>
 
-          {/* Ro'yhatdan o'tish */}
           <View style={styles.registerRow}>
             <Text style={[styles.registerText, { color: C.textSecondary }]}>
               Hisobingiz yo'qmi?
@@ -151,6 +158,13 @@ export default function LoginScreen() {
               </Text>
             </Pressable>
           </View>
+
+          <Pressable style={styles.forgotRow} onPress={() => router.push("/auth/forgot-password")}>
+            <Ionicons name="key-outline" size={14} color={C.textMuted} />
+            <Text style={[styles.forgotFullText, { color: C.textMuted }]}>
+              Parolni SMS orqali tiklash
+            </Text>
+          </Pressable>
 
           {/* Xavfsizlik eslatmasi */}
           <View style={[styles.secureNote, { backgroundColor: C.surface, borderColor: C.border }]}>
@@ -249,5 +263,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: "Inter_400Regular",
     lineHeight: 18,
+  },
+  fieldHint: {
+    fontSize: 11,
+    fontFamily: "Inter_400Regular",
+    marginTop: 5,
+  },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  forgotLink: {
+    fontSize: 12,
+    fontFamily: "Inter_600SemiBold",
+  },
+  forgotRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+    marginBottom: 12,
+  },
+  forgotFullText: {
+    fontSize: 13,
+    fontFamily: "Inter_400Regular",
   },
 });
