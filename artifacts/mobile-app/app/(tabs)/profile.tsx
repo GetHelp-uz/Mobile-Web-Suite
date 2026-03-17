@@ -1,7 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useCallback, useState } from "react";
 import {
   Alert,
   Pressable,
@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { checkBiometricAvailability } from "@/lib/biometric";
-import { isBiometricEnabled, setBiometricEnabled } from "@/lib/secure-storage";
+import { hasAppPin, isBiometricEnabled, setBiometricEnabled } from "@/lib/secure-storage";
 
 const ROLE_LABELS: Record<string, string> = {
   super_admin: "Super Admin",
@@ -73,18 +73,28 @@ export default function ProfileScreen() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBioEnabled] = useState(false);
   const [bioLabel, setBioLabel] = useState("Barmoq izi");
+  const [bioIcon, setBioIcon] = useState<"finger-print-outline" | "eye-outline">("finger-print-outline");
+  const [pinSet, setPinSet] = useState(false);
 
-  useEffect(() => {
-    (async () => {
-      const info = await checkBiometricAvailability();
-      setBiometricAvailable(info.available);
-      if (info.available) {
-        setBioLabel(info.label);
-        const enabled = await isBiometricEnabled();
-        setBioEnabled(enabled);
-      }
-    })();
-  }, []);
+  // PIN ekranidan qaytganda yangilash
+  useFocusEffect(useCallback(() => {
+    loadSecurity();
+  }, []));
+
+  async function loadSecurity() {
+    const [info, pinExists] = await Promise.all([
+      checkBiometricAvailability(),
+      hasAppPin(),
+    ]);
+    setBiometricAvailable(info.available);
+    setBioIcon(info.type === "facial" ? "eye-outline" : "finger-print-outline");
+    if (info.available) {
+      setBioLabel(info.label);
+      const enabled = await isBiometricEnabled();
+      setBioEnabled(enabled);
+    }
+    setPinSet(pinExists);
+  }
 
   async function handleBiometricToggle(value: boolean) {
     await setBiometricEnabled(value);
@@ -198,12 +208,30 @@ export default function ProfileScreen() {
       )}
 
       {/* Xavfsizlik sozlamalari */}
-      {biometricAvailable && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Xavfsizlik</Text>
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Xavfsizlik</Text>
+
+        {/* Ilova PIN */}
+        <MenuItem
+          icon="keypad-outline"
+          label={pinSet ? "Ilova parolini o'zgartirish" : "Ilova paroli o'rnatish"}
+          value={pinSet ? "Yoqilgan" : "O'chirilgan"}
+          onPress={() => router.push(`/security/set-pin?mode=${pinSet ? "change" : "set"}` as any)}
+        />
+        {pinSet && (
+          <MenuItem
+            icon="trash-outline"
+            label="Ilova parolini o'chirish"
+            onPress={() => router.push("/security/set-pin?mode=remove" as any)}
+            danger
+          />
+        )}
+
+        {/* Biometrik */}
+        {biometricAvailable && (
           <View style={[styles.menuItem, { backgroundColor: C.surface, borderColor: C.border }]}>
             <View style={[styles.menuIcon, { backgroundColor: C.primary + "20" }]}>
-              <Ionicons name="finger-print-outline" size={20} color={C.primary} />
+              <Ionicons name={bioIcon} size={20} color={C.primary} />
             </View>
             <Text style={[styles.menuLabel, { color: C.text }]}>{bioLabel} bilan kirish</Text>
             <Switch
@@ -213,8 +241,8 @@ export default function ProfileScreen() {
               thumbColor={biometricEnabled ? C.primary : C.textMuted}
             />
           </View>
-        </View>
-      )}
+        )}
+      </View>
 
       {/* App info */}
       <View style={styles.section}>

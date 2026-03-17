@@ -5,7 +5,7 @@ import {
   saveToken, getToken, deleteToken,
   saveUser, getUser, deleteUser,
   clearAllSecureData, updateLastActive, getLastActive,
-  isBiometricEnabled,
+  isBiometricEnabled, hasAppPin,
 } from "@/lib/secure-storage";
 import { authenticateWithBiometric, checkBiometricAvailability } from "@/lib/biometric";
 import { registerForPushNotificationsAsync, savePushToken } from "@/utils/notifications";
@@ -34,6 +34,7 @@ interface AuthContextValue {
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   unlockWithBiometric: () => Promise<boolean>;
+  unlockApp: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
 
@@ -60,13 +61,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const idle = lastActive > 0 ? Date.now() - lastActive : 0;
 
           if (lastActive > 0 && idle > SESSION_TIMEOUT) {
-            // Sessiya tugagan — biometrik talab qilish
-            const bioEnabled = await isBiometricEnabled();
+            // Sessiya tugagan — PIN yoki biometrik talab qilish
+            const [bioEnabled, pinExists] = await Promise.all([
+              isBiometricEnabled(),
+              hasAppPin(),
+            ]);
+            const shouldLock = bioEnabled || pinExists;
             setToken(savedToken);
             setUser(savedUser);
-            setIsLocked(bioEnabled);
-            if (!bioEnabled) {
-              // Biometrik yo'q — to'liq logout
+            setIsLocked(shouldLock);
+            if (!shouldLock) {
+              // Himoya yo'q — to'liq logout
               await clearAllSecureData();
               setToken(null);
               setUser(null);
@@ -103,8 +108,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (bgAt) {
           const elapsed = Date.now() - bgAt;
           if (elapsed > BG_LOCK_TIMEOUT) {
-            const bioEnabled = await isBiometricEnabled();
-            if (bioEnabled) {
+            const [bioEnabled, pinExists] = await Promise.all([
+              isBiometricEnabled(),
+              hasAppPin(),
+            ]);
+            if (bioEnabled || pinExists) {
               setIsLocked(true);
             }
           }
@@ -174,6 +182,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // ─── Qulfni ochish (PIN yoki biometrik muvaffaqiyatli bo'lganda) ─────────
+  async function unlockApp(): Promise<void> {
+    await updateLastActive();
+    setIsLocked(false);
+  }
+
   // ─── Biometrik bilan qulfni ochish ───────────────────────────────────────
   async function unlockWithBiometric(): Promise<boolean> {
     const bio = await checkBiometricAvailability();
@@ -211,7 +225,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider value={{
       user, token, isLoading, isLocked,
       login, register, logout,
-      unlockWithBiometric, refreshUser,
+      unlockWithBiometric, unlockApp, refreshUser,
     }}>
       {children}
     </AuthContext.Provider>

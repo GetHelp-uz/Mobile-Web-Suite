@@ -14,7 +14,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { BiometricLockScreen } from "@/components/BiometricLockScreen";
+import { AppLockScreen } from "@/components/AppLockScreen";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -24,7 +24,7 @@ function RootLayoutNav() {
   const { isLocked } = useAuth();
 
   if (isLocked) {
-    return <BiometricLockScreen />;
+    return <AppLockScreen />;
   }
 
   return (
@@ -35,6 +35,7 @@ function RootLayoutNav() {
       <Stack.Screen name="auth/login" />
       <Stack.Screen name="auth/register" />
       <Stack.Screen name="tool/[id]" options={{ presentation: "card" }} />
+      <Stack.Screen name="security/set-pin" options={{ presentation: "modal" }} />
     </Stack>
   );
 }
