@@ -43,6 +43,10 @@ import AdminPaymentSettings from "@/pages/admin/AdminPaymentSettings";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminSms from "@/pages/admin/AdminSms";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
+import AdminTariffs from "@/pages/admin/AdminTariffs";
+import AdminCommissions from "@/pages/admin/AdminCommissions";
+import AdminWithdrawals from "@/pages/admin/AdminWithdrawals";
+import AdminAppManagement from "@/pages/admin/AdminAppManagement";
 import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
 import ShopDeliverySettings from "@/pages/shop/ShopDeliverySettings";
 import ShopMaintenanceSchedule from "@/pages/shop/ShopMaintenanceSchedule";
@@ -210,6 +214,27 @@ function Router() {
       <Route path="/admin/payment-settings">
         {() => <ProtectedRoute component={AdminPaymentSettings} allowedRoles={['super_admin']} />}
       </Route>
+      <Route path="/admin/notifications">
+        {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/sms">
+        {() => <ProtectedRoute component={AdminSms} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/audit">
+        {() => <ProtectedRoute component={AdminAuditLog} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/tariffs">
+        {() => <ProtectedRoute component={AdminTariffs} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/commissions">
+        {() => <ProtectedRoute component={AdminCommissions} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/withdrawals">
+        {() => <ProtectedRoute component={AdminWithdrawals} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/app-management">
+        {() => <ProtectedRoute component={AdminAppManagement} allowedRoles={['super_admin']} />}
+      </Route>
       <Route path="/shop/payment-settings">
         {() => <ProtectedRoute component={ShopPaymentSettings} allowedRoles={['shop_owner', 'super_admin']} />}
       </Route>
@@ -231,19 +256,10 @@ function Router() {
       <Route path="/shop/owner-signature">
         {() => <ProtectedRoute component={ShopOwnerSignature} allowedRoles={['shop_owner', 'super_admin']} />}
       </Route>
-      <Route path="/admin/notifications">
-        {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}
-      </Route>
-      <Route path="/admin/sms">
-        {() => <ProtectedRoute component={AdminSms} allowedRoles={['super_admin']} />}
-      </Route>
-      <Route path="/admin/audit">
-        {() => <ProtectedRoute component={AdminAuditLog} allowedRoles={['super_admin']} />}
-      </Route>
 
-      {/* Hamyon va bildirishnomalar — barcha rollar */}
+      {/* Hamyon va bildirishnomalar */}
       <Route path="/wallet">
-        {() => <ProtectedRoute component={WalletPage} allowedRoles={['customer','shop_owner','worker']} />}
+        {() => <ProtectedRoute component={WalletPage} allowedRoles={['customer','shop_owner','worker','super_admin']} />}
       </Route>
       <Route path="/notifications-center">
         {() => <ProtectedRoute component={NotificationsCenter} />}

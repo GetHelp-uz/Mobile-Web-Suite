@@ -42,6 +42,10 @@ import {
   Network,
   PenLine,
   Gauge,
+  DollarSign,
+  ArrowDownToLine,
+  Smartphone,
+  PieChart,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -98,15 +102,18 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Bildirishnomalar", path: "/notifications-center", icon: Bell },
     ],
     super_admin: [
-      { name: "Umumiy ko'rinish", path: "/admin", icon: LayoutDashboard },
-      { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
-      { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
+      { name: "Boshqaruv paneli", path: "/admin", icon: LayoutDashboard },
+      { name: "Tarif rejalari", path: "/admin/tariffs", icon: PieChart },
+      { name: "Komissiya boshqaruvi", path: "/admin/commissions", icon: DollarSign },
+      { name: "Yechib olish so'rovlari", path: "/admin/withdrawals", icon: ArrowDownToLine },
+      { name: "Ilova boshqaruvi", path: "/admin/app-management", icon: Smartphone },
       { name: "Bildirishnomalar", path: "/admin/notifications", icon: Bell },
       { name: "SMS Boshqaruv", path: "/admin/sms", icon: MessageSquare },
       { name: "Audit jurnali", path: "/admin/audit", icon: Shield },
-      { name: "Ilova boshqaruvi", path: "/admin/app", icon: Settings },
+      { name: "Ilova (eski)", path: "/admin/app", icon: Settings },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
       { name: "To'lov sozlamalari", path: "/admin/payment-settings", icon: CreditCard },
+      { name: "Hamyon", path: "/wallet", icon: Wallet },
     ]
   };
 

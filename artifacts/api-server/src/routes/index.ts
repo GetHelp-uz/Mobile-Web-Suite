@@ -36,6 +36,8 @@ import paymentSettingsRouter from "./payment-settings.js";
 import paymentWebhooksRouter from "./payment-webhooks.js";
 import deliveryRouter from "./delivery.js";
 import workerPerformanceRouter from "./worker-performance.js";
+import platformRouter from "./platform.js";
+import withdrawalsRouter from "./withdrawals.js";
 
 const router: IRouter = Router();
 
@@ -76,5 +78,7 @@ router.use("/payment-settings", paymentSettingsRouter);
 router.use("/pay", paymentWebhooksRouter);
 router.use("/delivery", deliveryRouter);
 router.use("/worker-performance", workerPerformanceRouter);
+router.use("/platform", platformRouter);
+router.use("/withdrawals", withdrawalsRouter);
 
 export default router;

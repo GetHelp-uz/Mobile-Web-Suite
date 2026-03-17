@@ -97,6 +97,61 @@ router.post("/", authenticate, async (req, res) => {
       type: "rental",
     });
 
+    // ─── Avtomatik komissiya hisoblash va do'kon hamyoniga o'tkazish ──────────
+    try {
+      // Platform komissiyasini olish
+      const settingRow = await db.execute(sql`SELECT value FROM platform_settings WHERE key = 'auto_commission_enabled'`);
+      const autoCommission = (settingRow.rows[0] as any)?.value === "true";
+
+      if (autoCommission && body.verificationType !== "passport") {
+        // Do'konning komissiya foizini olish
+        const shopRow = await db.execute(sql`SELECT commission, owner_id FROM shops WHERE id = ${tool.shopId} LIMIT 1`);
+        const shop = shopRow.rows[0] as any;
+        const commissionRate = shop?.commission || 10;
+        const rentalAmount = tool.pricePerDay * rentalDays;
+        const commissionAmount = Math.round(rentalAmount * commissionRate / 100);
+        const shopAmount = rentalAmount - commissionAmount;
+        const ownerId = shop?.owner_id;
+
+        if (ownerId) {
+          // Do'kon egasi hamyonini yaratish yoki topish
+          await db.execute(sql`
+            INSERT INTO wallets (user_id, balance, escrow_balance)
+            VALUES (${ownerId}, 0, 0)
+            ON CONFLICT (user_id) DO NOTHING
+          `);
+
+          // Do'kon egasi hamyoniga ijara summasini komissiyasiz o'tkazish
+          const walletRow = await db.execute(sql`SELECT * FROM wallets WHERE user_id = ${ownerId} LIMIT 1`);
+          const ownerWallet = walletRow.rows[0] as any;
+
+          await db.execute(sql`
+            UPDATE wallets SET balance = balance + ${shopAmount}, updated_at = NOW()
+            WHERE user_id = ${ownerId}
+          `);
+
+          await db.execute(sql`
+            INSERT INTO wallet_transactions (wallet_id, user_id, rental_id, amount, type, provider, status, description, balance_before, balance_after)
+            VALUES (
+              ${ownerWallet.id}, ${ownerId}, ${rental.id},
+              ${shopAmount}, 'payment', 'system', 'completed',
+              ${`Ijara #${rental.id} to'lovi (${commissionRate}% komissiya ayirildi)`},
+              ${ownerWallet.balance}, ${ownerWallet.balance + shopAmount}
+            )
+          `);
+
+          // Komissiya logini saqlash
+          await db.execute(sql`
+            INSERT INTO commission_logs (rental_id, shop_id, total_amount, commission_rate, commission_amount, shop_amount)
+            VALUES (${rental.id}, ${tool.shopId}, ${rentalAmount}, ${commissionRate}, ${commissionAmount}, ${shopAmount})
+          `);
+        }
+      }
+    } catch (commErr: any) {
+      console.error("[Commission] Xatolik:", commErr.message);
+    }
+    // ─────────────────────────────────────────────────────────────────────────
+
     const enriched = await enrichRental(rental);
     res.status(201).json(enriched);
   } catch (err: any) {
