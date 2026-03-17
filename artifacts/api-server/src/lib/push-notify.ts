@@ -1,5 +1,6 @@
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
+import { sendTemplateSms } from "./sms.js";
 
 export type NotifType =
   | "rental_start"
@@ -42,10 +43,10 @@ export async function sendInAppNotification(payload: PushPayload) {
 export async function sendRentalStartNotifications(rentalId: number) {
   try {
     const row = await db.execute(sql`
-      SELECT r.id, r.customer_id, r.shop_id,
+      SELECT r.id, r.customer_id, r.shop_id, r.due_date,
              t.name as tool_name,
-             u.name as customer_name,
-             s.owner_id
+             u.name as customer_name, u.phone as customer_phone, u.preferred_lang,
+             s.owner_id, s.name as shop_name
       FROM rentals r
       JOIN tools t ON t.id = r.tool_id
       JOIN users u ON u.id = r.customer_id
@@ -54,6 +55,8 @@ export async function sendRentalStartNotifications(rentalId: number) {
     `);
     if (!row.rows.length) return;
     const r = row.rows[0] as any;
+    const lang = r.preferred_lang || "uz";
+    const dueDate = r.due_date ? new Date(r.due_date).toLocaleDateString("uz-UZ") : "";
 
     await sendInAppNotification({
       userId: r.customer_id,
@@ -63,6 +66,12 @@ export async function sendRentalStartNotifications(rentalId: number) {
       rentalId,
       soundType: "rental_start",
     });
+
+    if (r.customer_phone) {
+      sendTemplateSms(r.customer_phone, "rental_start", {
+        ism: r.customer_name, asbob: r.tool_name, dokon: r.shop_name, sana: dueDate,
+      }, { shopId: r.shop_id, rentalId, lang }).catch(() => {});
+    }
 
     if (r.owner_id) {
       await sendInAppNotification({
@@ -84,8 +93,8 @@ export async function sendRentalReturnNotifications(rentalId: number, depositAmo
     const row = await db.execute(sql`
       SELECT r.id, r.customer_id, r.shop_id, r.deposit_amount,
              t.name as tool_name,
-             u.name as customer_name,
-             s.owner_id
+             u.name as customer_name, u.phone as customer_phone, u.preferred_lang,
+             s.owner_id, s.name as shop_name
       FROM rentals r
       JOIN tools t ON t.id = r.tool_id
       JOIN users u ON u.id = r.customer_id
@@ -95,6 +104,7 @@ export async function sendRentalReturnNotifications(rentalId: number, depositAmo
     if (!row.rows.length) return;
     const r = row.rows[0] as any;
     const dep = depositAmount || Number(r.deposit_amount) || 0;
+    const lang = r.preferred_lang || "uz";
 
     await sendInAppNotification({
       userId: r.customer_id,
@@ -106,6 +116,12 @@ export async function sendRentalReturnNotifications(rentalId: number, depositAmo
       rentalId,
       soundType: "rental_return",
     });
+
+    if (r.customer_phone) {
+      sendTemplateSms(r.customer_phone, "return_confirm", {
+        ism: r.customer_name, asbob: r.tool_name, dokon: r.shop_name,
+      }, { shopId: r.shop_id, rentalId, lang }).catch(() => {});
+    }
 
     if (r.owner_id) {
       await sendInAppNotification({
@@ -132,6 +148,23 @@ export async function sendDepositNotification(customerId: number, amount: number
       rentalId,
       soundType: "payment",
     });
+
+    const row = await db.execute(sql`
+      SELECT u.phone, u.name, u.preferred_lang, r.shop_id,
+             t.name as tool_name
+      FROM rentals r
+      JOIN users u ON u.id = r.customer_id
+      JOIN tools t ON t.id = r.tool_id
+      WHERE r.id = ${rentalId} LIMIT 1
+    `);
+    if (row.rows.length) {
+      const d = row.rows[0] as any;
+      if (d.phone) {
+        sendTemplateSms(d.phone, "deposit_return", {
+          ism: d.name, asbob: d.tool_name, miqdor: amount.toLocaleString(),
+        }, { shopId: d.shop_id, rentalId, lang: d.preferred_lang || "uz" }).catch(() => {});
+      }
+    }
   } catch (err: any) {
     console.error("[Push Notify] deposit_return error:", err.message);
   }
