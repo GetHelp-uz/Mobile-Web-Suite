@@ -107,7 +107,7 @@ router.get("/:id/public", async (req, res) => {
     `);
     const ratingsResult = await db.execute(sql`
       SELECT r.*, u.name as customer_name FROM tool_ratings r
-      LEFT JOIN users u ON u.id = r.customer_id WHERE r.shop_id = ${shopId} ORDER BY r.created_at DESC LIMIT 20
+      LEFT JOIN users u ON u.id = r.customer_id WHERE r.shop_id = ${shopId} ORDER BY r.started_at DESC LIMIT 20
     `);
     const avgResult = await db.execute(sql`SELECT AVG(rating)::numeric(3,1) as avg, COUNT(*) as cnt FROM tool_ratings WHERE shop_id = ${shopId}`);
     const branchesResult = await db.execute(sql`SELECT * FROM shop_branches WHERE shop_id = ${shopId} AND is_active = TRUE ORDER BY is_main DESC`);

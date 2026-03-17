@@ -108,7 +108,7 @@ router.get("/schedule", authenticate, async (req, res) => {
         (SELECT COUNT(*) FROM maintenance_logs ml WHERE ml.tool_id = t.id) as total_maintenance_count,
         (SELECT ml.created_at FROM maintenance_logs ml WHERE ml.tool_id = t.id ORDER BY ml.created_at DESC LIMIT 1) as last_maintenance_log_at
       FROM tools t
-      WHERE t.shop_id = ${shopId} AND t.status != 'deleted'
+      WHERE t.shop_id = ${shopId}
       ORDER BY
         (COALESCE(t.rental_count, 0) - COALESCE(
           (SELECT COUNT(*) FROM rentals r2 WHERE r2.tool_id = t.id AND r2.returned_at > COALESCE(t.last_maintained_at, '2000-01-01'::timestamp)),
