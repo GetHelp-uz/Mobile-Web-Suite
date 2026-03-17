@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { db, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import { generateToken, authenticate } from "../lib/auth.js";
+import { sendTemplateSms } from "../lib/sms.js";
 
 const router = Router();
 
@@ -75,6 +76,12 @@ router.post("/register", async (req, res) => {
 
     const token = generateToken(user.id, user.role);
     res.status(201).json({ token, user: userResponse(user) });
+
+    // Welcome SMS (fire and forget)
+    const templateType = user.role === "shop_owner" ? "welcome_shop" : "welcome_customer";
+    const smsVars: Record<string, string> = { ism: user.name };
+    if (user.role === "shop_owner") smsVars.dokon = body.shopName || user.name;
+    sendTemplateSms(user.phone, templateType, smsVars, { lang: body.lang || "uz" }).catch(() => {});
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

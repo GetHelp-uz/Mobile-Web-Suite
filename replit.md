@@ -218,3 +218,17 @@ Utility scripts package. Each script is a `.ts` file in `src/` with a correspond
 - `routes/index.ts` ga delivery + worker-performance ro'yxatdan o'tkazildi
 - DashboardLayout.tsx: shop_owner uchun "Yetkazib berish", "Texnik jadval", "Xodim samaradorligi", "Do'konlar tarmog'i" nav elementlari
 - Customer uchun "Elektron imzo" nav elementi
+
+### 7. Ko'p tilli SMS xizmati (Yangi)
+- **Provayderlar**: Eskiz.uz (UZ), Playmobile.uz (UZ), SMSC.ru (RU/MDH), SMS.ru (RU), Infobip (Global)
+- **DB**: `sms_settings` (provider, label, country, api_key, is_global), `sms_templates` (+lang ustuni), `sms_logs` (+template_type, lang)
+- **Tillar**: UZ, RU, KK (Qozog'iston), KY (Qirg'iziston), TG (Tojikiston)
+- **Shablon turlari**: welcome_customer, welcome_shop, rental_reminder, overdue, booking_confirmed, return_confirm, custom
+- **API**: `GET/POST /api/sms/settings`, `DELETE /api/sms/settings/:id`, `PATCH /api/sms/settings/:id/toggle`
+- **API**: `GET/POST /api/sms/templates`, `PATCH/DELETE /api/sms/templates/:id`
+- **API**: `POST /api/sms/send`, `POST /api/sms/send-bulk`, `POST /api/sms/send-template`
+- **API**: `GET /api/sms/logs`, `GET /api/sms/stats`
+- **API**: `POST /api/sms/trigger-overdue`, `POST /api/sms/trigger-reminder`
+- **Auto SMS**: Ro'yxatdan o'tishda welcome SMS (fire-and-forget), 1 kun oldin eslatma, muddati o'tgan eslatma
+- **Web admin**: `/admin/sms` — AdminSms.tsx (provayderlar, shablonlar, tarix, triggerlar, tahlil)
+- **Lib**: `artifacts/api-server/src/lib/sms.ts` — `sendSms()`, `sendTemplateSms()`, `sendOverdueSmsAlerts()`, `sendReminderSmsAlerts()`

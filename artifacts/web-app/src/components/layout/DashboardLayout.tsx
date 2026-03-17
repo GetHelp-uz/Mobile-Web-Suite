@@ -102,6 +102,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
       { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
       { name: "Bildirishnomalar", path: "/admin/notifications", icon: Bell },
+      { name: "SMS Boshqaruv", path: "/admin/sms", icon: MessageSquare },
       { name: "Audit jurnali", path: "/admin/audit", icon: Shield },
       { name: "Ilova boshqaruvi", path: "/admin/app", icon: Settings },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },

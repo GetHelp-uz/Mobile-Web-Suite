@@ -1,48 +1,43 @@
-import { pgTable, text, serial, integer, timestamp, boolean, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 
-export const smsStatusEnum = pgEnum("sms_status", ["pending", "sent", "failed", "delivered"]);
-export const smsTemplateTypeEnum = pgEnum("sms_template_type", [
-  "overdue",
-  "reminder",
-  "welcome",
-  "return_confirm",
-  "custom",
-]);
-
-// SMS provider sozlamalari (global yoki shop uchun)
 export const smsSettingsTable = pgTable("sms_settings", {
   id: serial("id").primaryKey(),
-  shopId: integer("shop_id"), // null = global (admin)
-  provider: text("provider").notNull().default("eskiz"), // eskiz | playmobile | twilio
+  shopId: integer("shop_id"),
+  provider: text("provider").notNull().default("eskiz"),
+  label: text("label"),
+  country: text("country").default("uz"),
   email: text("email"),
   password: text("password"),
+  apiKey: text("api_key"),
   token: text("token"),
   tokenExpiresAt: timestamp("token_expires_at"),
   senderId: text("sender_id").notNull().default("4546"),
   isActive: boolean("is_active").notNull().default(false),
+  isGlobal: boolean("is_global").notNull().default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-// SMS shablonlari
 export const smsTemplatesTable = pgTable("sms_templates", {
   id: serial("id").primaryKey(),
-  shopId: integer("shop_id"), // null = global
+  shopId: integer("shop_id"),
   name: text("name").notNull(),
-  type: smsTemplateTypeEnum("type").notNull().default("custom"),
+  type: text("type").notNull().default("custom"),
+  lang: text("lang").notNull().default("uz"),
   message: text("message").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-// SMS yuborish tarixi
 export const smsLogsTable = pgTable("sms_logs", {
   id: serial("id").primaryKey(),
   shopId: integer("shop_id"),
   rentalId: integer("rental_id"),
   phone: text("phone").notNull(),
   message: text("message").notNull(),
-  status: smsStatusEnum("status").notNull().default("pending"),
+  status: text("status").notNull().default("pending"),
   provider: text("provider").notNull().default("eskiz"),
+  templateType: text("template_type"),
+  lang: text("lang").default("uz"),
   providerMessageId: text("provider_message_id"),
   errorMessage: text("error_message"),
   sentAt: timestamp("sent_at").defaultNow(),

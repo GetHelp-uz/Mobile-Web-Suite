@@ -41,6 +41,7 @@ import AdminApp from "@/pages/admin/AdminApp";
 import AdminIntegrations from "@/pages/admin/AdminIntegrations";
 import AdminPaymentSettings from "@/pages/admin/AdminPaymentSettings";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
+import AdminSms from "@/pages/admin/AdminSms";
 import AdminAuditLog from "@/pages/admin/AdminAuditLog";
 import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
 import ShopDeliverySettings from "@/pages/shop/ShopDeliverySettings";
@@ -232,6 +233,9 @@ function Router() {
       </Route>
       <Route path="/admin/notifications">
         {() => <ProtectedRoute component={AdminNotifications} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/sms">
+        {() => <ProtectedRoute component={AdminSms} allowedRoles={['super_admin']} />}
       </Route>
       <Route path="/admin/audit">
         {() => <ProtectedRoute component={AdminAuditLog} allowedRoles={['super_admin']} />}
