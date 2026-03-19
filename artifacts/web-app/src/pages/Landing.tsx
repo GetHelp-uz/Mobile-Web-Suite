@@ -62,34 +62,42 @@ export default function Landing() {
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-primary text-primary-foreground py-24 md:py-36">
-        <div className="absolute inset-0 z-0 opacity-10">
+      <section className="relative overflow-hidden bg-primary text-white py-24 md:py-36">
+        {/* Background image with dark overlay */}
+        <div className="absolute inset-0 z-0">
           <img
             src={`${import.meta.env.BASE_URL}images/hero-bg.png`}
             alt=""
             className="w-full h-full object-cover"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
+          <div className="absolute inset-0 bg-black/50" />
         </div>
+
         <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <Badge className="mb-6 bg-accent text-white border-0 text-sm px-4 py-1.5">
               O'zbekiston #1 Qurilish Asbob Ijarasi Platformasi
             </Badge>
-            <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight">
+            <h1 className="text-5xl md:text-7xl font-display font-bold mb-6 leading-tight text-white drop-shadow-lg">
               Asboblarni ijara bering,<br />
               <span className="text-accent">daromad oling</span>
             </h1>
-            <p className="text-xl md:text-2xl text-primary-foreground/80 max-w-3xl mx-auto mb-10 leading-relaxed">
+            <p className="text-xl md:text-2xl text-white/85 max-w-3xl mx-auto mb-10 leading-relaxed drop-shadow">
               GetHelp.uz orqali do'koningizni raqamlashtiring. QR kod, to'lov integratsiyasi va real vaqt boshqaruvi bilan.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/register">
-                <Button size="lg" className="bg-accent hover:bg-accent/90 text-white h-14 px-8 text-lg gap-2">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/register" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white h-14 px-8 text-lg gap-2 shadow-lg">
                   Bepul boshlash <ArrowRight size={20} />
                 </Button>
               </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-14 px-8 text-lg">
+              <Link href="/login" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto border-2 border-white/60 text-white hover:bg-white/15 hover:border-white bg-white/5 h-14 px-8 text-lg shadow-lg backdrop-blur-sm"
+                >
                   Hisobga kirish
                 </Button>
               </Link>
