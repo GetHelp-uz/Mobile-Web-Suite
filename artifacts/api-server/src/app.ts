@@ -60,6 +60,7 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 const ALLOWED_ORIGINS = [
   process.env.WEB_APP_URL,
   process.env.REPLIT_DOMAIN,
+  "http://localhost:5000",
   "http://localhost:22965",
   "http://localhost:3000",
   "http://localhost:5173",
