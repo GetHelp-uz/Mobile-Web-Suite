@@ -261,7 +261,17 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // ─── ASOSIY ROUTERLAR ────────────────────────────────────────────────────────
 app.use("/api", router);
 
-// ─── 404 HANDLER ─────────────────────────────────────────────────────────────
+// ─── STATIC FRONTEND (Production) ────────────────────────────────────────────
+if (process.env.NODE_ENV === "production") {
+  const frontendPath = path.resolve(process.cwd(), "artifacts/web-app/dist/public");
+  app.use(express.static(frontendPath));
+  
+  app.get(/^(?!\/api).*$/, (req: Request, res: Response) => {
+    res.sendFile(path.resolve(frontendPath, "index.html"));
+  });
+}
+
+// ─── 404 HANDLER (API) ───────────────────────────────────────────────────────
 app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: "Topilmadi" });
 });
