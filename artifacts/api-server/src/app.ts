@@ -13,7 +13,7 @@ const app: Express = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV === "development";
 
-// ─── TRUST PROXY (Replit / Nginx orqali ishlaydi) ───────────────────────────
+// ─── TRUST PROXY (Nginx orqali ishlaydi) ───────────────────────────
 app.set("trust proxy", 1);
 
 // ─── HELMET: Xavfsizlik sarlavhalari ─────────────────────────────────────────
@@ -27,7 +27,7 @@ app.use(
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
         imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: ["'self'", "https://*.replit.dev", "https://*.repl.co", "https://*.replit.app"],
+        connectSrc: ["'self'"],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: [],
@@ -59,7 +59,6 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 // ─── CORS: Faqat ruxsat berilgan manzillar ───────────────────────────────────
 const ALLOWED_ORIGINS = [
   process.env.WEB_APP_URL,
-  process.env.REPLIT_DOMAIN,
   "http://localhost:5000",
   "http://localhost:22965",
   "http://localhost:3000",
@@ -70,13 +69,6 @@ app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (
-        origin.includes(".replit.dev") ||
-        origin.includes(".repl.co") ||
-        origin.includes(".replit.app")
-      ) {
-        return callback(null, true);
-      }
       if (ALLOWED_ORIGINS.includes(origin)) {
         return callback(null, true);
       }
