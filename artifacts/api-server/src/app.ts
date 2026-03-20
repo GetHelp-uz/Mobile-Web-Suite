@@ -114,7 +114,8 @@ function getClientIP(req: Request): string {
 app.use((req: Request, res: Response, next: NextFunction) => {
   const ip = getClientIP(req);
   if (blockedIPs.has(ip)) {
-    return res.status(429).json({ error: "Kirish vaqtincha cheklangan" });
+    res.status(429).json({ error: "Kirish vaqtincha cheklangan" });
+    return;
   }
   next();
 });
@@ -251,7 +252,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
       setTimeout(() => blockedIPs.delete(ip), 60 * 60 * 1000);
       console.warn(`[Security] IP avtomatik bloklandi: ${ip}`);
     }
-    return res.status(404).json({ error: "Topilmadi" });
+    res.status(404).json({ error: "Topilmadi" });
+    return;
   }
   next();
 });
@@ -269,13 +271,16 @@ app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
   console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);
 
   if (err.message?.includes("CORS")) {
-    return res.status(403).json({ error: "CORS xatosi" });
+    res.status(403).json({ error: "CORS xatosi" });
+    return;
   }
   if (err.type === "entity.parse.failed") {
-    return res.status(400).json({ error: "JSON formati noto'g'ri" });
+    res.status(400).json({ error: "JSON formati noto'g'ri" });
+    return;
   }
   if (err.type === "entity.too.large") {
-    return res.status(413).json({ error: "So'rov hajmi juda katta" });
+    res.status(413).json({ error: "So'rov hajmi juda katta" });
+    return;
   }
 
   res.status(err.status || 500).json({
