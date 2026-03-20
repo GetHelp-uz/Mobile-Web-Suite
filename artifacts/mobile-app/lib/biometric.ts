@@ -47,9 +47,7 @@ export async function authenticateWithBiometric(options?: {
     if (result.error === "user_cancel") {
       return { success: false, error: "cancel" };
     }
-    if (result.error === "too_many_attempts") {
-      return { success: false, error: "Juda ko'p noto'g'ri urinish. Parol bilan kiring." };
-    }
+
     if (result.error === "lockout") {
       return { success: false, error: "Biometrik autentifikatsiya bloklangan. Parol bilan kiring." };
     }
