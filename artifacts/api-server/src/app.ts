@@ -5,12 +5,10 @@ import rateLimit from "express-rate-limit";
 import slowDown from "express-slow-down";
 import hpp from "hpp";
 import path from "path";
-import { fileURLToPath } from "url";
 import router from "./routes/index.js";
 import { sendOverdueSmsAlerts } from "./lib/sms.js";
 
 const app: Express = express();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isDev = process.env.NODE_ENV === "development";
 
 // ─── TRUST PROXY (Nginx orqali ishlaydi) ───────────────────────────
