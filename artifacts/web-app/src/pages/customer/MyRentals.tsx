@@ -139,7 +139,7 @@ export default function MyRentals() {
                 <div className={`h-2 w-full ${
                   rental.status === 'active' ? 'bg-primary' :
                   rental.status === 'overdue' ? 'bg-destructive' :
-                  rental.status === 'completed' ? 'bg-teal-500' : 'bg-green-500'
+                  rental.status === 'returned' ? 'bg-teal-500' : 'bg-green-500'
                 }`} />
 
                 {/* Shartnoma imzosi kerak ogohlantirish */}
