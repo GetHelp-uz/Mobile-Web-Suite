@@ -64,6 +64,7 @@ const ALLOWED_ORIGINS = [
 ].filter(Boolean);
 
 app.use(
+  "/api",
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
