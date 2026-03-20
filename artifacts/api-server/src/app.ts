@@ -261,7 +261,7 @@ app.use("/api", router);
 
 // ─── STATIC FRONTEND (Production) ────────────────────────────────────────────
 if (process.env.NODE_ENV === "production") {
-  const frontendPath = path.resolve(process.cwd(), "artifacts/web-app/dist/public");
+  const frontendPath = path.resolve(__dirname, "../../web-app/dist/public");
   app.use(express.static(frontendPath));
   
   app.get(/^(?!\/api).*$/, (req: Request, res: Response) => {
