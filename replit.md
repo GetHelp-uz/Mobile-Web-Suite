@@ -7,6 +7,7 @@ Qurilish asboblarini ijaraga berish va boshqarish uchun O'zbekistonga mo'ljallan
 - **API Server**: Node.js/Express, port 8080 (`artifacts/api-server`)
 - **Web App**: React/Vite, port 5000 (`artifacts/web-app`)
 - **Mobile App**: Expo (`artifacts/mobile-app`)
+- **Prezentatsiya**: React/Vite, port 24227 (`artifacts/gethelp-presentation`) — 18 slaydli startup pitch
 - **DB**: PostgreSQL (Drizzle ORM + raw SQL via `db.$client.query()`)
 
 ## Foydalanuvchi rollari

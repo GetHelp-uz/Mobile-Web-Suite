@@ -1,18 +1,146 @@
 [
   {
-    "id": "9f61f7eb-1ace-47f3-b8d5-9d5413e1282a",
+    "id": "01000000-0000-0000-0000-000000000001",
     "position": 1,
-    "filepath": "src/pages/slides/TitleSlide.tsx",
-    "title": "Welcome",
-    "description": "Opening title slide with deck name and presenter details.",
-    "speakerNotes": ""
+    "filepath": "src/pages/slides/S01_Title.tsx",
+    "title": "GetHelp.uz — Muqova",
+    "description": "Platformaning nomi, tagline va asosiy vizual.",
+    "speakerNotes": "Platformani taqdim etish. GetHelp.uz — O'zbekistondagi birinchi to'liq raqamli qurilish asboblari ijarasi platformasi."
   },
   {
-    "id": "8ebe390e-c4f7-4144-8bd0-e0530bc8ef7e",
+    "id": "02000000-0000-0000-0000-000000000002",
     "position": 2,
-    "filepath": "src/pages/slides/Agenda.tsx",
-    "title": "Agenda",
-    "description": "Overview of the sequence and core discussion points.",
-    "speakerNotes": ""
+    "filepath": "src/pages/slides/S02_Problem.tsx",
+    "title": "Muammo",
+    "description": "O'zbekiston qurilish bozorida mavjud muammolar va og'riq nuqtalari.",
+    "speakerNotes": "Hozirgi qurilish asboblari ijarasi tizimi qog'oz asosida ishlaydi. Tranzaksiyalar shaffof emas, inventarizatsiya yo'q, to'lov tizimi yo'q."
+  },
+  {
+    "id": "03000000-0000-0000-0000-000000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/S03_Solution.tsx",
+    "title": "Yechim",
+    "description": "GetHelp.uz qanday muammoni hal qiladi — asosiy qiymat taklifi.",
+    "speakerNotes": "To'liq raqamli platforma: 4 rol, 5 to'lov usuli, AI, SMS, QR skanerlash."
+  },
+  {
+    "id": "04000000-0000-0000-0000-000000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/S04_Roles.tsx",
+    "title": "4 Ta Rol",
+    "description": "Platforma ishtirokchilari: mijoz, do'kon egasi, ishchi, super admin.",
+    "speakerNotes": "Har bir foydalanuvchi turiga maxsus interfeys va huquqlar berilgan."
+  },
+  {
+    "id": "05000000-0000-0000-0000-000000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/S05_Features.tsx",
+    "title": "Asosiy Xususiyatlar",
+    "description": "Platformaning barcha asosiy xususiyatlari va funksiyalari.",
+    "speakerNotes": "60+ funksiya: AI tavsiya, QR ijara, escrow depozit, SMS bildirishnoma, hamyon, analitika."
+  },
+  {
+    "id": "06000000-0000-0000-0000-000000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/S06_WebDashboard.tsx",
+    "title": "Web Boshqaruv Paneli",
+    "description": "Admin va do'kon egasi uchun web dashboard ko'rinishi.",
+    "speakerNotes": "React + Vite asosidagi to'liq funksional admin panel. Real-vaqt statistika, grafik, jadvallar."
+  },
+  {
+    "id": "07000000-0000-0000-0000-000000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/S07_CustomerJourney.tsx",
+    "title": "Mijoz Tajribasi",
+    "description": "Mijozning 4 qadamli yo'li: qidirish, tanlash, to'lash, kuzatish.",
+    "speakerNotes": "Qidirish → Tanlash → To'lash → Kuzatish. Har bir qadamda AI, GPS, SMS integratsiyasi."
+  },
+  {
+    "id": "08000000-0000-0000-0000-000000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/S08_ShopDashboard.tsx",
+    "title": "Do'kon Egasi",
+    "description": "Do'kon egasining barcha boshqaruv imkoniyatlari.",
+    "speakerNotes": "Asbob qo'shish, ijara boshqaruvi, ishchilar, daromad, analitika, SMS paket."
+  },
+  {
+    "id": "09000000-0000-0000-0000-000000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/S09_WorkerApp.tsx",
+    "title": "Ishchi Ilovasi",
+    "description": "Ishchining QR skanerlash va topshiriq boshqaruvi.",
+    "speakerNotes": "QR skanerlash 15 soniyada ijara jarayonini tugatadi. Topshiriqlar, KPI, zarar hisob-kitobi."
+  },
+  {
+    "id": "10000000-0000-0000-0000-000000000010",
+    "position": 10,
+    "filepath": "src/pages/slides/S10_AdminPowers.tsx",
+    "title": "Admin Kuchlari",
+    "description": "Super admin uchun 12 ta kuchli boshqaruv moduli.",
+    "speakerNotes": "Foydalanuvchilar, hujjatlar, komissiya, to'lov, SMS, AI, xavfsizlik, monitoring, do'kon, promo, yechish, B2B."
+  },
+  {
+    "id": "11000000-0000-0000-0000-000000000011",
+    "position": 11,
+    "filepath": "src/pages/slides/S11_Payment.tsx",
+    "title": "To'lov & Komissiya",
+    "description": "5 ta O'zbek to'lov tizimi va 6 ta komissiya turi.",
+    "speakerNotes": "Click, Payme, Paynet, Uzum Bank, Naqd. Komissiya: ijara/topup/yechish × mijoz/do'kon. Escrow depozit."
+  },
+  {
+    "id": "12000000-0000-0000-0000-000000000012",
+    "position": 12,
+    "filepath": "src/pages/slides/S12_AIFeatures.tsx",
+    "title": "Suniy Intellekt",
+    "description": "Platformadagi 4 ta AI funksiyasi: chatbot, tavsiya, admin yordamchi, bashorat.",
+    "speakerNotes": "GPT-4 asosida O'zbek tilida chatbot. ML algoritm bilan tavsiya. Talab bashorat. Fraud detection."
+  },
+  {
+    "id": "13000000-0000-0000-0000-000000000013",
+    "position": 13,
+    "filepath": "src/pages/slides/S13_MobileApp.tsx",
+    "title": "Mobil Ilova",
+    "description": "React Native Expo asosida iOS va Android ilova.",
+    "speakerNotes": "Bitta kod baza, iOS va Android. Kamera, GPS, push notification, biometrik kirish."
+  },
+  {
+    "id": "14000000-0000-0000-0000-000000000014",
+    "position": 14,
+    "filepath": "src/pages/slides/S14_B2BEnterprise.tsx",
+    "title": "B2B & Enterprise",
+    "description": "Korporativ mijozlar, filiallar va obuna rejalari.",
+    "speakerNotes": "Korporativ hisob, loyiha boshqaruvi, filiallar, yetkazib berish, raqamli shartnomalar, P2P bozor."
+  },
+  {
+    "id": "15000000-0000-0000-0000-000000000015",
+    "position": 15,
+    "filepath": "src/pages/slides/S15_TechStack.tsx",
+    "title": "Texnologiya",
+    "description": "Zamonaviy va kengayadigan texnik arxitektura.",
+    "speakerNotes": "React 18 + Vite 7, Expo SDK 52, Node.js + Express, PostgreSQL + Drizzle ORM, pnpm monorepo."
+  },
+  {
+    "id": "16000000-0000-0000-0000-000000000016",
+    "position": 16,
+    "filepath": "src/pages/slides/S16_BusinessModel.tsx",
+    "title": "Biznes Model",
+    "description": "6 ta daromad oqimi va bozor imkoniyati.",
+    "speakerNotes": "Ijara komissiyasi, obuna, SMS paket, yechish komissiyasi, B2B, reklama. $4.8B O'zbek qurilish bozori."
+  },
+  {
+    "id": "17000000-0000-0000-0000-000000000017",
+    "position": 17,
+    "filepath": "src/pages/slides/S17_Roadmap.tsx",
+    "title": "Yo'l Xaritasi",
+    "description": "2025 yil 4 fazali yo'l xaritasi: MVP → Bozor → Kengayish → Miqyoslash.",
+    "speakerNotes": "Q1: MVP tayyor. Q2: 5-10 beta do'kon. Q3: 50+ do'kon, viloyatlar. Q4: 200+, qo'shni mamlakatlar."
+  },
+  {
+    "id": "18000000-0000-0000-0000-000000000018",
+    "position": 18,
+    "filepath": "src/pages/slides/S18_CTA.tsx",
+    "title": "Chaqiruv",
+    "description": "Investitsiya so'rovi, strategik hamkorlik va beta do'konlar uchun murojaat.",
+    "speakerNotes": "Seed round $300K. 10 beta do'kon. B2B hamkorlar. Aloqa: hello@gethelp.uz"
   }
 ]
