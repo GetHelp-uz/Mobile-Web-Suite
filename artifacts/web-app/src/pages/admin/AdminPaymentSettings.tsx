@@ -81,6 +81,26 @@ const PROVIDERS = [
     ],
     docs: "https://paynet.uz",
   },
+  {
+    key: "uzum",
+    name: "Uzum Bank",
+    color: "from-purple-600 to-violet-700",
+    bgLight: "bg-purple-50",
+    borderColor: "border-purple-200",
+    textColor: "text-purple-700",
+    logo: "",
+    fields: [
+      { key: "merchant_id", label: "Merchant ID", placeholder: "your-merchant-id", hint: "Uzum Bank merchant kabineti → Profil → Merchant ID" },
+      { key: "service_id", label: "Service ID", placeholder: "12345", hint: "Uzum Bank xizmat identifikatori" },
+      { key: "secret_key", label: "Secret Key", placeholder: "••••••••••••••••", hint: "Uzum Bank merchant kabineti → API → Secret Key", secret: true },
+      { key: "api_url", label: "API URL (ixtiyoriy)", placeholder: "https://checkout.uzum.uz", hint: "Odatda o'zgartirilmaydi. Test uchun: https://checkout.test.uzum.uz" },
+    ],
+    webhooks: [
+      { method: "POST", path: "/api/pay/uzum/notify", desc: "To'lov natijasini qabul qilish (Uzum → GetHelp.uz)" },
+      { method: "POST", path: "/api/pay/uzum/create", desc: "To'lov yaratish so'rovi" },
+    ],
+    docs: "https://developers.uzum.uz",
+  },
 ];
 
 export default function AdminPaymentSettings() {
@@ -200,7 +220,7 @@ export default function AdminPaymentSettings() {
       </Card>
 
       <Tabs defaultValue="click">
-        <TabsList className="mb-6 grid w-full grid-cols-3">
+        <TabsList className="mb-6 grid w-full grid-cols-4">
           {PROVIDERS.map(p => {
             const s = settings[p.key];
             return (

@@ -52,6 +52,13 @@ const PROVIDERS = [
     color: "from-orange-500 to-orange-600",
     desc: "Paynet to'lov",
   },
+  {
+    id: "uzum",
+    name: "Uzum Bank",
+    icon: "🟣",
+    color: "from-purple-500 to-violet-600",
+    desc: "Uzum Bank to'lov",
+  },
 ];
 
 const QUICK_AMOUNTS = [50000, 100000, 200000, 500000, 1000000];
@@ -94,10 +101,6 @@ export default function WalletPage() {
   const handleTopup = async () => {
     if (!amount || Number(amount) < 1000) {
       toast({ title: "Xatolik", description: "Minimal miqdor: 1 000 UZS", variant: "destructive" });
-      return;
-    }
-    if (!phone || phone.length < 9) {
-      toast({ title: "Xatolik", description: "To'g'ri telefon raqam kiriting", variant: "destructive" });
       return;
     }
     setTopping(true);
@@ -308,11 +311,14 @@ export default function WalletPage() {
               {/* To'lov usuli */}
               <div>
                 <label className="text-sm font-semibold mb-2 block">To'lov usuli</label>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
                   {PROVIDERS.map(p => (
-                    <button key={p.id} type="button" onClick={() => setProvider(p.id)} className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${provider === p.id ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground"}`}>
+                    <button key={p.id} type="button" onClick={() => setProvider(p.id)} className={`p-3 rounded-xl border-2 transition-all flex items-center gap-3 ${provider === p.id ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground"}`}>
                       <span className="text-2xl">{p.icon}</span>
-                      <span className="text-sm font-semibold">{p.name}</span>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold leading-tight">{p.name}</p>
+                        <p className="text-xs text-muted-foreground leading-tight">{p.desc}</p>
+                      </div>
                     </button>
                   ))}
                 </div>

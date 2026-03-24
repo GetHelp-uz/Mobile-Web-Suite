@@ -5,6 +5,56 @@ import { authenticate, requireRole } from "../lib/auth.js";
 
 const router = Router();
 
+// ─── Jadval avtomatik yaratish ────────────────────────────────────────────────
+async function ensurePaymentSettingsTables() {
+  try {
+    // Asosiy jadval yaratish (agar mavjud bo'lmasa)
+    await db.$client.query(`
+      CREATE TABLE IF NOT EXISTS payment_settings (
+        id SERIAL PRIMARY KEY,
+        provider VARCHAR(30) UNIQUE NOT NULL,
+        merchant_id VARCHAR(200) DEFAULT '',
+        secret_key VARCHAR(500) DEFAULT '',
+        service_id VARCHAR(200) DEFAULT '',
+        is_active BOOLEAN DEFAULT FALSE,
+        is_test_mode BOOLEAN DEFAULT TRUE,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_by INTEGER
+      );
+    `);
+    // Mavjud jadvalga yangi ustunlar qo'shish (xatolik bo'lsa o'tkazib yuboramiz)
+    for (const col of [
+      `ALTER TABLE payment_settings ADD COLUMN IF NOT EXISTS api_url VARCHAR(500) DEFAULT ''`,
+      `ALTER TABLE payment_settings ADD COLUMN IF NOT EXISTS updated_by INTEGER`,
+    ]) {
+      try { await db.$client.query(col); } catch {}
+    }
+    // Standart provayderlarni kiritish
+    await db.$client.query(`
+      INSERT INTO payment_settings (provider, api_url) VALUES ('click', 'https://my.click.uz/services/pay') ON CONFLICT (provider) DO NOTHING;
+      INSERT INTO payment_settings (provider, api_url) VALUES ('payme', 'https://checkout.paycom.uz') ON CONFLICT (provider) DO NOTHING;
+      INSERT INTO payment_settings (provider, api_url) VALUES ('paynet', 'https://paynet.uz/paying/gw') ON CONFLICT (provider) DO NOTHING;
+      INSERT INTO payment_settings (provider, api_url) VALUES ('uzum', 'https://checkout.uzum.uz') ON CONFLICT (provider) DO NOTHING;
+    `);
+    // Do'kon to'lov sozlamalari jadvali
+    await db.$client.query(`
+      CREATE TABLE IF NOT EXISTS shop_payment_settings (
+        id SERIAL PRIMARY KEY,
+        shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+        provider VARCHAR(30) NOT NULL DEFAULT 'paynet',
+        merchant_id VARCHAR(200) DEFAULT '',
+        secret_key VARCHAR(500) DEFAULT '',
+        service_id VARCHAR(200) DEFAULT '',
+        is_active BOOLEAN DEFAULT FALSE,
+        is_test_mode BOOLEAN DEFAULT TRUE,
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(shop_id, provider)
+      );
+    `);
+  } catch (e: any) { console.error('[PaymentSettings Tables]', e.message); }
+}
+ensurePaymentSettingsTables();
+
 // ─── System-wide credentials yordamchi funksiya ──────────────────────────────
 export async function getProviderSettings(provider: string) {
   const res = await db.execute(sql`

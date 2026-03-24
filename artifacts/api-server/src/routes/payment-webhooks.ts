@@ -273,4 +273,121 @@ router.post("/paynet/check", async (req, res) => {
   }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+//  UZUM (Uzum Bank — to'lov tizimi)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/pay/uzum/create — Uzum to'lov yaratish
+router.post("/uzum/create", async (req, res) => {
+  try {
+    const { orderId, amount, returnUrl, failUrl, description } = req.body;
+
+    const settings = await db.execute(sql`SELECT * FROM payment_settings WHERE provider = 'uzum' LIMIT 1`);
+    const s = settings.rows[0] as any;
+
+    if (!s?.merchant_id || !s?.secret_key) {
+      res.status(400).json({ error: "Uzum sozlanmagan" }); return;
+    }
+
+    // Uzum API ga to'lov yaratish so'rovi
+    const payload = {
+      serviceId: s.service_id || s.merchant_id,
+      orderId: String(orderId),
+      amount: Math.round(Number(amount) * 100), // so'm → tiyin
+      returnUrl: returnUrl || `${process.env.WEB_APP_URL || ""}/wallet/success`,
+      failUrl: failUrl || `${process.env.WEB_APP_URL || ""}/wallet`,
+      description: description || "GetHelp.uz hamyon to'ldirish",
+      lang: "uz",
+    };
+
+    // Uzum API endpoint (test rejim uchun sandbox)
+    const apiUrl = s.is_test_mode
+      ? "https://checkout.test.uzum.uz/api/create"
+      : "https://checkout.uzum.uz/api/create";
+
+    const authHeader = Buffer.from(`${s.merchant_id}:${s.secret_key}`).toString("base64");
+
+    const resp = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Basic ${authHeader}` },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await resp.json() as any;
+
+    if (!resp.ok || data.error) {
+      res.status(400).json({ error: data.error || "Uzum to'lov yaratishda xatolik" }); return;
+    }
+
+    // To'lov tranzaksiyasini bazaga saqlash
+    await db.execute(sql`
+      UPDATE wallet_transactions
+      SET provider = 'uzum', provider_tx_id = ${String(data.transactionId || data.id || "")}
+      WHERE reference_id = ${String(orderId)} AND type = 'topup'
+    `);
+
+    res.json({
+      success: true,
+      checkoutUrl: data.checkoutUrl || data.paymentUrl || `${s.api_url || "https://checkout.uzum.uz"}/${data.id || data.transactionId}`,
+      transactionId: data.transactionId || data.id,
+    });
+  } catch (err: any) {
+    console.error('[Uzum Create]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/pay/uzum/notify — Uzum to'lov natijasini qabul qilish
+router.post("/uzum/notify", async (req, res) => {
+  try {
+    const { transactionId, orderId, status, amount } = req.body;
+
+    const settings = await db.execute(sql`SELECT * FROM payment_settings WHERE provider = 'uzum' LIMIT 1`);
+    const s = settings.rows[0] as any;
+
+    // Imzo tekshirish (test rejimda o'tkazib yuboramiz)
+    if (!s?.is_test_mode && s?.secret_key) {
+      const sign = req.headers["x-uzum-sign"] as string || "";
+      const expectedSign = crypto.createHash("sha256").update(
+        `${orderId}${amount}${s.secret_key}`
+      ).digest("hex");
+      if (sign !== expectedSign) {
+        res.status(403).json({ error: "Invalid signature" }); return;
+      }
+    }
+
+    if (status === "CONFIRMED" || status === "success" || status === "2") {
+      const result = await confirmWalletTopup(String(orderId), String(transactionId));
+      res.json({ success: result.success });
+    } else if (status === "CANCELLED" || status === "failed") {
+      await db.execute(sql`
+        UPDATE wallet_transactions SET status = 'failed' WHERE reference_id = ${String(orderId)} AND status = 'pending'
+      `);
+      res.json({ success: true, message: "Cancelled" });
+    } else {
+      res.json({ success: true, message: "Status received" });
+    }
+  } catch (err: any) {
+    console.error('[Uzum Notify]', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/pay/uzum/status/:orderId — To'lov holatini tekshirish
+router.get("/uzum/status/:orderId", async (req, res) => {
+  try {
+    const orderId = req.params.orderId;
+    const txRow = await db.execute(sql`
+      SELECT * FROM wallet_transactions WHERE reference_id = ${orderId} AND type = 'topup' LIMIT 1
+    `);
+    if (!txRow.rows.length) {
+      res.json({ status: "not_found" }); return;
+    }
+    const tx = txRow.rows[0] as any;
+    res.json({ status: tx.status, amount: tx.amount, orderId });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

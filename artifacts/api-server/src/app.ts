@@ -61,14 +61,23 @@ const ALLOWED_ORIGINS = [
   "http://localhost:22965",
   "http://localhost:3000",
   "http://localhost:5173",
-].filter(Boolean);
+].filter(Boolean) as string[];
+
+function isAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Replit preview domains (*.replit.dev, *.repl.co, *.replit.app)
+  if (/^https?:\/\/[a-zA-Z0-9-]+\.(replit\.dev|repl\.co|replit\.app|repl\.it)(:\d+)?$/.test(origin)) return true;
+  // Replit workspace proxy (any subdomain of replit.dev)
+  if (/^https?:\/\/.*\.replit\.dev(:\d+)?/.test(origin)) return true;
+  return false;
+}
 
 app.use(
   "/api",
   cors({
     origin: (origin, callback) => {
       if (!origin) return callback(null, true);
-      if (ALLOWED_ORIGINS.includes(origin)) {
+      if (isAllowedOrigin(origin)) {
         return callback(null, true);
       }
       callback(new Error(`CORS: ${origin} manzili ruxsatsiz`));

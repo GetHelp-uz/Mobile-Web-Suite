@@ -218,6 +218,9 @@ function Router() {
       <Route path="/worker">
         {() => <ProtectedRoute component={QRScanner} allowedRoles={['worker', 'shop_owner']} />}
       </Route>
+      <Route path="/worker/rentals">
+        {() => <ProtectedRoute component={MyRentals} allowedRoles={['worker', 'shop_owner']} />}
+      </Route>
 
       {/* Admin yo'llari */}
       <Route path="/admin">

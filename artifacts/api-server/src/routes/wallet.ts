@@ -59,7 +59,7 @@ router.post("/topup", authenticate, async (req, res) => {
       res.status(400).json({ error: "Miqdor noto'g'ri" });
       return;
     }
-    if (!["click", "payme", "paynet"].includes(provider)) {
+    if (!["click", "payme", "paynet", "uzum"].includes(provider)) {
       res.status(400).json({ error: "To'lov usuli noto'g'ri" });
       return;
     }
@@ -101,6 +101,16 @@ router.post("/topup", authenticate, async (req, res) => {
       const serviceId = pSettings?.service_id || process.env.PAYNET_SERVICE_ID || "";
       const base = isTest ? "https://test.paynet.uz/processing/order" : "https://paynet.uz/processing/order";
       paymentUrl = `${base}?merchantId=${paynetMerchant}&orderId=${refId}&amount=${amount}&currency=860&returnUrl=${encodeURIComponent(returnUrl)}${serviceId ? `&serviceId=${serviceId}` : ""}`;
+    } else if (provider === "uzum") {
+      const uzumMerchant = pSettings?.merchant_id || process.env.UZUM_MERCHANT_ID || "";
+      const uzumService = pSettings?.service_id || process.env.UZUM_SERVICE_ID || "";
+      const base = isTest
+        ? "https://checkout.test.uzum.uz"
+        : (pSettings?.api_url || "https://checkout.uzum.uz");
+      // Uzum checkout URL formatiga mos
+      paymentUrl = uzumMerchant
+        ? `${base}/pay?serviceId=${uzumService || uzumMerchant}&orderId=${refId}&amount=${encodedAmount}&returnUrl=${encodeURIComponent(returnUrl)}`
+        : "";
     }
 
     res.json({
