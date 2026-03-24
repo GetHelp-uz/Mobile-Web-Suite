@@ -23,6 +23,32 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    chunkSizeWarningLimit: 600,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core
+          "vendor-react": ["react", "react-dom"],
+          // Router + state
+          "vendor-query": ["@tanstack/react-query", "wouter"],
+          // UI komponentlar
+          "vendor-ui": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-select",
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-popover",
+          ],
+          // Ikonlar
+          "vendor-icons": ["lucide-react"],
+          // Grafiklar
+          "vendor-charts": ["recharts"],
+          // Forma kutubxonasi
+          "vendor-forms": ["react-hook-form", "@hookform/resolvers", "zod"],
+        },
+      },
+    },
   },
   server: {
     port,
