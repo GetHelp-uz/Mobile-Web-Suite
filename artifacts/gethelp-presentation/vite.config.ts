@@ -4,12 +4,13 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 const port = parseInt(process.env.PORT || "3000", 10);
-const basePath = process.env.BASE_PATH || "/";
+const basePath = process.env.BASE_PATH || "/gethelp-presentation/";
 
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
+    tailwindcss(),
   ],
   resolve: {
     alias: {

@@ -33,6 +33,10 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/gethelp-presentation": {
+        target: "http://localhost:24227",
+        changeOrigin: true,
+      },
     },
     fs: {
       strict: true,
