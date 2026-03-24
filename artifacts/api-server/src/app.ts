@@ -7,6 +7,7 @@ import hpp from "hpp";
 import path from "path";
 import router from "./routes/index.js";
 import { sendOverdueSmsAlerts } from "./lib/sms.js";
+import { ensurePassportTables } from "./lib/passport.js";
 
 const app: Express = express();
 const isDev = process.env.NODE_ENV === "development";
@@ -327,6 +328,7 @@ setInterval(() => {
   if (isDev) console.log("[Security] Shubhali IP ro'yxati tozalandi");
 }, 60 * 60 * 1000);
 
+ensurePassportTables().catch((e: any) => console.error("[Startup] ensurePassportTables:", e.message));
 startOverdueCron();
 
 export default app;

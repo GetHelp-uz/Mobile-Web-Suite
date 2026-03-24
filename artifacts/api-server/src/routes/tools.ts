@@ -165,10 +165,12 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
       qrCode,
     }).returning();
 
-    // Update QR with real ID + save custom barcode
+    // Update QR with real ID + generate Code-128 barcode if none provided
     const realQr = generateQrCode(tool.id, body.shopId);
+    // Auto-generate barcode: GH + zero-padded shopId (4 digits) + zero-padded toolId (6 digits)
+    const finalBarcode = customBarcode || `GH${String(body.shopId).padStart(4, "0")}${String(tool.id).padStart(6, "0")}`;
     await db.execute(sql`
-      UPDATE tools SET qr_code = ${realQr}, custom_barcode = ${customBarcode}
+      UPDATE tools SET qr_code = ${realQr}, custom_barcode = ${finalBarcode}
       WHERE id = ${tool.id}
     `);
     const updatedRow = await db.execute(sql`SELECT * FROM tools WHERE id = ${tool.id} LIMIT 1`);
