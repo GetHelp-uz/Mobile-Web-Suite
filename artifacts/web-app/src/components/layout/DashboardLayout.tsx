@@ -114,6 +114,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Xodim vazifalari", path: "/shop/worker-tasks", icon: Users },
       { name: "Shikast xabarlari", path: "/shop/damage-reports", icon: AlertTriangle },
       { name: "GPS Monitoring", path: "/shop/gps", icon: MapPin },
+      { name: "Hardware & Qurilmalar", path: "/shop/hardware", icon: CreditCard },
       { name: "Filiallar", path: "/shop/branches", icon: Building2 },
       { name: "To'lov ulash", path: "/shop/payment-settings", icon: CreditCard },
       { name: "Yetkazib berish", path: "/shop/delivery-settings", icon: Truck },
@@ -155,6 +156,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "To'lov sozlamalari", path: "/admin/payment-settings", icon: CreditCard },
       { name: "B2B Boshqaruv", path: "/admin/b2b", icon: Building2 },
       { name: "Asbob Pasportlari", path: "/admin/tool-passports", icon: BookOpen },
+      { name: "Hardware Boshqaruvi", path: "/admin/hardware", icon: Package },
       { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
     ]

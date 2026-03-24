@@ -30,6 +30,7 @@ import ShopWorkerTasks from "@/pages/shop/ShopWorkerTasks";
 import ShopSuppliers from "@/pages/shop/ShopSuppliers";
 import ShopDamageReports from "@/pages/shop/ShopDamageReports";
 import ShopGPS from "@/pages/shop/ShopGPS";
+import ShopHardware from "@/pages/shop/ShopHardware";
 import ShopBranches from "@/pages/shop/ShopBranches";
 import ShopStats from "@/pages/shop/ShopStats";
 import ShopInventory from "@/pages/shop/ShopInventory";
@@ -72,6 +73,7 @@ import PeerListingsPage from "@/pages/customer/PeerListings";
 import ShopWorkerPackagesPage from "@/pages/shop/ShopWorkerPackages";
 import AdminB2BPage from "@/pages/admin/AdminB2B";
 import AdminToolPassports from "@/pages/admin/AdminToolPassports";
+import AdminHardware from "@/pages/admin/AdminHardware";
 import ToolPassport from "@/pages/ToolPassport";
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 
@@ -197,6 +199,9 @@ function Router() {
       </Route>
       <Route path="/shop/gps">
         {() => <ProtectedRoute component={ShopGPS} allowedRoles={['shop_owner']} />}
+      </Route>
+      <Route path="/shop/hardware">
+        {() => <ProtectedRoute component={ShopHardware} allowedRoles={['shop_owner']} />}
       </Route>
       <Route path="/shop/branches">
         {() => <ProtectedRoute component={ShopBranches} allowedRoles={['shop_owner']} />}
@@ -327,6 +332,9 @@ function Router() {
       </Route>
       <Route path="/admin/tool-passports">
         {() => <ProtectedRoute component={AdminToolPassports} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/hardware">
+        {() => <ProtectedRoute component={AdminHardware} allowedRoles={['super_admin']} />}
       </Route>
 
       {/* Ommaviy asbob pasporti (autentifikatsiya shart emas) */}
