@@ -4,6 +4,7 @@ import { eq, sql, and } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
 import { CreateRentalBody, ReturnRentalBody, StartRentalByQrBody, ReturnRentalByQrBody } from "@workspace/api-zod";
 import { sendRentalStartNotifications, sendRentalReturnNotifications, sendDepositNotification } from "../lib/push-notify.js";
+import { addToolEvent } from "../lib/passport.js";
 
 const router = Router();
 
@@ -88,6 +89,16 @@ router.post("/", authenticate, async (req, res) => {
     } as any).returning();
 
     await db.update(toolsTable).set({ status: "rented" }).where(eq(toolsTable.id, body.toolId));
+
+    // Tool passport: rental_started event
+    addToolEvent({
+      toolId,
+      shopId: tool.shopId,
+      eventType: "rental_started",
+      title: "Ijara boshlandi",
+      rentalId: rental.id,
+      actorId: (req as any).user?.id,
+    }).catch(() => {});
 
     // Create payment record
     await db.insert(paymentsTable).values({
@@ -385,6 +396,17 @@ router.post("/:id/return", authenticate, async (req, res) => {
 
     const enriched = await enrichRental(returned);
     res.json(enriched);
+
+    // Tool passport: rental_returned event
+    addToolEvent({
+      toolId: rental.toolId,
+      shopId: rental.shopId,
+      eventType: "rental_returned",
+      title: "Ijara yakunlandi",
+      rentalId: rental.id,
+      actorId: (req as any).user?.id,
+      description: body.damageNote || undefined,
+    }).catch(() => {});
 
     // Bildirishnomalar
     sendRentalReturnNotifications(Number(req.params.id)).catch(() => {});

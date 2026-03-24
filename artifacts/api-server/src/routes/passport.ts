@@ -1,9 +1,35 @@
 import { Router, type Request, type Response } from "express";
 import { db } from "@workspace/db";
 import { ensurePassportTables } from "../lib/passport.js";
+import { authenticate, requireRole } from "../lib/auth.js";
 ensurePassportTables();
 
 const router = Router();
+
+// GET /api/passport/admin/list — barcha asboblar ro'yxati (admin uchun)
+router.get("/admin/list", authenticate, requireRole("super_admin"), async (_req: Request, res: Response) => {
+  try {
+    const result = await db.$client.query(
+      `SELECT
+         t.id, t.name, t.category, t.status, t.qr_code, t.custom_barcode,
+         s.name as shop_name, s.id as shop_id,
+         COUNT(te.id) as event_count,
+         MAX(te.created_at) as last_event_at,
+         COUNT(te.id) FILTER (WHERE te.event_type = 'rental_started') as rental_count,
+         COUNT(te.id) FILTER (WHERE te.event_type IN ('repair', 'damage')) as damage_count
+       FROM tools t
+       JOIN shops s ON s.id = t.shop_id
+       LEFT JOIN tool_events te ON te.tool_id = t.id
+       GROUP BY t.id, t.name, t.category, t.status, t.qr_code, t.custom_barcode, s.name, s.id
+       ORDER BY event_count DESC, t.name ASC
+       LIMIT 500`
+    );
+    return res.json({ tools: result.rows });
+  } catch (err: any) {
+    console.error("[Passport] admin/list error:", err.message);
+    return res.status(500).json({ error: "Server xatosi" });
+  }
+});
 
 router.get("/:qrCode", async (req: Request, res: Response) => {
   try {

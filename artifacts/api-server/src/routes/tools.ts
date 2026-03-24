@@ -243,6 +243,31 @@ router.get("/:id/qr", authenticate, async (req, res) => {
   }
 });
 
+// GET /api/tools/:id/barcode-image — barcode rasm URL (bosib chiqarish uchun)
+router.get("/:id/barcode-image", authenticate, async (req, res) => {
+  try {
+    const result = await db.$client.query(
+      `SELECT id, name, custom_barcode, qr_code FROM tools WHERE id = $1 LIMIT 1`,
+      [Number(req.params.id)]
+    );
+    const tool = result.rows[0];
+    if (!tool) { res.status(404).json({ error: "Asbob topilmadi" }); return; }
+    const barcodeValue = tool.custom_barcode || tool.qr_code || `TOOL-${tool.id}`;
+    const barcodeImageUrl = `https://barcodeapi.org/api/auto/${encodeURIComponent(barcodeValue)}`;
+    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tool.qr_code || barcodeValue)}`;
+    res.json({
+      toolId: tool.id,
+      toolName: tool.name,
+      barcodeValue,
+      barcodeImageUrl,
+      qrImageUrl,
+      printLabelUrl: `data:application/json,${encodeURIComponent(JSON.stringify({ id: tool.id, name: tool.name, barcode: barcodeValue }))}`,
+    });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
+  }
+});
+
 // PATCH /api/tools/:id/stock — zaxira miqdorini yangilash
 router.patch("/:id/stock", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
   try {
