@@ -51,8 +51,7 @@ router.get("/:qrCode", async (req: Request, res: Response) => {
        FROM tool_events te
        LEFT JOIN users u ON u.id = te.actor_id
        WHERE te.tool_id = $1
-       ORDER BY te.created_at DESC
-       LIMIT 50`,
+       ORDER BY te.created_at DESC`,
       [tool.id]
     );
 
