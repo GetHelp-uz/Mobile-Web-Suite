@@ -4,12 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { formatCurrency } from "@/lib/utils";
 import {
   Wallet, Plus, ArrowUpRight, ArrowDownLeft, TrendingUp,
-  CreditCard, Shield, Clock, CheckCircle, XCircle, ExternalLink
+  CreditCard, Shield, Clock, CheckCircle, XCircle, ExternalLink, AlertTriangle, Lock
 } from "lucide-react";
 
 type WalletData = {
@@ -78,9 +78,12 @@ export default function WalletPage() {
   const [amount, setAmount] = useState("");
   const [phone, setPhone] = useState("");
   const [provider, setProvider] = useState("click");
-  const [topping, setTopping] = useState(false);
   const [payUrl, setPayUrl] = useState("");
   const [referenceId, setReferenceId] = useState("");
+
+  // Xavfsizlik tasdiq dialogi
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmLoading, setConfirmLoading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -98,24 +101,41 @@ export default function WalletPage() {
 
   useEffect(() => { load(); }, []);
 
-  const handleTopup = async () => {
+  // Birinchi: tasdiq dialogi ochiladi
+  const handleTopup = () => {
     if (!amount || Number(amount) < 1000) {
       toast({ title: "Xatolik", description: "Minimal miqdor: 1 000 UZS", variant: "destructive" });
       return;
     }
-    setTopping(true);
+    if (!phone || phone.length < 9) {
+      toast({ title: "Xatolik", description: "Telefon raqamini kiriting", variant: "destructive" });
+      return;
+    }
+    setConfirmOpen(true);
+  };
+
+  // Ikkinchi: tasdiqdan keyin haqiqiy to'lov so'rovi
+  const executeTopup = async () => {
+    setConfirmLoading(true);
     try {
+      const idempotencyKey = `topup-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
       const r = await fetch(`${baseUrl}/api/wallet/topup`, {
-        method: "POST", headers: h,
+        method: "POST",
+        headers: { ...h, "X-Idempotency-Key": idempotencyKey },
         body: JSON.stringify({ amount: Number(amount), provider, phone }),
       });
       const d = await r.json();
-      if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
+      if (!r.ok) {
+        toast({ title: "Xatolik", description: d.error, variant: "destructive" });
+        setConfirmOpen(false);
+        return;
+      }
       setPayUrl(d.paymentUrl);
       setReferenceId(d.referenceId || "");
+      setConfirmOpen(false);
       toast({ title: "To'lov yaratildi!", description: "To'lov sahifasiga o'ting" });
     } finally {
-      setTopping(false);
+      setConfirmLoading(false);
     }
   };
 
@@ -357,11 +377,67 @@ export default function WalletPage() {
           {!payUrl && (
             <DialogFooter>
               <Button variant="outline" onClick={() => setTopupOpen(false)}>Bekor</Button>
-              <Button onClick={handleTopup} disabled={topping || !amount || Number(amount) < 1000 || phone.length < 9} className="gap-2">
-                <CreditCard size={16} /> {topping ? "Tayyorlanmoqda..." : "To'lov yaratish"}
+              <Button onClick={handleTopup} disabled={!amount || Number(amount) < 1000 || (phone?.length ?? 0) < 9} className="gap-2">
+                <Shield size={16} /> To'lovni tekshirish
               </Button>
             </DialogFooter>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Xavfsizlik Tasdiq Dialogi ─────────────────────────────────── */}
+      <Dialog open={confirmOpen} onOpenChange={(v) => !confirmLoading && setConfirmOpen(v)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-600">
+              <Lock size={20} className="text-amber-600" />
+              To'lovni tasdiqlang
+            </DialogTitle>
+            <DialogDescription>
+              Quyidagi ma'lumotlarni diqqat bilan tekshiring va tasdiqlang
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-2 space-y-4">
+            {/* Ogohlantirish */}
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
+              <AlertTriangle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Ushbu summa sizning {provider.toUpperCase()} hisobingizdan yechiladi.
+              </p>
+            </div>
+
+            {/* To'lov tafsilotlari */}
+            <div className="space-y-3 p-4 rounded-xl bg-secondary/50">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Miqdor</span>
+                <span className="font-bold text-lg">{formatCurrency(Number(amount))}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">To'lov usuli</span>
+                <span className="font-semibold">{provider.toUpperCase()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Telefon</span>
+                <span className="font-semibold">+998{phone}</span>
+              </div>
+              <div className="border-t pt-3 flex justify-between items-center">
+                <span className="text-sm font-semibold">Hamyonga tushadigan summa</span>
+                <span className="font-bold text-green-600">{formatCurrency(Number(amount))}</span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={confirmLoading}>
+              Bekor qilish
+            </Button>
+            <Button onClick={executeTopup} disabled={confirmLoading} className="gap-2 bg-green-600 hover:bg-green-700">
+              {confirmLoading
+                ? <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Bajarilmoqda...</>
+                : <><CheckCircle size={16} /> Tasdiqlash</>}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

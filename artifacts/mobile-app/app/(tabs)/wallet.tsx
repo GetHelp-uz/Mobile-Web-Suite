@@ -20,6 +20,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
+import { authenticateWithBiometric, checkBiometricAvailability } from "@/lib/biometric";
 
 function fmt(n: number) { return n.toLocaleString("uz-UZ") + " so'm"; }
 
@@ -82,6 +83,42 @@ export default function WalletScreen() {
       Alert.alert("Xatolik", "Minimal miqdor: 1 000 so'm");
       return;
     }
+
+    // ── Barmoq izi / yuz tasdiq (agar mavjud bo'lsa) ──────────────────────
+    const biometricInfo = await checkBiometricAvailability();
+    if (biometricInfo.available) {
+      const bioResult = await authenticateWithBiometric({
+        promptMessage: `${fmt(Number(amount))} to'lashni tasdiqlang`,
+        cancelLabel: "Bekor qilish",
+        fallbackLabel: "PIN bilan",
+      });
+
+      if (bioResult.error === "cancel") return;
+
+      if (!bioResult.success) {
+        Alert.alert(
+          "Tasdiqlanmadi",
+          bioResult.error === "lockout"
+            ? "Biometrik bloklangan. Telefoningiz PIN kodi bilan kiring."
+            : "To'lovni tasdiqlash uchun barmoq izingizni yoki yuzingizni ishlating.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+    } else {
+      // Biometrik yo'q — oddiy PIN bilan tasdiq so'raymiz
+      await new Promise<void>((resolve, reject) => {
+        Alert.alert(
+          `${fmt(Number(amount))} to'lash`,
+          `${provider.toUpperCase()} orqali hamyonga to'liq miqdor qo'shiladi. Davom etasizmi?`,
+          [
+            { text: "Bekor", style: "cancel", onPress: () => reject(new Error("cancel")) },
+            { text: "Davom etish", onPress: () => resolve() },
+          ]
+        );
+      }).catch(() => { return; });
+    }
+
     setTopping(true);
     try {
       const d = await api.wallet.topup(Number(amount), provider);
@@ -96,7 +133,7 @@ export default function WalletScreen() {
       );
       setAmount("");
     } catch (e: any) {
-      Alert.alert("Xatolik", e.message);
+      if (e.message !== "cancel") Alert.alert("Xatolik", e.message);
     } finally { setTopping(false); }
   };
 

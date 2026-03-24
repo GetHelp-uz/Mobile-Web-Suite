@@ -101,3 +101,51 @@ Obunalar: `subscription_plans`
 4. Foydalanuvchi to'lov sahifasiga o'tadi
 5. To'lov amalga oshganda provayder webhook URL ga POST yuboradi
 6. Webhook handler `confirmWalletTopup()` ni chaqiradi — balans yangilanadi
+
+## Xavfsizlik arxitekturasi
+### API Server himoyasi (app.ts)
+- **Helmet**: CSP, HSTS, X-Frame-Options, XSS himoya sarlavhalari
+- **CORS**: faqat ruxsat berilgan domenlar (`*.replit.dev`, `*.repl.co`, `*.replit.app`)
+- **Rate limiting**: Login (15 req/15min), Umumiy (300 req/min), AI (10 req/min), To'lov (10 req/15min), Investitsiya (5 req/soat)
+- **IP bloklash**: 5+ ta rate limit buzilishi = 1 soatlik bloklash; to'lov hujumlari = 2 soatlik bloklash
+- **HPP**: HTTP Parameter Pollution himoyasi
+- **XSS/SQL Injection**: Barcha so'rov tanasini tozalaydigan sanitizer middleware
+- **Idempotency**: `X-Idempotency-Key` headerli to'lovlar takrorlanmaydi
+
+### Auth xavfsizligi (lib/auth.ts)
+- **JWT**: 24 soat muddatli, `gethelp-uz` issuer/audience
+- **Brute force**: `login_attempts` jadvalida 5 urinish/15 daqiqa = 30 daqiqa bloklash
+- **Token revocation**: Logout yoki buzilgan tokenlar `revoked_tokens` jadvalida saqlanadi
+- **`authenticateStrict`**: Muhim API yo'llari uchun token revocation tekshiruvi
+
+### Biometrik to'lov (API: /api/biometric-payment)
+- `POST /register` — qurilma barmoq izini ro'yxatdan o'tkazish
+- `POST /verify` — biometrik token tekshirish → 5 daqiqalik tasdiqlash tokenini olish
+- `GET /status` — biometrik holatni ko'rish
+- `DELETE /revoke` — biometrik o'chirish
+
+### Mobil app biometrik to'lov
+- Hamyon to'ldirish oldidan barmoq izi / Face ID so'raladi (`expo-local-authentication`)
+- Biometrik mavjud bo'lmasa → oddiy "davom etasizmi?" alert
+
+### Web app xavfsizlik tasdiqlash
+- Hamyon to'ldirish 2 bosqichli: 1) forma to'ldirish, 2) xavfsizlik tasdiq dialogi
+- To'lov tafsilotlari ko'rsatiladi, so'ng foydalanuvchi "Tasdiqlash" bosadi
+- `X-Idempotency-Key` qo'shiladi (qayta to'lov himoyasi)
+
+### DB xavfsizlik jadvallari
+| Jadval | Maqsad |
+|--------|--------|
+| `login_attempts` | Brute force log va bloklash |
+| `revoked_tokens` | Logout / buzilgan tokenlar |
+| `payment_biometrics` | Qurilma biometrik tokenlari |
+| `payment_idempotency` | Qayta to'lov oldini olish |
+| `security_events` | Xavfsizlik hodisalar logi |
+| `api_keys` | API kalit boshqaruvi (kelajak uchun) |
+
+### Production sozlamalari (Mobile app.json)
+- Android: `uz.gethelp.app` package nomi
+- iOS: `uz.gethelp.app` bundle identifier
+- Ruxsatlar: `USE_BIOMETRIC`, `USE_FINGERPRINT`, `CAMERA`, `ACCESS_FINE_LOCATION`
+- Pluginlar: `expo-local-authentication` (Face ID ruxsati bilan)
+- Health check: `GET /api/healthz` (tez) + `GET /api/healthz/detail` (DB latency, xotira, uptime)

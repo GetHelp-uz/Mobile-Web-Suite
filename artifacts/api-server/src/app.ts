@@ -5,6 +5,7 @@ import rateLimit from "express-rate-limit";
 import slowDown from "express-slow-down";
 import hpp from "hpp";
 import path from "path";
+import crypto from "crypto";
 import router from "./routes/index.js";
 import { sendOverdueSmsAlerts } from "./lib/sms.js";
 import { ensurePassportTables } from "./lib/passport.js";
@@ -195,11 +196,80 @@ const uploadLimiter = rateLimit({
   skip: isLocalIP,
 });
 
+// To'lov uchun JUDA QATTIQ: 15 daqiqada 10 ta topup urinish
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: "To'lov urinishlari limitiga yetdingiz. 15 daqiqadan keyin qayta urining." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isLocalIP,
+  handler: (req: Request, res: Response) => {
+    const ip = getClientIP(req);
+    console.warn(`[Security] To'lov reti hujumi: ${ip}`);
+    const count = (suspiciousIPs.get(ip) || 0) + 2;
+    suspiciousIPs.set(ip, count);
+    if (count >= 8) {
+      blockedIPs.add(ip);
+      setTimeout(() => blockedIPs.delete(ip), 2 * 60 * 60 * 1000);
+      console.warn(`[Security] To'lov hujumchisi bloklandi: ${ip}`);
+    }
+    res.status(429).json({ error: "To'lov urinishlari limitiga yetdingiz. 15 daqiqadan keyin qayta urining." });
+  },
+});
+
+// Investitsiya uchun: 1 soatda 5 ta
+const investLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  message: { error: "Investitsiya urinishlari limiti. 1 soatdan keyin qayta urining." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: isLocalIP,
+});
+
 app.use("/api/auth/login", authSlowDown, authLimiter);
 app.use("/api/auth/register", authLimiter);
 app.use("/api/ai/", aiLimiter);
 app.use("/api/documents/", uploadLimiter);
+app.use("/api/wallet/topup", paymentLimiter);
+app.use("/api/funds/:id/invest", investLimiter);
 app.use("/api", generalLimiter);
+
+// ─── IDEMPOTENCY MIDDLEWARE: To'lov takrorlanmasligini ta'minlash ─────────────
+const paymentIdempotencyCache = new Map<string, { result: any; ts: number }>();
+
+export function idempotencyMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (req.method !== "POST") return next();
+  const key = req.headers["x-idempotency-key"] as string;
+  if (!key) return next();
+
+  // Max key uzunligi
+  if (key.length > 128) {
+    res.status(400).json({ error: "Idempotency key juda uzun" });
+    return;
+  }
+
+  // In-memory cache (24 soat)
+  const cached = paymentIdempotencyCache.get(key);
+  if (cached && Date.now() - cached.ts < 24 * 60 * 60 * 1000) {
+    res.setHeader("X-Idempotency-Hit", "true");
+    res.json(cached.result);
+    return;
+  }
+
+  // Javobni saqlash uchun res.json ni o'rash
+  const origJson = res.json.bind(res);
+  res.json = (body: any) => {
+    if (res.statusCode < 400) {
+      paymentIdempotencyCache.set(key, { result: body, ts: Date.now() });
+      // 24 soatdan so'ng tozalash
+      setTimeout(() => paymentIdempotencyCache.delete(key), 24 * 60 * 60 * 1000);
+    }
+    return origJson(body);
+  };
+  next();
+}
 
 // ─── XSS/INJECTION DAN HIMOYA ────────────────────────────────────────────────
 const DANGEROUS_PATTERNS = [

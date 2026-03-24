@@ -48,6 +48,7 @@ import peerListingsRouter from "./peer-listings.js";
 import passportRouter from "./passport.js";
 import hardwareRouter from "./hardware.js";
 import fundsRouter from "./funds.js";
+import biometricPaymentRouter from "./biometric-payment.js";
 
 const router: IRouter = Router();
 
@@ -100,5 +101,6 @@ router.use("/peer-listings", peerListingsRouter);
 router.use("/passport", passportRouter);
 router.use("/hardware", hardwareRouter);
 router.use("/funds", fundsRouter);
+router.use("/biometric-payment", biometricPaymentRouter);
 
 export default router;
