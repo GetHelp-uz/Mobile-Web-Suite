@@ -51,6 +51,10 @@ import {
   PieChart,
   Puzzle,
   Bot,
+  ShieldCheck,
+  Crown,
+  Calculator,
+  Users2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -81,6 +85,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Bronlarim", path: "/bookings", icon: CalendarCheck },
       { name: "Loyihalarim", path: "/projects", icon: FolderOpen },
       { name: "Sevimlilar", path: "/favorites", icon: Heart },
+      { name: "Obuna Rejalari", path: "/subscriptions", icon: Crown },
+      { name: "Sug'urta", path: "/insurance", icon: ShieldCheck },
+      { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
+      { name: "Ustoz + Asbob", path: "/worker-packages", icon: Users },
+      { name: "Hamshaharlarga Ijara", path: "/peer-listings", icon: Users2 },
+      { name: "B2B Portal", path: "/b2b", icon: Building2 },
       { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
       { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
@@ -110,6 +120,11 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Do'konlar tarmog'i", path: "/shop/network", icon: Network },
       { name: "Ta'minotchilar", path: "/shop/suppliers", icon: Truck },
       { name: "Do'kon imzosi", path: "/shop/owner-signature", icon: PenLine },
+      { name: "Ustoz + Asbob Paketlari", path: "/shop/worker-packages", icon: Users2 },
+      { name: "B2B Portal", path: "/b2b", icon: Building2 },
+      { name: "Sug'urta Da'volari", path: "/insurance", icon: ShieldCheck },
+      { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
+      { name: "Hamshaharlarga Ijara", path: "/peer-listings", icon: Users2 },
       { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
       { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
@@ -135,6 +150,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Plaginylar", path: "/admin/plugins", icon: Puzzle },
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
       { name: "To'lov sozlamalari", path: "/admin/payment-settings", icon: CreditCard },
+      { name: "B2B Boshqaruv", path: "/admin/b2b", icon: Building2 },
+      { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
     ]
   };

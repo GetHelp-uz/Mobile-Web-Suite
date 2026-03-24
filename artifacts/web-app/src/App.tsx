@@ -62,6 +62,14 @@ import ESignPage from "@/pages/customer/ESignPage";
 import WalletPage from "@/pages/wallet/Wallet";
 import NotificationsCenter from "@/pages/NotificationsCenter";
 import NotFound from "@/pages/not-found";
+import InsurancePage from "@/pages/customer/Insurance";
+import SubscriptionsPage from "@/pages/customer/Subscriptions";
+import ProjectCalculatorPage from "@/pages/customer/ProjectCalculator";
+import WorkerPackagesPage from "@/pages/customer/WorkerPackages";
+import B2BPortalPage from "@/pages/customer/B2BPortal";
+import PeerListingsPage from "@/pages/customer/PeerListings";
+import ShopWorkerPackagesPage from "@/pages/shop/ShopWorkerPackages";
+import AdminB2BPage from "@/pages/admin/AdminB2B";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -273,6 +281,36 @@ function Router() {
       </Route>
       <Route path="/shop/owner-signature">
         {() => <ProtectedRoute component={ShopOwnerSignature} allowedRoles={['shop_owner', 'super_admin']} />}
+      </Route>
+
+      {/* Yangi xususiyatlar — mijoz */}
+      <Route path="/insurance">
+        {() => <ProtectedRoute component={InsurancePage} allowedRoles={['customer','shop_owner']} />}
+      </Route>
+      <Route path="/subscriptions">
+        {() => <ProtectedRoute component={SubscriptionsPage} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/calculator">
+        {() => <ProtectedRoute component={ProjectCalculatorPage} allowedRoles={['customer','shop_owner','worker','super_admin']} />}
+      </Route>
+      <Route path="/worker-packages">
+        {() => <ProtectedRoute component={WorkerPackagesPage} allowedRoles={['customer']} />}
+      </Route>
+      <Route path="/b2b">
+        {() => <ProtectedRoute component={B2BPortalPage} allowedRoles={['customer','shop_owner']} />}
+      </Route>
+      <Route path="/peer-listings">
+        {() => <ProtectedRoute component={PeerListingsPage} allowedRoles={['customer','shop_owner','worker','super_admin']} />}
+      </Route>
+
+      {/* Yangi xususiyatlar — do'kon */}
+      <Route path="/shop/worker-packages">
+        {() => <ProtectedRoute component={ShopWorkerPackagesPage} allowedRoles={['shop_owner','super_admin']} />}
+      </Route>
+
+      {/* Yangi xususiyatlar — admin */}
+      <Route path="/admin/b2b">
+        {() => <ProtectedRoute component={AdminB2BPage} allowedRoles={['super_admin']} />}
       </Route>
 
       {/* Hamyon va bildirishnomalar */}

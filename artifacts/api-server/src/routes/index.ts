@@ -39,6 +39,12 @@ import workerPerformanceRouter from "./worker-performance.js";
 import platformRouter from "./platform.js";
 import withdrawalsRouter from "./withdrawals.js";
 import aiAdminRouter from "./ai-admin.js";
+import insuranceRouter from "./insurance.js";
+import workerPackagesRouter from "./worker-packages.js";
+import calculatorRouter from "./calculator.js";
+import b2bRouter from "./b2b.js";
+import subscriptionsRouter from "./subscriptions.js";
+import peerListingsRouter from "./peer-listings.js";
 
 const router: IRouter = Router();
 
@@ -82,5 +88,11 @@ router.use("/delivery", deliveryRouter);
 router.use("/worker-performance", workerPerformanceRouter);
 router.use("/platform", platformRouter);
 router.use("/withdrawals", withdrawalsRouter);
+router.use("/insurance", insuranceRouter);
+router.use("/worker-packages", workerPackagesRouter);
+router.use("/calculator", calculatorRouter);
+router.use("/b2b", b2bRouter);
+router.use("/subscriptions", subscriptionsRouter);
+router.use("/peer-listings", peerListingsRouter);
 
 export default router;

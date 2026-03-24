@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import { useRoute, useLocation } from "wouter";
-import { Star, MapPin, Phone, Clock, Package, MessageSquare, ChevronRight, Building2 } from "lucide-react";
+import { Star, MapPin, Phone, Clock, Package, MessageSquare, ChevronRight, Building2, QrCode, Download, X } from "lucide-react";
+import QRCodeLib from "qrcode";
 
 function StarRow({ rating, max = 5, size = 16 }: { rating: number; max?: number; size?: number }) {
   return (
@@ -29,6 +30,9 @@ export default function PublicShopProfile() {
   const [branches, setBranches] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"tools" | "reviews" | "branches">("tools");
+  const [showQR, setShowQR] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     if (!shopId) return;
@@ -45,6 +49,21 @@ export default function PublicShopProfile() {
       setLoading(false);
     });
   }, [shopId]);
+
+  const openQR = async () => {
+    const shopUrl = `${window.location.origin}${baseUrl}/shops/${shopId}`;
+    const dataUrl = await QRCodeLib.toDataURL(shopUrl, { width: 300, margin: 2, color: { dark: "#111111", light: "#FFFFFF" } });
+    setQrDataUrl(dataUrl);
+    setShowQR(true);
+  };
+
+  const downloadQR = () => {
+    if (!qrDataUrl) return;
+    const a = document.createElement("a");
+    a.href = qrDataUrl;
+    a.download = `${shop?.name || "shop"}-qr.png`;
+    a.click();
+  };
 
   if (loading) return (
     <DashboardLayout>
@@ -87,12 +106,15 @@ export default function PublicShopProfile() {
                     <span className="text-muted-foreground text-sm">({ratings.count} baho)</span>
                   </div>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <Button variant="outline" onClick={() => setLocation(`/chat`)}>
                     <MessageSquare className="w-4 h-4 mr-2" /> Xabar
                   </Button>
                   <Button onClick={() => setLocation("/browse")}>
                     <Package className="w-4 h-4 mr-2" /> Ijara
+                  </Button>
+                  <Button variant="outline" onClick={openQR}>
+                    <QrCode className="w-4 h-4 mr-2" /> QR Kod
                   </Button>
                 </div>
               </div>
@@ -225,6 +247,32 @@ export default function PublicShopProfile() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* QR Modal */}
+      {showQR && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setShowQR(false)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">{shop?.name}</h3>
+              <button onClick={() => setShowQR(false)}><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            {qrDataUrl && (
+              <div className="bg-white p-3 rounded-xl border-2 border-gray-100 inline-block mb-4">
+                <img src={qrDataUrl} alt="QR kod" className="w-48 h-48" />
+              </div>
+            )}
+            <p className="text-sm text-gray-500 mb-4">Bu QR kodni skanerlash orqali do'kon sahifasiga o'tish mumkin</p>
+            <div className="flex gap-3">
+              <Button className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={downloadQR}>
+                <Download className="w-4 h-4 mr-2" /> Yuklab olish
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(`${window.location.origin}${baseUrl}/shops/${shopId}`); }}>
+                Havolani nusxalash
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </DashboardLayout>
