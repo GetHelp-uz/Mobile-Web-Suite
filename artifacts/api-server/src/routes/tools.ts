@@ -245,7 +245,7 @@ router.get("/:id/qr", authenticate, async (req, res) => {
   }
 });
 
-// GET /api/tools/:id/barcode-image — barcode rasm URL (bosib chiqarish uchun)
+// GET /api/tools/:id/barcode-image — Code-128 barcode SVG (bosib chiqarish uchun)
 router.get("/:id/barcode-image", authenticate, async (req, res) => {
   try {
     const result = await db.$client.query(
@@ -254,17 +254,30 @@ router.get("/:id/barcode-image", authenticate, async (req, res) => {
     );
     const tool = result.rows[0];
     if (!tool) { res.status(404).json({ error: "Asbob topilmadi" }); return; }
-    const barcodeValue = tool.custom_barcode || tool.qr_code || `TOOL-${tool.id}`;
-    const barcodeImageUrl = `https://barcodeapi.org/api/auto/${encodeURIComponent(barcodeValue)}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(tool.qr_code || barcodeValue)}`;
-    res.json({
-      toolId: tool.id,
-      toolName: tool.name,
-      barcodeValue,
-      barcodeImageUrl,
-      qrImageUrl,
-      printLabelUrl: `data:application/json,${encodeURIComponent(JSON.stringify({ id: tool.id, name: tool.name, barcode: barcodeValue }))}`,
-    });
+    const barcodeValue = tool.custom_barcode || `GH${String(tool.id).padStart(6, "0")}`;
+    // Proxy real barcode PNG from barcodeapi.org (Code-128 format)
+    try {
+      const upstream = await fetch(`https://barcodeapi.org/api/128/${encodeURIComponent(barcodeValue)}`, {
+        signal: AbortSignal.timeout(5000),
+      });
+      if (upstream.ok) {
+        const buf = Buffer.from(await upstream.arrayBuffer());
+        const ct = upstream.headers.get("content-type") || "image/png";
+        res.setHeader("Content-Type", ct);
+        res.setHeader("Cache-Control", "public, max-age=86400");
+        res.send(buf);
+        return;
+      }
+    } catch { /* fallback to SVG */ }
+    // Fallback: minimal SVG placeholder with barcode value text
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="60" viewBox="0 0 300 60">
+  <rect width="300" height="60" fill="white"/>
+  <text x="150" y="20" text-anchor="middle" font-family="monospace" font-size="11" fill="#333">Code-128</text>
+  <text x="150" y="50" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#000">${barcodeValue}</text>
+</svg>`;
+    res.setHeader("Content-Type", "image/svg+xml");
+    res.setHeader("Cache-Control", "public, max-age=86400");
+    res.send(svg);
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }

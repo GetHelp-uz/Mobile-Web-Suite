@@ -254,6 +254,57 @@ export default function ShopTools() {
     pw.close();
   };
 
+  const printPassportLabel = async () => {
+    if (!passportTool) return;
+    const token = localStorage.getItem("gethelp_token") || "";
+    const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`${window.location.origin}/passport/${passportTool.qrCode}`)}`;
+    let barcodeDataUrl = "";
+    try {
+      const r = await fetch(`${baseUrl}/api/tools/${passportTool.id}/barcode-image`, { headers: { Authorization: `Bearer ${token}` } });
+      if (r.ok) {
+        const blob = await r.blob();
+        barcodeDataUrl = await new Promise<string>(resolve => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      }
+    } catch { /* ignore, label will skip barcode if unavailable */ }
+    const pw = window.open("", "_blank");
+    if (!pw) return;
+    const barcodeHtml = barcodeDataUrl
+      ? `<img src="${barcodeDataUrl}" alt="barcode" style="max-width:260px;height:60px;object-fit:contain;"/>`
+      : `<p style="font-family:monospace;font-size:13px;letter-spacing:2px">${passportTool.qrCode}</p>`;
+    pw.document.write(`<!DOCTYPE html><html><head><title>Yorliq — ${passportTool.name}</title>
+      <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#fff;padding:20px}
+        .card{border:2px solid #333;border-radius:8px;padding:18px 22px;max-width:320px;width:100%;text-align:center}
+        .name{font-size:17px;font-weight:700;margin-bottom:4px}
+        .price{font-size:13px;color:#555;margin-bottom:14px}
+        .sep{border-top:1px dashed #ccc;margin:12px 0}
+        .label{font-size:10px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+        .foot{font-size:10px;color:#999;margin-top:14px}
+        @media print{body{padding:0}button{display:none}}
+      </style></head><body>
+      <div class="card">
+        <p class="label">GetHelp.uz asbob yorlig'i</p>
+        <p class="name">${passportTool.name}</p>
+        <p class="price">Kunlik: ${formatCurrency(passportTool.pricePerDay)} | Depozit: ${formatCurrency(passportTool.depositAmount)}</p>
+        <div class="sep"></div>
+        <p class="label">QR Kod (skaner qiling)</p>
+        <img src="${qrUrl}" alt="QR" style="width:150px;height:150px;margin:6px auto"/>
+        <div class="sep"></div>
+        <p class="label">Shtrix kod</p>
+        ${barcodeHtml}
+        <p class="foot">GetHelp.uz | ID: ${passportTool.id}</p>
+      </div>
+      <script>window.onload=()=>window.print()</script>
+    </body></html>`);
+    pw.document.close();
+  };
+
   const openPassport = async (tool: Tool) => {
     setPassportTool(tool);
     setPassportData(null);
@@ -733,6 +784,13 @@ export default function ShopTools() {
               </div>
             </div>
           ) : null}
+          {passportTool && !passportLoading && (
+            <DialogFooter className="pt-2 border-t mt-2">
+              <Button variant="outline" size="sm" className="gap-1.5" onClick={printPassportLabel}>
+                <Printer size={14}/> Yorliq chop etish
+              </Button>
+            </DialogFooter>
+          )}
         </DialogContent>
       </Dialog>
 
