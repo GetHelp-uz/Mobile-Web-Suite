@@ -32,7 +32,7 @@ router.get("/shops/:shopId/tools", async (req, res) => {
     const shopName = shop[0]?.name || "";
 
     res.json({
-      tools: tools.map(t => ({ ...t, shopName })),
+      tools: tools.map((t: any) => ({ ...t, shopName })),
       total,
       page,
       limit,
@@ -60,9 +60,9 @@ router.get("/", async (req, res) => {
         .select({ id: shopsTable.id })
         .from(shopsTable)
         .where(eq(shopsTable.region, region));
-      regionShopIds = regionShops.map(s => s.id);
+      regionShopIds = regionShops.map((s: any) => s.id);
       // If no shops in region, return empty
-      if (regionShopIds.length === 0) {
+      if ((regionShopIds as number[]).length === 0) {
         res.json({ tools: [], total: 0, page, limit });
         return;
       }
@@ -79,14 +79,14 @@ router.get("/", async (req, res) => {
     const countResult = await db.select({ count: sql<number>`count(*)` }).from(toolsTable).where(whereClause);
     const total = Number(countResult[0].count);
 
-    const uniqueShopIds = [...new Set(tools.map(t => t.shopId))];
+    const uniqueShopIds = [...new Set(tools.map((t: any) => t.shopId))];
     const shops = uniqueShopIds.length > 0
       ? await db.select({ id: shopsTable.id, name: shopsTable.name, region: shopsTable.region }).from(shopsTable)
       : [];
-    const shopMap = Object.fromEntries(shops.map(s => [s.id, s.name]));
+    const shopMap = Object.fromEntries(shops.map((s: any) => [s.id, s.name]));
 
     res.json({
-      tools: tools.map(t => ({ ...t, shopName: shopMap[t.shopId] || "" })),
+      tools: tools.map((t: any) => ({ ...t, shopName: shopMap[t.shopId] || "" })),
       total,
       page,
       limit,

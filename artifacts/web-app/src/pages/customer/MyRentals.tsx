@@ -63,10 +63,10 @@ export default function MyRentals() {
 
   // Fetch contract status for active rentals
   useEffect(() => {
-    const activeRentals = rentals.filter(r => r.status === "active" || r.status === "overdue");
+    const activeRentals = rentals.filter((r: any) => r.status === "active" || r.status === "overdue");
     if (!activeRentals.length) return;
     Promise.all(
-      activeRentals.slice(0, 10).map(async r => {
+      activeRentals.slice(0, 10).map(async (r: any) => {
         try {
           const res = await fetch(`${baseUrl}/api/contracts/rental/${r.id}/esign`, { headers: h });
           if (res.ok) {
@@ -80,7 +80,7 @@ export default function MyRentals() {
       })
     ).then(results => {
       const map: Record<number, { signed: boolean }> = {};
-      results.forEach(r => { map[r.id] = { signed: r.signed }; });
+      results.forEach((r: any) => { map[r.id] = { signed: r.signed }; });
       setContractStatuses(map);
     });
   }, [rentals.length]);
@@ -129,7 +129,7 @@ export default function MyRentals() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {rentals.map(rental => {
+          {rentals.map((rental: any) => {
             const isActive = rental.status === "active" || rental.status === "overdue";
             const contractInfo = contractStatuses[rental.id];
             const needsSign = isActive && contractInfo && !contractInfo.signed;

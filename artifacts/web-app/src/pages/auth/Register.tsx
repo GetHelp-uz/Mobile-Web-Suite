@@ -90,7 +90,7 @@ export default function Register() {
 
   const registerMutation = useRegister({
     mutation: {
-      onSuccess: async (data) => {
+      onSuccess: async (data: any) => {
         localStorage.setItem("gethelp_token", data.token);
 
         if (role === "shop_owner" && form.shopName && data.user) {

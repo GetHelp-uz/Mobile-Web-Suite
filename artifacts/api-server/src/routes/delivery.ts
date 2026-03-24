@@ -113,7 +113,7 @@ router.post("/orders", authenticate, async (req, res) => {
               ${Number(distanceKm) || 0}, ${Number(deliveryPrice) || 0}, ${timeSlot || null},
               ${scheduledDate || null}, ${notes || null}, 'pending')
       RETURNING *
-    `).then(r => r.rows);
+    `).then((r: any) => r.rows);
 
     res.status(201).json({ success: true, order });
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }

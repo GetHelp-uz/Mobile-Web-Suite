@@ -44,10 +44,10 @@ router.get("/dashboard", authenticate, requireRole("super_admin", "shop_owner"),
     for (let i = 6; i >= 0; i--) {
       const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
       const dateStr = date.toISOString().split("T")[0];
-      const dayRentals = recentRentals.filter(r => r.startedAt.toISOString().split("T")[0] === dateStr);
+      const dayRentals = recentRentals.filter((r: any) => r.startedAt.toISOString().split("T")[0] === dateStr);
       revenueByPeriod.push({
         date: dateStr,
-        revenue: dayRentals.reduce((sum, r) => sum + r.rentalPrice, 0),
+        revenue: dayRentals.reduce((sum: any, r: any) => sum + r.rentalPrice, 0),
         rentals: dayRentals.length,
       });
     }
@@ -65,7 +65,7 @@ router.get("/dashboard", authenticate, requireRole("super_admin", "shop_owner"),
       rentedTools: Number(rentedTools[0].count),
       totalCustomers: Number(totalCustomers[0].count),
       revenueByPeriod,
-      recentRentals: last10Rentals.map(r => ({
+      recentRentals: last10Rentals.map((r: any) => ({
         ...r,
         toolName: "",
         customerName: "",
@@ -84,7 +84,7 @@ router.get("/tools", authenticate, requireRole("super_admin", "shop_owner"), asy
 
     const tools = await db.select().from(toolsTable).where(conditions.length > 0 ? and(...conditions) : undefined);
 
-    const topRentedTools = tools.slice(0, 5).map(t => ({
+    const topRentedTools = tools.slice(0, 5).map((t: any) => ({
       toolId: t.id,
       toolName: t.name,
       totalRentals: Math.floor(Math.random() * 20) + 1,
@@ -92,7 +92,7 @@ router.get("/tools", authenticate, requireRole("super_admin", "shop_owner"), asy
     }));
 
     const categories: Record<string, { total: number; rentals: number }> = {};
-    tools.forEach(t => {
+    tools.forEach((t: any) => {
       if (!categories[t.category]) categories[t.category] = { total: 0, rentals: 0 };
       categories[t.category].total++;
       if (t.status === "rented") categories[t.category].rentals++;

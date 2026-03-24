@@ -17,7 +17,7 @@ export default function Login() {
   
   const loginMutation = useLogin({
     mutation: {
-      onSuccess: (data) => {
+      onSuccess: (data: any) => {
         login(data.token, data.user);
         toast({
           title: "Xush kelibsiz!",
