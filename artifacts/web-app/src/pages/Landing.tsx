@@ -2,9 +2,11 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hammer, QrCode, Shield, TrendingUp, Users, Wrench, CheckCircle, Star, Phone, MapPin, ArrowRight, Building2 } from "lucide-react";
+import { Hammer, QrCode, Shield, TrendingUp, Users, Wrench, CheckCircle, Star, Phone, MapPin, ArrowRight, Building2, Search, Tag } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { formatCurrency } from "@/lib/utils";
 
 const plans = [
   {
@@ -37,6 +39,101 @@ const plans = [
     ],
   },
 ];
+
+function PublicToolsSection() {
+  const [tools, setTools] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${baseUrl}/api/tools?status=available&limit=8`);
+        if (res.ok) {
+          const d = await res.json();
+          setTools(d.tools || []);
+        }
+      } catch {} finally { setLoading(false); }
+    };
+    load();
+  }, []);
+
+  const filtered = tools.filter(t =>
+    !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.category?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <section className="py-24 max-w-7xl mx-auto px-6" id="tools">
+      <div className="text-center mb-10">
+        <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">Hozir mavjud</Badge>
+        <h2 className="text-4xl font-display font-bold mb-4">Ijaraga bo'sh asboblar</h2>
+        <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+          Ro'yhatdan o'tmay ko'ring — kerakli asbobni topib, tezda ijara oling
+        </p>
+      </div>
+      <div className="relative max-w-xl mx-auto mb-8">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
+        <Input
+          placeholder="Asbob nomi yoki toifasi..."
+          className="pl-11 h-12 rounded-xl"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {[...Array(8)].map((_, i) => <div key={i} className="h-60 bg-muted animate-pulse rounded-2xl" />)}
+        </div>
+      ) : filtered.length === 0 ? (
+        <p className="text-center text-muted-foreground py-10">Asbob topilmadi</p>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+          {filtered.map(tool => (
+            <Card key={tool.id} className="group overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="h-40 bg-secondary flex items-center justify-center overflow-hidden relative">
+                <img
+                  src={tool.imageUrl || `${import.meta.env.BASE_URL}images/placeholder-tool.png`}
+                  alt={tool.name}
+                  className="max-h-full object-contain p-4 group-hover:scale-105 transition-transform"
+                />
+                <div className="absolute top-2 right-2">
+                  <Badge className="bg-green-500 text-white text-xs border-0">Mavjud</Badge>
+                </div>
+              </div>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-1 text-xs text-primary font-semibold mb-1">
+                  <Tag size={11} /> {tool.category}
+                </div>
+                <h3 className="font-bold text-sm mb-1 line-clamp-2">{tool.name}</h3>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground mb-3">
+                  <MapPin size={11} /> {tool.shopName || "Do'kon"}
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Kunlik</p>
+                    <p className="font-bold text-primary">{formatCurrency(tool.pricePerDay)}</p>
+                  </div>
+                  <Link href="/register">
+                    <Button size="sm" className="text-xs">Ijara olish</Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      <div className="text-center">
+        <Link href="/register">
+          <Button size="lg" className="gap-2 h-12 px-8">
+            Barcha asboblarni ko'rish <ArrowRight size={18} />
+          </Button>
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 export default function Landing() {
   return (
@@ -156,6 +253,9 @@ export default function Landing() {
           ))}
         </div>
       </section>
+
+      {/* Public tools section */}
+      <PublicToolsSection />
 
       {/* Narxlar */}
       <section className="py-24 bg-secondary/30" id="pricing">

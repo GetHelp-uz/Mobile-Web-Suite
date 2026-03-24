@@ -70,6 +70,7 @@ import B2BPortalPage from "@/pages/customer/B2BPortal";
 import PeerListingsPage from "@/pages/customer/PeerListings";
 import ShopWorkerPackagesPage from "@/pages/shop/ShopWorkerPackages";
 import AdminB2BPage from "@/pages/admin/AdminB2B";
+import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -94,7 +95,7 @@ function ProtectedRoute({ component: Component, allowedRoles }: { component: any
       case "super_admin": return <Redirect to="/admin" />;
       case "shop_owner": return <Redirect to="/shop" />;
       case "worker": return <Redirect to="/worker" />;
-      case "customer": return <Redirect to="/browse" />;
+      case "customer": return <Redirect to="/home" />;
       default: return <Redirect to="/" />;
     }
   }
@@ -112,7 +113,7 @@ function RootRedirect() {
     case "super_admin": return <Redirect to="/admin" />;
     case "shop_owner": return <Redirect to="/shop" />;
     case "worker": return <Redirect to="/worker" />;
-    case "customer": return <Redirect to="/browse" />;
+    case "customer": return <Redirect to="/home" />;
     default: return <Landing />;
   }
 }
@@ -126,6 +127,9 @@ function Router() {
       <Route path="/forgot-password" component={ForgotPassword} />
 
       {/* Mijoz yo'llari */}
+      <Route path="/home">
+        {() => <ProtectedRoute component={CustomerDashboard} allowedRoles={['customer']} />}
+      </Route>
       <Route path="/browse">
         {() => <ProtectedRoute component={BrowseTools} allowedRoles={['customer']} />}
       </Route>

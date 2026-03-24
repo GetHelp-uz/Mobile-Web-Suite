@@ -80,7 +80,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   const navItems = {
     customer: [
-      { name: "Asboblar", path: "/browse", icon: Wrench },
+      { name: "Bosh sahifa", path: "/home", icon: LayoutDashboard },
+      { name: "Asboblar katalogi", path: "/browse", icon: Wrench },
       { name: "Ijaralarim", path: "/my-rentals", icon: FileText },
       { name: "Bronlarim", path: "/bookings", icon: CalendarCheck },
       { name: "Loyihalarim", path: "/projects", icon: FolderOpen },
