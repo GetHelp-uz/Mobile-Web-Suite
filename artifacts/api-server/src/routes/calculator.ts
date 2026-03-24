@@ -50,13 +50,13 @@ router.post("/estimate", async (req, res) => {
     const toolRows = await db.execute(sql`
       SELECT DISTINCT ON (t.category)
         t.id, t.name, t.category,
-        COALESCE(t.daily_price, 0) as daily_price,
+        COALESCE(t.price_per_day, 0) as daily_price,
         s.name as shop_name, s.region as shop_region
       FROM tools t
       LEFT JOIN shops s ON s.id = t.shop_id
-      WHERE t.is_available = TRUE AND t.is_active = TRUE
+      WHERE t.is_available = TRUE
       ${region ? sql`AND (s.region = ${region} OR s.region IS NULL)` : sql``}
-      ORDER BY t.category, t.daily_price ASC
+      ORDER BY t.category, t.price_per_day ASC
       LIMIT 20
     `);
 

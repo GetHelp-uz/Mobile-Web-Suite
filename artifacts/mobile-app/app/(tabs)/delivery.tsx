@@ -36,17 +36,16 @@ export default function DeliveryScreen() {
         const token = await AsyncStorage.getItem("gethelp_token");
         const r = await fetch(`${BASE_URL}/delivery/settings/${user.shopId}`, { headers: { Authorization: `Bearer ${token}` } });
         if (r.ok) {
-          const d = await r.json();
-          const s = d.settings || d;
+          const s = await r.json();
           setSettings({
-            deliveryEnabled: !!s.delivery_enabled,
-            freeDeliveryThreshold: String(s.free_delivery_threshold || ""),
-            baseDeliveryFee: String(s.base_delivery_fee || ""),
-            deliveryRadius: String(s.delivery_radius || ""),
-            deliveryNote: s.delivery_note || "",
-            expressFee: String(s.express_fee || ""),
-            expressAvailable: !!s.express_available,
-            pickupAvailable: s.pickup_available !== false,
+            deliveryEnabled: !!s.is_active,
+            freeDeliveryThreshold: String(s.free_km || ""),
+            baseDeliveryFee: String(s.base_price || ""),
+            deliveryRadius: String(s.max_km || ""),
+            deliveryNote: s.notes || "",
+            expressFee: String(s.price_per_km || ""),
+            expressAvailable: false,
+            pickupAvailable: true,
           });
         }
       } catch {}
@@ -58,19 +57,17 @@ export default function DeliveryScreen() {
     setSaving(true);
     try {
       const token = await AsyncStorage.getItem("gethelp_token");
-      await fetch(`${BASE_URL}/delivery/settings`, {
-        method: "POST",
+      await fetch(`${BASE_URL}/delivery/settings/${user?.shopId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          shopId: user?.shopId,
-          deliveryEnabled: settings.deliveryEnabled,
-          freeDeliveryThreshold: settings.freeDeliveryThreshold ? Number(settings.freeDeliveryThreshold) : null,
-          baseDeliveryFee: settings.baseDeliveryFee ? Number(settings.baseDeliveryFee) : 0,
-          deliveryRadius: settings.deliveryRadius ? Number(settings.deliveryRadius) : null,
-          deliveryNote: settings.deliveryNote,
-          expressFee: settings.expressFee ? Number(settings.expressFee) : null,
-          expressAvailable: settings.expressAvailable,
-          pickupAvailable: settings.pickupAvailable,
+          is_active: settings.deliveryEnabled,
+          base_price: settings.baseDeliveryFee ? Number(settings.baseDeliveryFee) : 0,
+          price_per_km: settings.expressFee ? Number(settings.expressFee) : 0,
+          free_km: settings.freeDeliveryThreshold ? Number(settings.freeDeliveryThreshold) : 0,
+          max_km: settings.deliveryRadius ? Number(settings.deliveryRadius) : 50,
+          min_km: 1,
+          notes: settings.deliveryNote,
         }),
       });
       Alert.alert("Saqlandi", "Yetkazib berish sozlamalari yangilandi");

@@ -51,7 +51,7 @@ export default function ShopWorkerTasksScreen() {
       const r = await fetch(`${BASE_URL}/worker-tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ ...form, shopId: user?.shopId, assignedTo: form.assignedTo ? Number(form.assignedTo) : undefined }),
+        body: JSON.stringify({ title: form.title, description: form.description, priority: form.priority, dueDate: form.dueDate || undefined, shopId: user?.shopId, workerId: form.assignedTo ? Number(form.assignedTo) : undefined }),
       });
       if (r.ok) { setModalOpen(false); setForm({ title: "", description: "", assignedTo: "", priority: "medium", dueDate: "" }); load(); }
     } catch {}

@@ -161,7 +161,6 @@ export default function ProfileScreen() {
             <MenuItem icon="analytics-outline" label="Dashboard" onPress={() => router.push("/(tabs)")} />
             <MenuItem icon="construct-outline" label="Asboblar" onPress={() => router.push("/(tabs)/tools")} />
             <MenuItem icon="document-text-outline" label="Ijaralar" onPress={() => router.push("/(tabs)/rentals")} />
-            <MenuItem icon="people-outline" label="Mijozlar" onPress={() => router.push("/(tabs)/customers")} />
           </View>
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Do'kon sozlamalari</Text>
