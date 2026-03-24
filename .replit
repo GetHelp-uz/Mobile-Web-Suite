@@ -1,4 +1,4 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "postgresql-16"]
 
 [[ports]]
 localPort = 5000
@@ -37,3 +37,6 @@ APP_URL = "https://98e59e1f-c999-4a68-9b83-910ab2aa90f1-00-3u9flehs6ip7v.pike.re
 WEB_APP_URL = "https://98e59e1f-c999-4a68-9b83-910ab2aa90f1-00-3u9flehs6ip7v.pike.replit.dev"
 EXPO_PUBLIC_DOMAIN = "98e59e1f-c999-4a68-9b83-910ab2aa90f1-00-3u9flehs6ip7v.pike.replit.dev"
 JWT_SECRET = "dev-secret-key-change-in-production"
+
+[nix]
+channel = "stable-25_05"
