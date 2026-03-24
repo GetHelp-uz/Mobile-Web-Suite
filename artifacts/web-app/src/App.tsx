@@ -76,6 +76,9 @@ import AdminToolPassports from "@/pages/admin/AdminToolPassports";
 import AdminHardware from "@/pages/admin/AdminHardware";
 import ToolPassport from "@/pages/ToolPassport";
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
+import InvestmentsPage from "@/pages/investments/InvestmentsPage";
+import MyInvestmentsPage from "@/pages/investments/MyInvestmentsPage";
+import AdminFunds from "@/pages/admin/AdminFunds";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -326,7 +329,18 @@ function Router() {
         {() => <ProtectedRoute component={ShopWorkerPackagesPage} allowedRoles={['shop_owner','super_admin']} />}
       </Route>
 
+      {/* Investitsiya yo'llari */}
+      <Route path="/investments">
+        {() => <ProtectedRoute component={InvestmentsPage} allowedRoles={['customer','shop_owner','worker','super_admin']} />}
+      </Route>
+      <Route path="/investments/my">
+        {() => <ProtectedRoute component={MyInvestmentsPage} allowedRoles={['customer','shop_owner','worker','super_admin']} />}
+      </Route>
+
       {/* Yangi xususiyatlar — admin */}
+      <Route path="/admin/funds">
+        {() => <ProtectedRoute component={AdminFunds} allowedRoles={['super_admin']} />}
+      </Route>
       <Route path="/admin/b2b">
         {() => <ProtectedRoute component={AdminB2BPage} allowedRoles={['super_admin']} />}
       </Route>

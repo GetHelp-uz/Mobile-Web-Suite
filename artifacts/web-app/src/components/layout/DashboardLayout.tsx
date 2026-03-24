@@ -56,6 +56,7 @@ import {
   Calculator,
   Users2,
   BookOpen,
+  Coins,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -87,6 +88,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Bronlarim", path: "/bookings", icon: CalendarCheck },
       { name: "Loyihalarim", path: "/projects", icon: FolderOpen },
       { name: "Sevimlilar", path: "/favorites", icon: Heart },
+      { name: "Investitsiya", path: "/investments", icon: TrendingUp },
+      { name: "Mening investitsiyalarim", path: "/investments/my", icon: Coins },
       { name: "Obuna Rejalari", path: "/subscriptions", icon: Crown },
       { name: "Sug'urta", path: "/insurance", icon: ShieldCheck },
       { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
@@ -128,6 +131,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Sug'urta Da'volari", path: "/insurance", icon: ShieldCheck },
       { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
       { name: "Hamshaharlarga Ijara", path: "/peer-listings", icon: Users2 },
+      { name: "Investitsiya", path: "/investments", icon: TrendingUp },
+      { name: "Mening investitsiyalarim", path: "/investments/my", icon: Coins },
       { name: "AI Tavsiya", path: "/ai-suggest", icon: Sparkles },
       { name: "Chat", path: "/chat", icon: MessageSquare },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
@@ -157,6 +162,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "B2B Boshqaruv", path: "/admin/b2b", icon: Building2 },
       { name: "Asbob Pasportlari", path: "/admin/tool-passports", icon: BookOpen },
       { name: "Hardware Boshqaruvi", path: "/admin/hardware", icon: Package },
+      { name: "Fondlar boshqaruvi", path: "/admin/funds", icon: Coins },
       { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
     ]

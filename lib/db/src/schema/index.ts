@@ -7,3 +7,4 @@ export * from "./plans";
 export * from "./sms";
 export * from "./wallet";
 export * from "./tool-events";
+export * from "./investments";
