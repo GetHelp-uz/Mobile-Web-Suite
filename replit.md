@@ -51,10 +51,43 @@ Barcha to'lov tizimlarini sozlash: `/admin/payment-settings`
 | `artifacts/web-app/src/pages/customer/BrowseTools.tsx` | Asboblar katalogi |
 | `artifacts/web-app/src/components/layout/DashboardLayout.tsx` | Sidebar navigatsiya |
 
+## DB jadvallar (to'liq ro'yxat)
+Asosiy: `users`, `shops`, `tools`, `rentals`, `payments`, `wallets`, `wallet_transactions`
+To'lov: `payment_settings`, `shop_payment_settings`, `commission_settings`, `commission_transactions`, `escrow_holds`, `shop_commission_overrides`
+SMS: `sms_packages`, `shop_sms_subscriptions`, `sms_settings`, `sms_logs`, `sms_templates`
+Asbob pasporti: `tool_events`
+Hardware: `hardware_products`, `hardware_orders`, `hardware_order_items`
+Investitsiya: `investment_funds`, `user_investments`
+B2B: `b2b_clients`, `b2b_contracts`
+Bronlash: `bookings`
+Filiallar: `shop_branches`
+Loyihalar: `projects`, `project_rentals`
+P2P: `peer_listings`, `peer_rentals`
+Baholash: `tool_ratings`
+Sevimlilar: `favorites`
+Loyallik: `loyalty_points`, `loyalty_transactions`
+Referal: `referral_rewards`
+Zarar hisobotlari: `damage_reports`
+Audit: `audit_logs`
+Ta'mirlash: `maintenance_logs`
+Bildirishnomalar: `notifications`
+Pul chiqarish: `withdrawal_requests`
+Ishchi: `worker_tasks`, `worker_packages`
+GPS: `gps_devices`, `gps_tracking_logs`, `gps_geofences`
+Sug'urta: `insurance_policies`, `insurance_claims`
+Yetkazib berish: `delivery_settings`, `delivery_orders`
+Narxlash: `pricing_rules`
+Ta'minotchilar: `suppliers`
+Promo kodlar: `promo_codes`
+Hujjatlar: `customer_documents`
+Chat: `chat_rooms`, `chat_messages`
+Obunalar: `subscription_plans`
+
 ## DB sxema yondashuvi
 - **Drizzle ORM** asosiy jadvallar uchun (users, shops, tools, rentals, payments, ...)
 - **Raw SQL** (`db.$client.query()`) qo'shimcha jadvallar uchun
 - `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ADD COLUMN IF NOT EXISTS` — xavfsiz migratsiya
+- `tools` jadvalida `supplier_id` va `branch_id` ustunlari qo'shilgan (ALTER TABLE)
 
 ## Muhim konfiguratsiya
 - `JWT_SECRET` — Replit env secret sifatida saqlangan

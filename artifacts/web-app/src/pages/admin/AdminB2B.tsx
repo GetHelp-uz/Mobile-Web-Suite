@@ -123,15 +123,15 @@ export default function AdminB2BPage() {
                     <div className="mt-3 pt-3 border-t grid grid-cols-3 gap-3">
                       <div>
                         <label className="text-xs font-medium block mb-1">Chegirma (%)</label>
-                        <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={verifyForm.discount} onChange={e => setVerifyForm(f => f ? { ...f, discount: e.target.value } : null)} />
+                        <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={verifyForm?.discount ?? ""} onChange={e => setVerifyForm(f => f ? { ...f, discount: e.target.value } : null)} />
                       </div>
                       <div>
                         <label className="text-xs font-medium block mb-1">Kredit limit (UZS)</label>
-                        <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={verifyForm.credit} onChange={e => setVerifyForm(f => f ? { ...f, credit: e.target.value } : null)} />
+                        <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={verifyForm?.credit ?? ""} onChange={e => setVerifyForm(f => f ? { ...f, credit: e.target.value } : null)} />
                       </div>
                       <div>
                         <label className="text-xs font-medium block mb-1">To'lov muddati (kun)</label>
-                        <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={verifyForm.days} onChange={e => setVerifyForm(f => f ? { ...f, days: e.target.value } : null)} />
+                        <input type="number" className="w-full border rounded-lg px-2 py-1.5 text-sm" value={verifyForm?.days ?? ""} onChange={e => setVerifyForm(f => f ? { ...f, days: e.target.value } : null)} />
                       </div>
                       <div className="col-span-3 flex gap-2">
                         <Button size="sm" className="bg-green-500 hover:bg-green-600" onClick={verify} disabled={verifying === c.id}>{verifying === c.id ? "..." : "Tasdiqlash"}</Button>

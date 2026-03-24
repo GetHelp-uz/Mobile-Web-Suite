@@ -49,10 +49,6 @@ export default function ShopPaymentSettings() {
   const load = async () => {
     setLoading(true);
     try {
-      // Avval do'kon ma'lumotini olamiz
-      const meRes = await fetch(`${baseUrl}/api/users/me`, { headers: h });
-      const meData = await meRes.json();
-
       const shopsRes = await fetch(`${baseUrl}/api/shops?mine=true`, { headers: h });
       const shopsData = await shopsRes.json();
       const myShop = shopsData.shops?.[0] || shopsData[0];

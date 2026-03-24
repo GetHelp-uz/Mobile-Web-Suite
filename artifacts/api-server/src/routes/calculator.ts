@@ -61,13 +61,14 @@ router.post("/estimate", async (req, res) => {
     `);
 
     // Hisob-kitob
-    const baseRatePerM2 = {
+    const baseRates: Record<string, number> = {
       apartment_repair: 50000,
       house_construction: 80000,
       road_work: 120000,
       landscaping: 30000,
       plumbing: 40000
-    }[projectType] || 50000;
+    };
+    const baseRatePerM2 = baseRates[projectType] || 50000;
 
     const estimatedTotal = area * baseRatePerM2 * (days / 30);
 
