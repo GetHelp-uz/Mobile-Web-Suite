@@ -807,7 +807,8 @@ export default function ShopTools() {
                 <SelectTrigger className="h-9 text-sm"><SelectValue/></SelectTrigger>
                 <SelectContent>
                   {[
-                    ["inspection","Ko'rik / Tekshiruv"],["repair","Ta'mirlash"],["maintenance_started","Texnik xizmat boshlandi"],
+                    ["inspection","Ko'rik / Tekshiruv"],["repair","Ta'mirlash"],["modification","Modifikatsiya"],
+                    ["maintenance_started","Texnik xizmat boshlandi"],
                     ["maintenance_completed","Texnik xizmat tugadi"],["damage","Shikast"],["note","Eslatma"],
                     ["sold","Sotildi"],["transferred","O'tkazildi"],
                   ].map(([v,l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}

@@ -201,10 +201,21 @@ router.get("/:id", async (req, res) => {
 router.patch("/:id", authenticate, requireRole("super_admin", "shop_owner", "worker"), async (req, res) => {
   try {
     const body = UpdateToolBody.parse(req.body);
-    const [tool] = await db.update(toolsTable).set(body as any).where(eq(toolsTable.id, Number(req.params.id))).returning();
+    const customBarcode = (req.body as any).customBarcode;
+    const toolId = Number(req.params.id);
+    const [tool] = await db.update(toolsTable).set(body as any).where(eq(toolsTable.id, toolId)).returning();
     if (!tool) {
       res.status(404).json({ error: "Tool not found" });
       return;
+    }
+    // Ensure barcode is set: preserve existing or generate if missing
+    const existingBarcode = await db.$client.query(
+      `SELECT custom_barcode FROM tools WHERE id = $1 LIMIT 1`, [toolId]
+    );
+    const currentBarcode = (existingBarcode.rows[0] as any)?.custom_barcode;
+    if (customBarcode !== undefined || !currentBarcode) {
+      const finalBarcode = customBarcode || `GH${String(tool.shopId).padStart(4, "0")}${String(toolId).padStart(6, "0")}`;
+      await db.execute(sql`UPDATE tools SET custom_barcode = ${finalBarcode} WHERE id = ${toolId}`);
     }
     const shop = await db.select().from(shopsTable).where(eq(shopsTable.id, tool.shopId)).limit(1);
     res.json({ ...tool, shopName: shop[0]?.name || "" });
@@ -341,7 +352,7 @@ router.post("/:id/events", authenticate, requireRole("super_admin", "shop_owner"
 
     const VALID_EVENT_TYPES = [
       "rental_started", "rental_returned", "maintenance_started",
-      "maintenance_completed", "repair", "inspection", "damage", "note", "sold", "transferred"
+      "maintenance_completed", "repair", "inspection", "damage", "note", "sold", "transferred", "modification"
     ];
     if (!VALID_EVENT_TYPES.includes(eventType)) {
       res.status(400).json({ error: "Noto'g'ri event_type" }); return;
