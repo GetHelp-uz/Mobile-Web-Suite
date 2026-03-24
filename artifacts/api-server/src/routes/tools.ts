@@ -277,8 +277,8 @@ router.patch("/:id/stock", authenticate, requireRole("super_admin", "shop_owner"
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
-// GET /api/tools/:id/passport — asbob pasporti (autentifikatsiya kerak)
-router.get("/:id/passport", authenticate, async (req, res) => {
+// GET /api/tools/:id/passport — asbob pasporti (faqat super_admin, shop_owner, worker)
+router.get("/:id/passport", authenticate, requireRole("super_admin", "shop_owner", "worker"), async (req, res) => {
   try {
     const toolId = Number(req.params.id);
     const user = (req as any).user;
@@ -295,7 +295,8 @@ router.get("/:id/passport", authenticate, async (req, res) => {
     }
     const tool = toolResult.rows[0];
 
-    if (user.role === "shop_owner" && tool.shop_id !== user.shopId) {
+    // Non-admin roles can only view tools belonging to their own shop
+    if (user.role !== "super_admin" && tool.shop_id !== user.shopId) {
       res.status(403).json({ error: "Ruxsat yo'q" }); return;
     }
 
@@ -355,7 +356,8 @@ router.post("/:id/events", authenticate, requireRole("super_admin", "shop_owner"
     }
     const tool = toolResult.rows[0];
 
-    if (user.role === "shop_owner" && tool.shop_id !== user.shopId) {
+    // Non-admin roles (shop_owner, worker) can only write events for tools in their own shop
+    if (user.role !== "super_admin" && tool.shop_id !== user.shopId) {
       res.status(403).json({ error: "Ruxsat yo'q" }); return;
     }
 
