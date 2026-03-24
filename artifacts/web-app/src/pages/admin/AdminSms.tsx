@@ -9,7 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import {
   MessageSquare, Send, Settings, FileText, BarChart3, Plus, Trash2, Edit3,
-  RefreshCw, CheckCircle, XCircle, Clock, Zap, Globe, AlertTriangle, Eye, EyeOff
+  RefreshCw, CheckCircle, XCircle, Clock, Zap, Globe, AlertTriangle, Eye, EyeOff,
+  Package, Building2, ToggleLeft, ToggleRight, Crown
 } from "lucide-react";
 
 const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
@@ -92,14 +93,27 @@ export default function AdminSms() {
   const [logType, setLogType] = useState("");
   const [triggering, setTriggering] = useState("");
 
+  // Packages
+  const [packages, setPackages] = useState<any[]>([]);
+  const [pkgOpen, setPkgOpen] = useState(false);
+  const [editPkg, setEditPkg] = useState<any>(null);
+  const [pkgForm, setPkgForm] = useState({ name: "", smsCount: 100, priceMonthly: 50000, pricePerSms: 500 });
+
+  // Shop subscriptions
+  const [shopSubs, setShopSubs] = useState<any[]>([]);
+  const [subOpen, setSubOpen] = useState(false);
+  const [subForm, setSubForm] = useState({ shopId: 0, shopName: "", packageId: "", isEnabled: true, smsLimit: 0, expiresAt: "", notes: "" });
+
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [pR, tR, lR, sR] = await Promise.all([
+      const [pR, tR, lR, sR, pkgR, subR] = await Promise.all([
         fetch(`${baseUrl}/api/sms/settings`, { headers: h }),
         fetch(`${baseUrl}/api/sms/templates`, { headers: h }),
         fetch(`${baseUrl}/api/sms/logs?limit=100`, { headers: h }),
         fetch(`${baseUrl}/api/sms/stats`, { headers: h }),
+        fetch(`${baseUrl}/api/sms/packages`, { headers: h }),
+        fetch(`${baseUrl}/api/sms/shop-subscriptions`, { headers: h }),
       ]);
       if (pR.ok) setProviders((await pR.json()).settings || []);
       if (tR.ok) setTemplates((await tR.json()).templates || []);
@@ -110,6 +124,8 @@ export default function AdminSms() {
         setByType(sd.byType || []);
         setByProvider(sd.byProvider || []);
       }
+      if (pkgR.ok) setPackages((await pkgR.json()).packages || []);
+      if (subR.ok) setShopSubs((await subR.json()).subscriptions || []);
     } finally { setLoading(false); }
   }, []);
 
@@ -224,6 +240,41 @@ export default function AdminSms() {
     } finally { setTriggering(""); }
   };
 
+  // ─── Package CRUD ──────────────────────────────────────────────────────────
+  const savePkg = async () => {
+    const url = editPkg ? `${baseUrl}/api/sms/packages/${editPkg.id}` : `${baseUrl}/api/sms/packages`;
+    const method = editPkg ? "PATCH" : "POST";
+    const r = await fetch(url, { method, headers: h, body: JSON.stringify({ name: pkgForm.name, smsCount: pkgForm.smsCount, priceMonthly: pkgForm.priceMonthly, pricePerSms: pkgForm.pricePerSms }) });
+    const d = await r.json();
+    if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
+    toast({ title: editPkg ? "Yangilandi" : "Qo'shildi" });
+    setPkgOpen(false);
+    load();
+  };
+  const deletePkg = async (id: number) => {
+    if (!confirm("Paketni o'chirasizmi?")) return;
+    await fetch(`${baseUrl}/api/sms/packages/${id}`, { method: "DELETE", headers: h });
+    load();
+  };
+
+  // ─── Shop subscription ─────────────────────────────────────────────────────
+  const toggleShopSms = async (shopId: number) => {
+    await fetch(`${baseUrl}/api/sms/shop-subscriptions/${shopId}/toggle`, { method: "PATCH", headers: h });
+    toast({ title: "Yangilandi" });
+    load();
+  };
+  const saveSub = async () => {
+    const r = await fetch(`${baseUrl}/api/sms/shop-subscriptions`, {
+      method: "POST", headers: h,
+      body: JSON.stringify({ shopId: subForm.shopId, packageId: subForm.packageId || null, isEnabled: subForm.isEnabled, smsLimit: subForm.smsLimit, expiresAt: subForm.expiresAt || null, notes: subForm.notes }),
+    });
+    const d = await r.json();
+    if (!r.ok) { toast({ title: "Xatolik", description: d.error, variant: "destructive" }); return; }
+    toast({ title: "SMS xizmati ulandi" });
+    setSubOpen(false);
+    load();
+  };
+
   const filteredLogs = logs.filter(l =>
     (!logStatus || l.status === logStatus) &&
     (!logType || l.template_type === logType)
@@ -275,14 +326,112 @@ export default function AdminSms() {
         </div>
       )}
 
-      <Tabs defaultValue="providers">
-        <TabsList className="mb-6 flex-wrap h-auto">
-          <TabsTrigger value="providers" className="gap-1.5"><Settings size={14}/> Provayderlar</TabsTrigger>
+      <Tabs defaultValue="shops">
+        <TabsList className="mb-6 flex-wrap h-auto gap-1">
+          <TabsTrigger value="shops" className="gap-1.5"><Building2 size={14}/> Do'konlarga SMS</TabsTrigger>
+          <TabsTrigger value="packages" className="gap-1.5"><Package size={14}/> Paketlar</TabsTrigger>
+          <TabsTrigger value="providers" className="gap-1.5"><Settings size={14}/> Eskiz/Provayder</TabsTrigger>
           <TabsTrigger value="templates" className="gap-1.5"><FileText size={14}/> Shablonlar</TabsTrigger>
           <TabsTrigger value="logs" className="gap-1.5"><MessageSquare size={14}/> Tarix</TabsTrigger>
           <TabsTrigger value="triggers" className="gap-1.5"><Zap size={14}/> Triggerlar</TabsTrigger>
           <TabsTrigger value="analytics" className="gap-1.5"><BarChart3 size={14}/> Tahlil</TabsTrigger>
         </TabsList>
+
+        {/* ─── DO'KONLARGA SMS ──────────────────────────────────────────── */}
+        <TabsContent value="shops">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-muted-foreground text-sm">Har bir do'konga SMS xizmatini ulang, paket belgilang va monitoring qiling.</p>
+          </div>
+          {shopSubs.length === 0 ? (
+            <div className="text-center py-16 text-muted-foreground">
+              <Building2 size={48} className="mx-auto mb-3 opacity-30"/>
+              <p>Do'konlar topilmadi yoki SMS ulangan do'kon yo'q.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {shopSubs.map((s: any) => (
+                <Card key={s.shop_id} className={s.is_enabled ? "border-green-200" : ""}>
+                  <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Building2 size={20} className="text-primary"/>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="font-bold">{s.shop_name}</span>
+                        <Badge variant={s.is_enabled ? "default" : "secondary"} className="text-xs">
+                          {s.is_enabled ? "SMS Faol" : "SMS Nofaol"}
+                        </Badge>
+                        {s.package_name && <Badge variant="outline" className="text-xs">{s.package_name}</Badge>}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {s.owner_name} · {s.owner_phone}
+                        {s.sms_limit > 0 && ` · ${s.sms_used || 0}/${s.sms_limit} SMS ishlatildi`}
+                        {s.expires_at && ` · Tugaydi: ${new Date(s.expires_at).toLocaleDateString("uz-UZ")}`}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button size="sm" variant={s.is_enabled ? "outline" : "default"} onClick={() => toggleShopSms(s.shop_id)} className="gap-1">
+                        {s.is_enabled ? <ToggleRight size={15} className="text-green-600"/> : <ToggleLeft size={15}/>}
+                        {s.is_enabled ? "O'chirish" : "Yoqish"}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => {
+                        setSubForm({ shopId: s.shop_id, shopName: s.shop_name, packageId: s.package_id || "", isEnabled: s.is_enabled ?? false, smsLimit: s.sms_limit || 0, expiresAt: s.expires_at ? s.expires_at.split("T")[0] : "", notes: s.notes || "" });
+                        setSubOpen(true);
+                      }}>
+                        <Edit3 size={14}/>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* ─── PAKETLAR ─────────────────────────────────────────────────── */}
+        <TabsContent value="packages">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-muted-foreground text-sm">Admin tomonidan belgilanadigan SMS paket rejalari</p>
+            <Button onClick={() => { setEditPkg(null); setPkgForm({ name: "", smsCount: 100, priceMonthly: 50000, pricePerSms: 500 }); setPkgOpen(true); }} className="gap-2">
+              <Plus size={16}/> Yangi paket
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {packages.map((pkg: any) => (
+              <Card key={pkg.id} className="relative overflow-hidden hover:shadow-md transition-shadow">
+                <div className="h-2 w-full bg-primary" />
+                <CardContent className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Crown size={18} className="text-primary"/>
+                      <h3 className="font-bold text-lg">{pkg.name_uz || pkg.name}</h3>
+                    </div>
+                    <Badge variant={pkg.is_active ? "default" : "secondary"}>{pkg.is_active ? "Faol" : "Nofaol"}</Badge>
+                  </div>
+                  <p className="text-3xl font-bold text-primary mb-1">{Number(pkg.price_monthly).toLocaleString()} <span className="text-sm font-normal text-muted-foreground">so'm/oy</span></p>
+                  <p className="text-sm text-muted-foreground mb-3">{pkg.sms_count} ta SMS/oy · {Number(pkg.price_per_sms)} so'm/SMS</p>
+                  {Array.isArray(pkg.features) && pkg.features.length > 0 && (
+                    <ul className="space-y-1.5 mb-4">
+                      {pkg.features.map((f: string, i: number) => (
+                        <li key={i} className="flex items-center gap-2 text-sm">
+                          <CheckCircle size={14} className="text-green-500 flex-shrink-0"/> {f}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="flex-1" onClick={() => { setEditPkg(pkg); setPkgForm({ name: pkg.name, smsCount: pkg.sms_count, priceMonthly: pkg.price_monthly, pricePerSms: pkg.price_per_sms }); setPkgOpen(true); }}>
+                      <Edit3 size={13} className="mr-1"/> Tahrirlash
+                    </Button>
+                    <Button size="sm" variant="destructive" onClick={() => deletePkg(pkg.id)}>
+                      <Trash2 size={13}/>
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </TabsContent>
 
         {/* ─── PROVAYDERLAR ─────────────────────────────────────────────── */}
         <TabsContent value="providers">
@@ -752,6 +901,81 @@ export default function AdminSms() {
               {testing ? <RefreshCw size={14} className="animate-spin"/> : <Send size={14}/>}
               Yuborish
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── PAKET DIALOG ────────────────────────────────────────────────── */}
+      <Dialog open={pkgOpen} onOpenChange={setPkgOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editPkg ? "Paketni tahrirlash" : "Yangi paket yaratish"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold mb-1 block">Paket nomi *</label>
+              <Input placeholder="Masalan: Professional" value={pkgForm.name} onChange={e => setPkgForm(f => ({ ...f, name: e.target.value }))}/>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-sm font-semibold mb-1 block">SMS/oy</label>
+                <Input type="number" min={1} value={pkgForm.smsCount} onChange={e => setPkgForm(f => ({ ...f, smsCount: Number(e.target.value) }))}/>
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Narx/oy (so'm)</label>
+                <Input type="number" min={0} value={pkgForm.priceMonthly} onChange={e => setPkgForm(f => ({ ...f, priceMonthly: Number(e.target.value) }))}/>
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Narx/SMS</label>
+                <Input type="number" min={0} value={pkgForm.pricePerSms} onChange={e => setPkgForm(f => ({ ...f, pricePerSms: Number(e.target.value) }))}/>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPkgOpen(false)}>Bekor</Button>
+            <Button onClick={savePkg} disabled={!pkgForm.name}>{editPkg ? "Saqlash" : "Yaratish"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── DO'KON SMS DIALOG ───────────────────────────────────────────── */}
+      <Dialog open={subOpen} onOpenChange={setSubOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>SMS xizmatini sozlash — {subForm.shopName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-semibold mb-1 block">Paket</label>
+              <select className="w-full border rounded-md px-3 py-2 text-sm bg-background" value={subForm.packageId} onChange={e => setSubForm(f => ({ ...f, packageId: e.target.value }))}>
+                <option value="">— Paket tanlanmagan —</option>
+                {packages.map((p: any) => <option key={p.id} value={p.id}>{p.name_uz || p.name} — {Number(p.price_monthly).toLocaleString()} so'm/oy</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm font-semibold mb-1 block">SMS limiti</label>
+                <Input type="number" min={0} value={subForm.smsLimit} onChange={e => setSubForm(f => ({ ...f, smsLimit: Number(e.target.value) }))}/>
+              </div>
+              <div>
+                <label className="text-sm font-semibold mb-1 block">Tugash sanasi</label>
+                <Input type="date" value={subForm.expiresAt} onChange={e => setSubForm(f => ({ ...f, expiresAt: e.target.value }))}/>
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-semibold mb-1 block">Izoh</label>
+              <Input placeholder="Ixtiyoriy izoh..." value={subForm.notes} onChange={e => setSubForm(f => ({ ...f, notes: e.target.value }))}/>
+            </div>
+            <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+              <span className="text-sm font-medium flex-1">SMS xizmati holati</span>
+              <Button size="sm" variant={subForm.isEnabled ? "default" : "outline"} onClick={() => setSubForm(f => ({ ...f, isEnabled: !f.isEnabled }))}>
+                {subForm.isEnabled ? <><ToggleRight size={14} className="mr-1 text-green-400"/> Faol</> : <><ToggleLeft size={14} className="mr-1"/> Nofaol</>}
+              </Button>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubOpen(false)}>Bekor</Button>
+            <Button onClick={saveSub}>Saqlash</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

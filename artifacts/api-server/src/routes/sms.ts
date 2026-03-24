@@ -302,4 +302,158 @@ router.post("/trigger-reminder", authenticate, requireRole("super_admin"), async
   }
 });
 
+// ─── SMS Paket rejalari (admin) ─────────────────────────────────────────────
+
+async function ensureSmsPackageTables() {
+  try {
+    await db.$client.query(`
+      CREATE TABLE IF NOT EXISTS sms_packages (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        name_uz VARCHAR(100),
+        sms_count INTEGER NOT NULL DEFAULT 100,
+        price_monthly INTEGER NOT NULL DEFAULT 50000,
+        price_per_sms INTEGER NOT NULL DEFAULT 500,
+        is_active BOOLEAN DEFAULT TRUE,
+        features JSONB DEFAULT '[]',
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS shop_sms_subscriptions (
+        id SERIAL PRIMARY KEY,
+        shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+        package_id INTEGER REFERENCES sms_packages(id),
+        is_enabled BOOLEAN DEFAULT FALSE,
+        sms_used INTEGER DEFAULT 0,
+        sms_limit INTEGER DEFAULT 0,
+        expires_at TIMESTAMPTZ,
+        activated_at TIMESTAMPTZ,
+        activated_by INTEGER,
+        notes TEXT,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(shop_id)
+      );
+      INSERT INTO sms_packages (name, name_uz, sms_count, price_monthly, price_per_sms, features)
+      SELECT 'Boshlangich', 'Boshlang''ich', 100, 50000, 500, '["100 ta SMS/oy", "Asosiy shablonlar", "SMS tarixi"]'
+      WHERE NOT EXISTS (SELECT 1 FROM sms_packages WHERE name = 'Boshlangich');
+      INSERT INTO sms_packages (name, name_uz, sms_count, price_monthly, price_per_sms, features)
+      SELECT 'Professional', 'Professional', 500, 150000, 300, '["500 ta SMS/oy", "Barcha shablonlar", "Tahlil va hisobotlar"]'
+      WHERE NOT EXISTS (SELECT 1 FROM sms_packages WHERE name = 'Professional');
+      INSERT INTO sms_packages (name, name_uz, sms_count, price_monthly, price_per_sms, features)
+      SELECT 'Biznes', 'Biznes', 2000, 400000, 200, '["2000 ta SMS/oy", "Maxsus shablonlar", "API kirish"]'
+      WHERE NOT EXISTS (SELECT 1 FROM sms_packages WHERE name = 'Biznes');
+    `);
+  } catch (e: any) { console.error('[SMS Tables]', e.message); }
+}
+ensureSmsPackageTables();
+
+// GET /api/sms/packages — barcha paketlar
+router.get("/packages", authenticate, async (_req, res) => {
+  try {
+    const { rows } = await db.$client.query(`SELECT * FROM sms_packages ORDER BY price_monthly ASC`);
+    res.json({ packages: rows });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/sms/packages — yangi paket yaratish (admin)
+router.post("/packages", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const { name, nameUz, smsCount, priceMonthly, pricePerSms, features } = req.body;
+    const { rows } = await db.$client.query(
+      `INSERT INTO sms_packages (name, name_uz, sms_count, price_monthly, price_per_sms, features)
+       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [name, nameUz || null, smsCount || 100, priceMonthly || 50000, pricePerSms || 500, JSON.stringify(features || [])]
+    );
+    res.status(201).json({ package: rows[0] });
+  } catch (err: any) { res.status(400).json({ error: err.message }); }
+});
+
+// PATCH /api/sms/packages/:id — paket yangilash (admin)
+router.patch("/packages/:id", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { name, nameUz, smsCount, priceMonthly, pricePerSms, features, isActive } = req.body;
+    const { rows } = await db.$client.query(
+      `UPDATE sms_packages SET
+        name = COALESCE($1, name),
+        name_uz = COALESCE($2, name_uz),
+        sms_count = COALESCE($3, sms_count),
+        price_monthly = COALESCE($4, price_monthly),
+        price_per_sms = COALESCE($5, price_per_sms),
+        features = COALESCE($6, features),
+        is_active = COALESCE($7, is_active)
+       WHERE id = $8 RETURNING *`,
+      [name || null, nameUz || null, smsCount || null, priceMonthly || null, pricePerSms || null,
+       features ? JSON.stringify(features) : null, isActive !== undefined ? isActive : null, id]
+    );
+    res.json({ package: rows[0] });
+  } catch (err: any) { res.status(400).json({ error: err.message }); }
+});
+
+// DELETE /api/sms/packages/:id
+router.delete("/packages/:id", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    await db.$client.query(`DELETE FROM sms_packages WHERE id = $1`, [Number(req.params.id)]);
+    res.json({ success: true });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// ─── Do'kon SMS obunalari ─────────────────────────────────────────────────────
+
+// GET /api/sms/shop-subscriptions — do'kon SMS obunalari ro'yxati
+router.get("/shop-subscriptions", authenticate, requireRole("super_admin"), async (_req, res) => {
+  try {
+    const { rows } = await db.$client.query(`
+      SELECT s.id as shop_id, s.name as shop_name, s.owner_id,
+        u.name as owner_name, u.phone as owner_phone,
+        sub.id as sub_id, sub.is_enabled, sub.sms_used, sub.sms_limit, sub.expires_at, sub.activated_at, sub.package_id, sub.notes,
+        pkg.name as package_name, pkg.sms_count, pkg.price_monthly
+      FROM shops s
+      LEFT JOIN users u ON u.id = s.owner_id
+      LEFT JOIN shop_sms_subscriptions sub ON sub.shop_id = s.id
+      LEFT JOIN sms_packages pkg ON pkg.id = sub.package_id
+      ORDER BY s.name ASC
+    `);
+    res.json({ subscriptions: rows });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/sms/shop-subscriptions — do'konga SMS ulash/yangilash
+router.post("/shop-subscriptions", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const { shopId, packageId, isEnabled, smsLimit, expiresAt, notes } = req.body;
+    if (!shopId) { res.status(400).json({ error: "shopId kerak" }); return; }
+    const { rows } = await db.$client.query(`
+      INSERT INTO shop_sms_subscriptions (shop_id, package_id, is_enabled, sms_limit, expires_at, activated_at, activated_by, notes)
+      VALUES ($1, $2, $3, $4, $5, NOW(), $6, $7)
+      ON CONFLICT (shop_id) DO UPDATE SET
+        package_id = EXCLUDED.package_id,
+        is_enabled = EXCLUDED.is_enabled,
+        sms_limit = EXCLUDED.sms_limit,
+        expires_at = EXCLUDED.expires_at,
+        activated_at = CASE WHEN EXCLUDED.is_enabled THEN NOW() ELSE shop_sms_subscriptions.activated_at END,
+        activated_by = $6,
+        notes = EXCLUDED.notes,
+        updated_at = NOW()
+      RETURNING *
+    `, [shopId, packageId || null, isEnabled ?? false, smsLimit || 0, expiresAt || null, user.userId, notes || null]);
+    res.json({ subscription: rows[0] });
+  } catch (err: any) { res.status(400).json({ error: err.message }); }
+});
+
+// PATCH /api/sms/shop-subscriptions/:shopId/toggle — do'kon SMS yoqish/o'chirish
+router.patch("/shop-subscriptions/:shopId/toggle", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const shopId = Number(req.params.shopId);
+    const { rows } = await db.$client.query(`
+      INSERT INTO shop_sms_subscriptions (shop_id, is_enabled)
+      VALUES ($1, TRUE)
+      ON CONFLICT (shop_id) DO UPDATE SET is_enabled = NOT shop_sms_subscriptions.is_enabled, updated_at = NOW()
+      RETURNING *
+    `, [shopId]);
+    res.json({ subscription: rows[0] });
+  } catch (err: any) { res.status(500).json({ error: err.message }); }
+});
+
 export default router;
