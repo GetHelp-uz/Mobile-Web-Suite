@@ -254,6 +254,7 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
 router.get("/:rentalId/info", authenticate, async (req, res) => {
   try {
     const rentalId = Number(req.params.rentalId);
+    const user = (req as any).user;
 
     const row = await db.execute(sql`
       SELECT r.*,
@@ -278,6 +279,17 @@ router.get("/:rentalId/info", authenticate, async (req, res) => {
 
     if (!row.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
     const r = row.rows[0] as any;
+
+    // Authorization: super_admin can access all; shop_owner/worker must own the shop; customer must own the rental
+    if (user.role === "super_admin") {
+      // full access
+    } else if (user.role === "shop_owner" || user.role === "worker") {
+      if (r.shop_id !== user.shopId) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+    } else if (user.role === "customer") {
+      if (r.customer_id !== user.id) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+    } else {
+      res.status(403).json({ error: "Ruxsat yo'q" }); return;
+    }
 
     // Shartnoma yo'q bo'lsa — yaratamiz
     if (!r.contract_number) {

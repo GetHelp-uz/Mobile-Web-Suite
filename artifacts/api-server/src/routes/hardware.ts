@@ -247,12 +247,24 @@ router.get("/orders", authenticate, async (req, res) => {
 // GET /api/hardware/orders/:id/items — buyurtma tarkibi
 router.get("/orders/:id/items", authenticate, async (req, res) => {
   try {
+    const user = (req as any).user;
+    const orderId = Number(req.params.id);
+    // Fetch order to verify ownership
+    const orderCheck = await db.$client.query(
+      `SELECT shop_id FROM hardware_orders WHERE id = $1 LIMIT 1`,
+      [orderId]
+    );
+    if (!orderCheck.rows.length) { res.status(404).json({ error: "Buyurtma topilmadi" }); return; }
+    const order = orderCheck.rows[0] as any;
+    if (user.role !== "super_admin" && order.shop_id !== user.shopId) {
+      res.status(403).json({ error: "Ruxsat yo'q" }); return;
+    }
     const result = await db.$client.query(
       `SELECT hoi.*, hp.name as product_name, hp.type, hp.unit
        FROM hardware_order_items hoi
        JOIN hardware_products hp ON hp.id = hoi.product_id
        WHERE hoi.order_id = $1`,
-      [Number(req.params.id)]
+      [orderId]
     );
     res.json({ items: result.rows });
   } catch (err: any) {
