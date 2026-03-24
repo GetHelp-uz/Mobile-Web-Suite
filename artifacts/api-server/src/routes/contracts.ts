@@ -250,6 +250,89 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
   }
 });
 
+// GET /api/contracts/:rentalId/info — shartnoma ma'lumotlari (JSON, modal uchun)
+router.get("/:rentalId/info", authenticate, async (req, res) => {
+  try {
+    const rentalId = Number(req.params.rentalId);
+
+    const row = await db.execute(sql`
+      SELECT r.*,
+             t.name as tool_name, t.category as tool_category,
+             t.price_per_day, t.deposit_amount as tool_deposit,
+             u.name as customer_name, u.phone as customer_phone,
+             u.passport_id as customer_passport,
+             s.name as shop_name, s.address as shop_address, s.phone as shop_phone,
+             s.owner_signature_data as owner_signature,
+             su.name as owner_name,
+             c.contract_number, c.signed_at as contract_signed_at,
+             c.signature_data as customer_signature
+      FROM rentals r
+      JOIN tools t ON t.id = r.tool_id
+      JOIN users u ON u.id = r.customer_id
+      JOIN shops s ON s.id = r.shop_id
+      LEFT JOIN users su ON su.id = s.owner_id
+      LEFT JOIN contracts c ON c.rental_id = r.id
+      WHERE r.id = ${rentalId}
+      LIMIT 1
+    `);
+
+    if (!row.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
+    const r = row.rows[0] as any;
+
+    // Shartnoma yo'q bo'lsa — yaratamiz
+    if (!r.contract_number) {
+      const num = generateContractNumber();
+      try {
+        await db.execute(sql`
+          INSERT INTO contracts (rental_id, contract_number, customer_id, shop_id, content)
+          VALUES (${rentalId}, ${num}, ${r.customer_id}, ${r.shop_id}, ${num})
+        `);
+      } catch { /* agar mavjud bo'lsa e'tiborsiz */ }
+      r.contract_number = num;
+    }
+
+    const days = r.days || 1;
+    const total = (r.total_amount || r.price_per_day * days || 0);
+
+    res.json({
+      contractNumber: r.contract_number,
+      rentalId: r.id,
+      signed: !!r.contract_signed,
+      signedAt: r.contract_signed_at,
+      customerSignature: r.customer_signature || null,
+      startDate: r.started_at || r.created_at,
+      dueDate: r.due_date,
+      days,
+      tool: {
+        name: r.tool_name,
+        category: r.tool_category,
+        pricePerDay: r.price_per_day,
+        deposit: r.tool_deposit,
+      },
+      customer: {
+        name: r.customer_name,
+        phone: r.customer_phone,
+        passport: r.customer_passport,
+      },
+      shop: {
+        name: r.shop_name,
+        address: r.shop_address,
+        phone: r.shop_phone,
+        ownerName: r.owner_name,
+        ownerSignature: r.owner_signature || null,
+      },
+      totals: {
+        rentalCost: total,
+        deposit: r.deposit_amount || 0,
+        paymentMethod: r.payment_method || "cash",
+      },
+    });
+  } catch (err: any) {
+    console.error("[Contracts] GET /:rentalId/info error:", err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
 // GET /api/contracts/rental/:rentalId — eski endpoint (HTML)
 router.get("/rental/:rentalId", authenticate, async (req, res) => {
   try {

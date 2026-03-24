@@ -1,0 +1,157 @@
+QURILISH USKUNALARINI IJARAGA BERISH SHARTNOMASI (OFERTA)
+
+1. Umumiy qoidalar
+
+Ushbu shartnoma (oferta) qurilish uskunalarini ijaraga berish xizmatidan foydalanuvchi mijoz (keyingi o‘rinlarda “Mijoz”) va platforma/do‘kon egasi (keyingi o‘rinlarda “Ijara beruvchi”) o‘rtasida tuziladi.
+
+Mijoz ilovada ro‘yxatdan o‘tib “Roziman” tugmasini bosganidan so‘ng ushbu shartnoma avtomatik ravishda kuchga kiradi.
+
+---
+
+2. Shartnoma predmeti
+
+Ijara beruvchi Mijozga qurilish uskunalarini vaqtinchalik foydalanish uchun beradi.
+
+Mijoz:
+
+- uskunani ehtiyotkorlik bilan ishlatishi
+- belgilangan muddatda qaytarishi
+- to‘lovni amalga oshirishi shart
+
+---
+
+3. Uskunani olish tartibi
+
+Mijoz ilova orqali:
+
+- uskunani tanlaydi
+- ijara muddatini belgilaydi
+- buyurtma beradi
+
+Admin QR kod orqali uskunani beradi.
+
+QR kod scan qilingan vaqtdan boshlab ijara boshlanadi.
+
+---
+
+4. Uskunani qaytarish
+
+Uskuna qaytarilganda:
+
+- QR kod yana scan qilinadi
+- ishlatilgan kunlar hisoblanadi
+- to‘lov chiqariladi
+
+Mijoz to‘lovni to‘liq amalga oshirishi shart.
+
+---
+
+5. To‘lov
+
+To‘lov:
+
+- kunlik narx asosida hisoblanadi
+- ilova yoki naqd amalga oshiriladi
+
+Misol:
+
+Bolgarka — 40 000 so‘m
+3 kun ishlatildi
+Jami: 120 000 so‘m
+
+---
+
+6. Depozit
+
+Ba’zi uskunalar uchun depozit olinadi.
+
+Masalan:
+
+Bolgarka depozit: 500 000 so‘m
+
+Uskuna butun qaytarilsa depozit qaytariladi.
+
+---
+
+7. Mijoz majburiyatlari
+
+Mijoz:
+
+- uskunani sindirmasligi
+- yo‘qotmasligi
+- boshqalarga bermasligi
+- vaqtida qaytarishi
+- shikast yetkazmasligi shart
+
+---
+
+8. Jarima
+
+Agar mijoz:
+
+- kech qaytarsa
+- sindirsa
+- yo‘qotsa
+
+unda jarima qo‘llanadi.
+
+Kech qaytarish:
+
+kuniga +20%
+
+Yo‘qotish:
+
+to‘liq narx to‘lanadi
+
+---
+
+9. Javobgarlik
+
+Mijoz uskunadan foydalanish vaqtida:
+
+- jarohat
+- zarar
+- avariya
+
+uchun o‘zi javob beradi.
+
+Ijara beruvchi javobgar emas.
+
+---
+
+10. Ma'lumotlarni qayta ishlash
+
+Mijoz:
+
+- ism
+- telefon
+- pasport
+- manzil
+
+ma'lumotlarini kiritadi.
+
+Ilova ushbu ma'lumotlarni saqlash va qayta ishlashga haqli.
+
+---
+
+11. Shartnomani bekor qilish
+
+Ijara beruvchi:
+
+- qoidabuzarlik bo‘lsa
+- qarzdorlik bo‘lsa
+
+mijozni bloklashi mumkin.
+
+---
+
+12. Yakuniy qoidalar
+
+Ilovadan foydalanish ushbu shartnomaga rozilik bildiradi.
+
+Shartnoma elektron shaklda tuzilgan va qonuniy kuchga ega.
+
+---
+
+Ijara beruvchi: GETHELP.UZ
+Mijoz: Ilovadan foydalanuvchi

@@ -11,6 +11,7 @@ import { useRoute, useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { format, addDays } from "date-fns";
+import { RentalContractModal } from "@/components/RentalContractModal";
 
 const paymentLabels: Record<string, string> = {
   click: "Click",
@@ -34,6 +35,8 @@ export default function ToolDetails() {
 
   const { data: tool, isLoading } = useGetTool(id);
   const [rentDialogOpen, setRentDialogOpen] = useState(false);
+  const [contractOpen, setContractOpen] = useState(false);
+  const [contractRentalId, setContractRentalId] = useState<number | null>(null);
   const [days, setDays] = useState(1);
   const [paymentMethod, setPaymentMethod] = useState<"click" | "payme" | "paynet" | "cash">("cash");
   const [isFavorite, setIsFavorite] = useState(false);
@@ -61,10 +64,15 @@ export default function ToolDetails() {
           fd.append("documentType", docType);
           await fetch(`${baseUrl}/api/documents/upload`, { method: "POST", headers: h, body: fd });
         }
-        // Loyallik ballari beriladi (API server ichida avtomatik)
         setRentDialogOpen(false);
-        toast({ title: "Muvaffaqiyatli!", description: "Ijara so'rovi yuborildi! Loyallik ballari qo'shildi." });
-        setLocation("/my-rentals");
+        // Shartnomani avtomatik ko'rsatish
+        if (rental?.id) {
+          setContractRentalId(rental.id);
+          setContractOpen(true);
+        } else {
+          toast({ title: "Muvaffaqiyatli!", description: "Ijara so'rovi yuborildi!" });
+          setLocation("/my-rentals");
+        }
       },
       onError: () => {
         toast({ title: "Xatolik", description: "Ijara yaratib bo'lmadi", variant: "destructive" });
@@ -333,6 +341,22 @@ export default function ToolDetails() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Shartnoma imzolash modali — ijara yaratilgandan so'ng avtomatik ochiladi */}
+      <RentalContractModal
+        rentalId={contractRentalId}
+        open={contractOpen}
+        onClose={() => {
+          setContractOpen(false);
+          toast({ title: "Eslatma", description: "Shartnomani keyinroq 'Mening ijaralarim' bo'limidan imzolashingiz mumkin." });
+          setLocation("/my-rentals");
+        }}
+        onSigned={() => {
+          setContractOpen(false);
+          toast({ title: "✅ Shartnoma imzolandi!", description: "Ijara tasdiqlandi. Rahmat!" });
+          setLocation("/my-rentals");
+        }}
+      />
     </DashboardLayout>
   );
 }
