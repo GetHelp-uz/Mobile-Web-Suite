@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticate, requireRole } from "../lib/auth.js";
+import { getCommissionRate, calcCommission, logCommissionTx } from "../lib/commission.js";
 
 const router = Router();
 
@@ -51,8 +52,30 @@ router.post("/", authenticate, async (req, res) => {
       return;
     }
     const w = wallet.rows[0] as any;
-    if (w.balance < amount) {
-      res.status(400).json({ error: `Balans yetarli emas. Mavjud: ${Number(w.balance).toLocaleString()} UZS` });
+
+    // ─── Komissiya hisoblash ──────────────────────────────────────────────────
+    const commType = isShopOwner ? "withdrawal_shop" : "withdrawal_customer";
+    let shopIdForComm: number | null = null;
+    if (isShopOwner && shopId) {
+      shopIdForComm = shopId;
+    }
+    const { rate: commRate, isActive: commActive } = await getCommissionRate(commType, shopIdForComm);
+
+    // Min/max olish
+    const commSettingRow = await db.$client.query(
+      `SELECT min_amount, max_amount FROM commission_settings WHERE type = $1 LIMIT 1`, [commType]
+    );
+    const minAmt = commSettingRow.rows[0]?.min_amount ?? 0;
+    const maxAmt = commSettingRow.rows[0]?.max_amount ?? 0;
+
+    const commissionAmount = commActive ? calcCommission(amount, commRate, minAmt, maxAmt) : 0;
+    const totalDeduction = amount + commissionAmount; // foydalanuvchi balansidan yechiladi
+
+    if (w.balance < totalDeduction) {
+      const needed = commissionAmount > 0
+        ? `${amount.toLocaleString()} UZS + ${commissionAmount.toLocaleString()} UZS komissiya = ${totalDeduction.toLocaleString()} UZS`
+        : `${amount.toLocaleString()} UZS`;
+      res.status(400).json({ error: `Balans yetarli emas. Kerak: ${needed}. Mavjud: ${Number(w.balance).toLocaleString()} UZS` });
       return;
     }
 
@@ -65,11 +88,11 @@ router.post("/", authenticate, async (req, res) => {
       return;
     }
 
-    // Balansdan yechish (escrow ga o'tkazish)
+    // Balansdan yechish (komissiya + so'rov summasi escrow ga o'tkazish)
     await db.execute(sql`
       UPDATE wallets SET
-        balance = balance - ${amount},
-        escrow_balance = escrow_balance + ${amount},
+        balance = balance - ${totalDeduction},
+        escrow_balance = escrow_balance + ${totalDeduction},
         updated_at = NOW()
       WHERE user_id = ${user.userId}
     `);
@@ -80,19 +103,40 @@ router.post("/", authenticate, async (req, res) => {
       VALUES (
         ${w.id}, ${user.userId}, ${amount},
         'withdrawal', ${provider || 'payme'}, 'pending',
-        ${`Karta yechib olish: ${cardNumber}`},
-        ${w.balance}, ${w.balance - amount}
+        ${`Karta yechib olish: ${cardNumber}${commissionAmount > 0 ? ` (${commRate}% komissiya: ${commissionAmount.toLocaleString()} UZS)` : ''}`},
+        ${w.balance}, ${w.balance - totalDeduction}
       )
     `);
 
-    // So'rov yaratish
+    // Komissiya logini yozish
+    if (commissionAmount > 0) {
+      await logCommissionTx({
+        type: commType,
+        userId: user.userId,
+        shopId: shopIdForComm,
+        grossAmount: amount,
+        commissionRate: commRate,
+        commissionAmount,
+        description: `Yechib olish komissiyasi: karta ${cardNumber}`,
+      });
+    }
+
+    // So'rov yaratish (commission_amount ham saqlanadi)
     const result = await db.execute(sql`
       INSERT INTO withdrawal_requests (shop_id, user_id, amount, provider, card_number, card_holder, status)
       VALUES (${shopId}, ${user.userId}, ${amount}, ${provider || 'payme'}, ${cardNumber}, ${cardHolder || ''}, 'pending')
       RETURNING *
     `);
 
-    res.status(201).json({ request: result.rows[0], message: "Yechib olish so'rovi yuborildi. Admin tomonidan ko'rib chiqiladi." });
+    res.status(201).json({
+      request: result.rows[0],
+      commissionAmount,
+      commissionRate: commRate,
+      totalDeduction,
+      message: commissionAmount > 0
+        ? `Yechib olish so'rovi yuborildi. Komissiya: ${commissionAmount.toLocaleString()} UZS (${commRate}%). Admin tomonidan ko'rib chiqiladi.`
+        : "Yechib olish so'rovi yuborildi. Admin tomonidan ko'rib chiqiladi.",
+    });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }

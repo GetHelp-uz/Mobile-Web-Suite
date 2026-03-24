@@ -2,6 +2,8 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticate, requireRole } from "../lib/auth.js";
+import { ensureCommissionTables } from "../lib/commission.js";
+ensureCommissionTables();
 import os from "os";
 import { execSync } from "child_process";
 
@@ -162,7 +164,164 @@ function formatUptime(seconds: number): string {
   return `${d}k ${h}s ${m}d`;
 }
 
-// ─── Komissiya statistikasi ────────────────────────────────────────────────────
+// ─── Global komissiya stavkalarini olish ──────────────────────────────────────
+router.get("/commission-settings", authenticate, requireRole("super_admin"), async (_req, res) => {
+  try {
+    const rows = await db.$client.query(`SELECT * FROM commission_settings ORDER BY type`);
+    res.json({ settings: rows.rows });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Global komissiya stavkasini yangilash ────────────────────────────────────
+router.patch("/commission-settings/:type", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const { type } = req.params;
+    const { rate, min_amount, max_amount, is_active, description } = req.body;
+    await db.$client.query(
+      `UPDATE commission_settings SET
+        rate = COALESCE($1, rate),
+        min_amount = COALESCE($2, min_amount),
+        max_amount = COALESCE($3, max_amount),
+        is_active = COALESCE($4, is_active),
+        description = COALESCE($5, description),
+        updated_at = NOW()
+      WHERE type = $6`,
+      [rate ?? null, min_amount ?? null, max_amount ?? null, is_active ?? null, description ?? null, type]
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Do'kon komissiya overridelarini olish ────────────────────────────────────
+router.get("/shop-commission-overrides", authenticate, requireRole("super_admin"), async (_req, res) => {
+  try {
+    const rows = await db.$client.query(`
+      SELECT sco.*, s.name as shop_name
+      FROM shop_commission_overrides sco
+      LEFT JOIN shops s ON s.id = sco.shop_id
+      ORDER BY s.name, sco.type
+    `);
+    res.json({ overrides: rows.rows });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Do'kon komissiya override saqlash/yangilash ──────────────────────────────
+router.post("/shop-commission-overrides", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const { shop_id, type, rate, is_active } = req.body;
+    if (!shop_id || !type) {
+      res.status(400).json({ error: "shop_id va type majburiy" }); return;
+    }
+    await db.$client.query(
+      `INSERT INTO shop_commission_overrides (shop_id, type, rate, is_active)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (shop_id, type) DO UPDATE SET rate = $3, is_active = $4, updated_at = NOW()`,
+      [shop_id, type, rate ?? 0, is_active ?? true]
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Do'kon komissiya overrideni o'chirish ────────────────────────────────────
+router.delete("/shop-commission-overrides/:shopId/:type", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const { shopId, type } = req.params;
+    await db.$client.query(
+      `DELETE FROM shop_commission_overrides WHERE shop_id = $1 AND type = $2`,
+      [shopId, type]
+    );
+    res.json({ success: true });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Escrow holati ────────────────────────────────────────────────────────────
+router.get("/escrow", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const status = (req.query.status as string) || "held";
+    const rows = await db.$client.query(`
+      SELECT
+        eh.*,
+        u.name as user_name, u.phone as user_phone,
+        r.status as rental_status
+      FROM escrow_holds eh
+      LEFT JOIN users u ON u.id = eh.user_id
+      LEFT JOIN rentals r ON r.id = eh.rental_id
+      WHERE eh.status = $1
+      ORDER BY eh.created_at DESC
+      LIMIT 100
+    `, [status]);
+
+    const totals = await db.$client.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE status='held') as held_count,
+        COALESCE(SUM(amount) FILTER (WHERE status='held'), 0) as held_amount,
+        COUNT(*) FILTER (WHERE status='released') as released_count,
+        COALESCE(SUM(amount) FILTER (WHERE status='released'), 0) as released_amount
+      FROM escrow_holds
+    `);
+
+    res.json({ holds: rows.rows, totals: totals.rows[0] });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Komissiya tranzaksiyalari statistikasi ────────────────────────────────────
+router.get("/commission-transactions", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const period = (req.query.period as string) || "month";
+    const type = (req.query.type as string) || "";
+    const interval = period === "week" ? "7 days" : period === "year" ? "365 days" : "30 days";
+
+    const where = type
+      ? `WHERE ct.created_at >= NOW() - INTERVAL '${interval}' AND ct.type = '${type}'`
+      : `WHERE ct.created_at >= NOW() - INTERVAL '${interval}'`;
+
+    const rows = await db.$client.query(`
+      SELECT ct.*, u.name as user_name, s.name as shop_name
+      FROM commission_transactions ct
+      LEFT JOIN users u ON u.id = ct.user_id
+      LEFT JOIN shops s ON s.id = ct.shop_id
+      ${where}
+      ORDER BY ct.created_at DESC LIMIT 100
+    `);
+
+    const totals = await db.$client.query(`
+      SELECT
+        COALESCE(SUM(commission_amount),0) as total_commission,
+        COALESCE(SUM(gross_amount),0) as total_gross,
+        COALESCE(SUM(net_amount),0) as total_net,
+        COUNT(*) as count
+      FROM commission_transactions
+      ${where.replace('ct.', '')}
+    `);
+
+    const byType = await db.$client.query(`
+      SELECT type, COUNT(*) as cnt,
+        COALESCE(SUM(commission_amount),0) as commission,
+        COALESCE(SUM(gross_amount),0) as gross
+      FROM commission_transactions
+      WHERE created_at >= NOW() - INTERVAL '${interval}'
+      GROUP BY type ORDER BY commission DESC
+    `);
+
+    res.json({ transactions: rows.rows, totals: totals.rows[0], byType: byType.rows });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
+  }
+});
+
+// ─── Komissiya statistikasi (eski endpoint — backward compat) ────────────────
 router.get("/commissions", authenticate, requireRole("super_admin"), async (req, res) => {
   try {
     const period = (req.query.period as string) || "month";

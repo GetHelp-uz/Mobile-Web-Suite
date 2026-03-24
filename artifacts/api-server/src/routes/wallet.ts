@@ -3,6 +3,7 @@ import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
 import crypto from "crypto";
+import { getCommissionRate, calcCommission, logCommissionTx, createEscrowHold, releaseEscrowHold } from "../lib/commission.js";
 
 const router = Router();
 
@@ -67,10 +68,29 @@ router.post("/topup", authenticate, async (req, res) => {
     const wallet = await getOrCreateWallet(user.userId);
     const refId = crypto.randomUUID();
 
-    // Tranzaksiya yaratamiz (pending holatda)
+    // Foydalanuvchi rolini olish
+    const userRow = await db.$client.query(`SELECT role FROM users WHERE id = $1 LIMIT 1`, [user.userId]);
+    const userRole = userRow.rows[0]?.role || "customer";
+    const commType = userRole === "shop_owner" ? "topup_shop" : "topup_customer";
+
+    // Topup komissiyasini hisoblash (preview)
+    const { rate: commRate, isActive: commActive } = await getCommissionRate(commType);
+    const commSettingRow = await db.$client.query(
+      `SELECT min_amount, max_amount FROM commission_settings WHERE type = $1 LIMIT 1`, [commType]
+    );
+    const minAmt = commSettingRow.rows[0]?.min_amount ?? 0;
+    const maxAmt = commSettingRow.rows[0]?.max_amount ?? 0;
+    const commissionAmount = commActive ? calcCommission(Number(amount), commRate, minAmt, maxAmt) : 0;
+    const netCredit = Number(amount) - commissionAmount;
+
+    // Tranzaksiya yaratamiz (pending holatda) — net_credit metadata sifatida descriptionda saqlanadi
     await db.execute(sql`
       INSERT INTO wallet_transactions (wallet_id, user_id, amount, type, provider, status, reference_id, description, balance_before, balance_after)
-      VALUES (${wallet.id}, ${user.userId}, ${Number(amount)}, 'topup', ${provider}, 'pending', ${refId}, ${'Hamyon to\'ldirish: ' + provider}, ${wallet.balance}, ${wallet.balance + Number(amount)})
+      VALUES (
+        ${wallet.id}, ${user.userId}, ${netCredit}, 'topup', ${provider}, 'pending', ${refId},
+        ${`Hamyon to'ldirish: ${provider}${commissionAmount > 0 ? ` (${commRate}% komissiya: ${commissionAmount.toLocaleString()} UZS ajratildi)` : ''}`},
+        ${wallet.balance}, ${wallet.balance + netCredit}
+      )
     `);
 
     // To'lov URL-larini generatsiya qilamiz
@@ -113,13 +133,30 @@ router.post("/topup", authenticate, async (req, res) => {
         : "";
     }
 
+    // Komissiya logini yozish (topup boshlanganda) — confirm bo'lganda qayta log yozilmaydi
+    if (commissionAmount > 0) {
+      await logCommissionTx({
+        type: commType,
+        userId: user.userId,
+        grossAmount: Number(amount),
+        commissionRate: commRate,
+        commissionAmount,
+        description: `Hamyon to'ldirish komissiyasi: ${provider}`,
+      });
+    }
+
     res.json({
       success: true,
       referenceId: refId,
       amount: Number(amount),
+      commissionAmount,
+      commissionRate: commRate,
+      netCredit,
       provider,
       paymentUrl,
-      message: `${provider.toUpperCase()} orqali ${amount} UZS to'ldirish`,
+      message: commissionAmount > 0
+        ? `${provider.toUpperCase()} orqali ${amount.toLocaleString()} UZS to'ldirish. Komissiya: ${commissionAmount.toLocaleString()} UZS. Hisobga o'tadigan: ${netCredit.toLocaleString()} UZS`
+        : `${provider.toUpperCase()} orqali ${amount} UZS to'ldirish`,
     });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
@@ -204,10 +241,19 @@ router.post("/deposit-hold", authenticate, async (req, res) => {
     await db.execute(sql`UPDATE wallets SET balance = ${newBalance}, escrow_balance = ${newEscrow}, updated_at = NOW() WHERE id = ${wallet.id}`);
     await db.execute(sql`
       INSERT INTO wallet_transactions (wallet_id, user_id, rental_id, amount, type, provider, status, description, balance_before, balance_after)
-      VALUES (${wallet.id}, ${user.userId}, ${rentalId}, ${Number(amount)}, 'deposit_hold', 'system', 'completed', 'Ijara depoziti', ${wallet.balance}, ${newBalance})
+      VALUES (${wallet.id}, ${user.userId}, ${rentalId}, ${Number(amount)}, 'deposit_hold', 'system', 'completed', 'Ijara depoziti escrowga o\'tkazildi', ${wallet.balance}, ${newBalance})
     `);
 
-    res.json({ success: true, newBalance, escrowBalance: newEscrow });
+    // Escrow hold yozuvi
+    const holdId = await createEscrowHold({
+      rentalId: Number(rentalId),
+      userId: user.userId,
+      walletId: wallet.id,
+      amount: Number(amount),
+      type: "deposit",
+    });
+
+    res.json({ success: true, holdId, newBalance, escrowBalance: newEscrow });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
@@ -216,7 +262,7 @@ router.post("/deposit-hold", authenticate, async (req, res) => {
 // POST /api/wallet/deposit-release — depozitni qaytarish
 router.post("/deposit-release", authenticate, async (req, res) => {
   try {
-    const { userId, amount, rentalId, damageCost = 0 } = req.body;
+    const { userId, amount, rentalId, damageCost = 0, holdId } = req.body;
     const targetUserId = userId || (req as any).user.userId;
 
     const wallet = await getOrCreateWallet(targetUserId);
@@ -239,7 +285,21 @@ router.post("/deposit-release", authenticate, async (req, res) => {
       `);
     }
 
-    res.json({ success: true, released: releaseAmount, deducted: damageCost, newBalance });
+    // Escrow holdni yopish
+    if (holdId) {
+      await releaseEscrowHold(Number(holdId));
+    } else if (rentalId) {
+      // rentalId bo'yicha topib release qilish
+      const holdRow = await db.$client.query(
+        `SELECT id FROM escrow_holds WHERE rental_id = $1 AND status = 'held' LIMIT 1`,
+        [rentalId]
+      );
+      if (holdRow.rows.length) {
+        await releaseEscrowHold(Number(holdRow.rows[0].id));
+      }
+    }
+
+    res.json({ success: true, released: releaseAmount, deducted: damageCost, newBalance, escrowBalance: newEscrow });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
