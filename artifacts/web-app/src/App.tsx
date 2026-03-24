@@ -71,6 +71,8 @@ import B2BPortalPage from "@/pages/customer/B2BPortal";
 import PeerListingsPage from "@/pages/customer/PeerListings";
 import ShopWorkerPackagesPage from "@/pages/shop/ShopWorkerPackages";
 import AdminB2BPage from "@/pages/admin/AdminB2B";
+import AdminToolPassports from "@/pages/admin/AdminToolPassports";
+import ToolPassport from "@/pages/ToolPassport";
 import CustomerDashboard from "@/pages/customer/CustomerDashboard";
 
 const queryClient = new QueryClient({
@@ -322,6 +324,14 @@ function Router() {
       {/* Yangi xususiyatlar — admin */}
       <Route path="/admin/b2b">
         {() => <ProtectedRoute component={AdminB2BPage} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/tool-passports">
+        {() => <ProtectedRoute component={AdminToolPassports} allowedRoles={['super_admin']} />}
+      </Route>
+
+      {/* Ommaviy asbob pasporti (autentifikatsiya shart emas) */}
+      <Route path="/passport/:qrCode">
+        {(params) => <ToolPassport />}
       </Route>
 
       {/* Hamyon va bildirishnomalar */}

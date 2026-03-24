@@ -55,6 +55,7 @@ import {
   Crown,
   Calculator,
   Users2,
+  BookOpen,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -153,6 +154,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       { name: "Integratsiyalar", path: "/admin/integrations", icon: Plug },
       { name: "To'lov sozlamalari", path: "/admin/payment-settings", icon: CreditCard },
       { name: "B2B Boshqaruv", path: "/admin/b2b", icon: Building2 },
+      { name: "Asbob Pasportlari", path: "/admin/tool-passports", icon: BookOpen },
       { name: "Loyiha Kalkulyator", path: "/calculator", icon: Calculator },
       { name: "Hamyon", path: "/wallet", icon: Wallet },
     ]

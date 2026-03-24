@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/lib/auth";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, QrCode, Download, Printer, Search, Satellite, Link, Camera, Shuffle, CheckCircle, AlertCircle, ScanLine, Barcode, X } from "lucide-react";
+import { Plus, QrCode, Download, Printer, Search, Satellite, Link, Camera, Shuffle, CheckCircle, AlertCircle, ScanLine, Barcode, X, BookOpen, ClipboardList, Wrench, AlertTriangle, FileText, PackageCheck, ArrowRightLeft, Tag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { QRCodeSVG, QRCodeCanvas } from "qrcode.react";
@@ -60,6 +60,13 @@ export default function ShopTools() {
   const [codeOpen, setCodeOpen] = useState(false);
   const [codeMode, setCodeMode] = useState<"qr" | "barcode">("qr");
   const [selectedTool, setSelectedTool] = useState<Tool | null>(null);
+  const [passportOpen, setPassportOpen] = useState(false);
+  const [passportTool, setPassportTool] = useState<Tool | null>(null);
+  const [passportData, setPassportData] = useState<any>(null);
+  const [passportLoading, setPassportLoading] = useState(false);
+  const [addEventOpen, setAddEventOpen] = useState(false);
+  const [eventForm, setEventForm] = useState({ eventType: "inspection", title: "", description: "", cost: "", performedBy: "" });
+  const [addingEvent, setAddingEvent] = useState(false);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -247,6 +254,55 @@ export default function ShopTools() {
     pw.close();
   };
 
+  const openPassport = async (tool: Tool) => {
+    setPassportTool(tool);
+    setPassportData(null);
+    setPassportOpen(true);
+    setPassportLoading(true);
+    try {
+      const token = localStorage.getItem("gethelp_token") || "";
+      const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+      const r = await fetch(`${baseUrl}/api/tools/${tool.id}/passport`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) throw new Error("Xatolik");
+      setPassportData(await r.json());
+    } catch {
+      toast({ title: "Xatolik", description: "Pasport ma'lumotlarini yuklashda xatolik", variant: "destructive" });
+    } finally {
+      setPassportLoading(false);
+    }
+  };
+
+  const submitEvent = async () => {
+    if (!passportTool || !eventForm.title) return;
+    setAddingEvent(true);
+    try {
+      const token = localStorage.getItem("gethelp_token") || "";
+      const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+      const r = await fetch(`${baseUrl}/api/tools/${passportTool.id}/events`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          eventType: eventForm.eventType,
+          title: eventForm.title,
+          description: eventForm.description || undefined,
+          cost: eventForm.cost ? Number(eventForm.cost) : undefined,
+          performedBy: eventForm.performedBy || undefined,
+        }),
+      });
+      if (!r.ok) throw new Error("Xatolik");
+      toast({ title: "Voqea qo'shildi" });
+      setEventForm({ eventType: "inspection", title: "", description: "", cost: "", performedBy: "" });
+      setAddEventOpen(false);
+      await openPassport(passportTool);
+    } catch {
+      toast({ title: "Xatolik", variant: "destructive" });
+    } finally {
+      setAddingEvent(false);
+    }
+  };
+
   const tools = (data?.tools || []) as Tool[];
   const filtered = tools.filter(t => {
     const ms = !search || t.name.toLowerCase().includes(search.toLowerCase()) || t.category.toLowerCase().includes(search.toLowerCase());
@@ -317,12 +373,15 @@ export default function ShopTools() {
                       <p className="font-bold text-sm">{formatCurrency(tool.pricePerHour ?? tool.depositAmount)}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2 mt-auto">
-                    <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={()=>showCode(tool,"qr")}>
-                      <QrCode size={13}/> QR Kod
+                  <div className="flex gap-1 mt-auto flex-wrap">
+                    <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs min-w-0" onClick={()=>showCode(tool,"qr")}>
+                      <QrCode size={12}/> QR
                     </Button>
-                    <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={()=>showCode(tool,"barcode")}>
+                    <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs min-w-0" onClick={()=>showCode(tool,"barcode")}>
                       <span className="text-xs font-bold">|||</span> Barcode
+                    </Button>
+                    <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs min-w-0 border-blue-200 text-blue-700 hover:bg-blue-50" onClick={()=>openPassport(tool)}>
+                      <BookOpen size={12}/> Pasport
                     </Button>
                   </div>
                 </CardContent>
@@ -589,6 +648,141 @@ export default function ShopTools() {
           onClose={() => setScannerOpen(false)}
         />
       )}
+
+      {/* Asbob Pasporti Modal */}
+      <Dialog open={passportOpen} onOpenChange={setPassportOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <BookOpen size={18} className="text-blue-600"/>
+              Asbob Pasporti — {passportTool?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {passportLoading ? (
+            <div className="py-16 text-center text-muted-foreground">
+              <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto mb-3"/>
+              <p>Yuklanmoqda...</p>
+            </div>
+          ) : passportData ? (
+            <div className="space-y-4">
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  { label: "Jami ijaralar", value: passportData.stats?.total_rentals || 0, icon: <ClipboardList size={14}/>, color: "text-blue-600" },
+                  { label: "Ta'mirlar", value: passportData.stats?.total_repairs || 0, icon: <Wrench size={14}/>, color: "text-orange-600" },
+                  { label: "Texnik xizmat", value: passportData.stats?.total_maintenance || 0, icon: <PackageCheck size={14}/>, color: "text-green-600" },
+                  { label: "Xarajat (UZS)", value: Number(passportData.stats?.total_maintenance_cost||0).toLocaleString(), icon: <Tag size={14}/>, color: "text-purple-600" },
+                ].map(s => (
+                  <div key={s.label} className="bg-secondary rounded-lg p-3 text-center">
+                    <div className={`flex justify-center mb-1 ${s.color}`}>{s.icon}</div>
+                    <p className="font-bold text-sm">{s.value}</p>
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Public link */}
+              <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <Link size={14} className="text-blue-600 shrink-0"/>
+                <span className="text-xs text-blue-700 flex-1 truncate">
+                  {window.location.origin}/passport/{passportTool?.qrCode}
+                </span>
+                <Button size="sm" variant="outline" className="text-xs h-7 shrink-0" onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/passport/${passportTool?.qrCode}`);
+                  toast({ title: "Nusxalandi!" });
+                }}>
+                  Nusxa
+                </Button>
+              </div>
+
+              {/* Events list */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm">Voqealar tarixi</h3>
+                  <Button size="sm" className="gap-1 text-xs h-7" onClick={() => setAddEventOpen(true)}>
+                    <Plus size={12}/> Voqea qo'shish
+                  </Button>
+                </div>
+                {passportData.events?.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">Hali voqealar yo'q</p>
+                ) : (
+                  <div className="space-y-2">
+                    {passportData.events?.map((ev: any) => (
+                      <div key={ev.id} className="flex gap-3 p-3 border rounded-lg text-sm">
+                        <div className="shrink-0 mt-0.5">
+                          {ev.event_type === "repair" ? <Wrench size={14} className="text-orange-500"/> :
+                           ev.event_type === "damage" ? <AlertTriangle size={14} className="text-red-500"/> :
+                           ev.event_type === "note" ? <FileText size={14} className="text-gray-500"/> :
+                           ev.event_type === "transferred" ? <ArrowRightLeft size={14} className="text-purple-500"/> :
+                           <ClipboardList size={14} className="text-blue-500"/>}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">{ev.title}</p>
+                          {ev.description && <p className="text-xs text-muted-foreground mt-0.5">{ev.description}</p>}
+                          <div className="flex gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                            <span>{new Date(ev.created_at).toLocaleDateString("uz-UZ")}</span>
+                            {ev.performed_by && <span>Bajaruvchi: {ev.performed_by}</span>}
+                            {ev.cost && <span className="text-orange-600 font-medium">{Number(ev.cost).toLocaleString()} so'm</span>}
+                          </div>
+                        </div>
+                        <span className="shrink-0 text-xs bg-secondary px-2 py-0.5 rounded capitalize">{ev.event_type.replace("_"," ")}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Voqea qo'shish modal */}
+      <Dialog open={addEventOpen} onOpenChange={setAddEventOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Yangi voqea</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium mb-1 block">Voqea turi</label>
+              <Select value={eventForm.eventType} onValueChange={v => setEventForm(f => ({ ...f, eventType: v }))}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue/></SelectTrigger>
+                <SelectContent>
+                  {[
+                    ["inspection","Ko'rik / Tekshiruv"],["repair","Ta'mirlash"],["maintenance_started","Texnik xizmat boshlandi"],
+                    ["maintenance_completed","Texnik xizmat tugadi"],["damage","Shikast"],["note","Eslatma"],
+                    ["sold","Sotildi"],["transferred","O'tkazildi"],
+                  ].map(([v,l]) => <SelectItem key={v} value={v}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">Sarlavha *</label>
+              <Input className="h-9 text-sm" placeholder="Masalan: Yillik ko'rik" value={eventForm.title} onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))}/>
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">Tavsif</label>
+              <Input className="h-9 text-sm" placeholder="Qo'shimcha izoh" value={eventForm.description} onChange={e => setEventForm(f => ({ ...f, description: e.target.value }))}/>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-xs font-medium mb-1 block">Xarajat (so'm)</label>
+                <Input type="number" className="h-9 text-sm" placeholder="0" value={eventForm.cost} onChange={e => setEventForm(f => ({ ...f, cost: e.target.value }))}/>
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Bajaruvchi</label>
+                <Input className="h-9 text-sm" placeholder="Ism" value={eventForm.performedBy} onChange={e => setEventForm(f => ({ ...f, performedBy: e.target.value }))}/>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" size="sm" onClick={() => setAddEventOpen(false)}>Bekor</Button>
+            <Button size="sm" onClick={submitEvent} disabled={addingEvent || !eventForm.title}>
+              {addingEvent ? "Saqlanmoqda..." : "Saqlash"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

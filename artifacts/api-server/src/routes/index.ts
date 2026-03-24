@@ -45,6 +45,7 @@ import calculatorRouter from "./calculator.js";
 import b2bRouter from "./b2b.js";
 import subscriptionsRouter from "./subscriptions.js";
 import peerListingsRouter from "./peer-listings.js";
+import passportRouter from "./passport.js";
 
 const router: IRouter = Router();
 
@@ -94,5 +95,6 @@ router.use("/calculator", calculatorRouter);
 router.use("/b2b", b2bRouter);
 router.use("/subscriptions", subscriptionsRouter);
 router.use("/peer-listings", peerListingsRouter);
+router.use("/passport", passportRouter);
 
 export default router;

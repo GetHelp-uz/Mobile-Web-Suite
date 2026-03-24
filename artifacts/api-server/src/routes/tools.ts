@@ -255,5 +255,101 @@ router.patch("/:id/stock", authenticate, requireRole("super_admin", "shop_owner"
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
+// GET /api/tools/:id/passport — asbob pasporti (autentifikatsiya kerak)
+router.get("/:id/passport", authenticate, async (req, res) => {
+  try {
+    const toolId = Number(req.params.id);
+    const user = (req as any).user;
+
+    const toolResult = await db.$client.query(
+      `SELECT t.*, s.name as shop_name, s.phone as shop_phone, s.address as shop_address
+       FROM tools t
+       JOIN shops s ON s.id = t.shop_id
+       WHERE t.id = $1`,
+      [toolId]
+    );
+    if (!toolResult.rows.length) {
+      res.status(404).json({ error: "Asbob topilmadi" }); return;
+    }
+    const tool = toolResult.rows[0];
+
+    if (user.role === "shop_owner" && tool.shop_id !== user.shopId) {
+      res.status(403).json({ error: "Ruxsat yo'q" }); return;
+    }
+
+    const eventsResult = await db.$client.query(
+      `SELECT te.*, u.full_name as actor_name
+       FROM tool_events te
+       LEFT JOIN users u ON u.id = te.actor_id
+       WHERE te.tool_id = $1
+       ORDER BY te.created_at DESC
+       LIMIT 100`,
+      [toolId]
+    );
+
+    const statsResult = await db.$client.query(
+      `SELECT
+         COUNT(*) FILTER (WHERE event_type = 'rental_started') as total_rentals,
+         COUNT(*) FILTER (WHERE event_type = 'maintenance_started') as total_maintenance,
+         COUNT(*) FILTER (WHERE event_type = 'repair') as total_repairs,
+         COALESCE(SUM(cost) FILTER (WHERE event_type IN ('repair','maintenance_completed')), 0) as total_maintenance_cost
+       FROM tool_events
+       WHERE tool_id = $1`,
+      [toolId]
+    );
+
+    res.json({ tool, events: eventsResult.rows, stats: statsResult.rows[0] });
+  } catch (err: any) {
+    console.error("[Passport] GET /:id/passport error:", err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
+// POST /api/tools/:id/events — yangi voqea qo'shish
+router.post("/:id/events", authenticate, requireRole("super_admin", "shop_owner", "worker"), async (req, res) => {
+  try {
+    const toolId = Number(req.params.id);
+    const user = (req as any).user;
+    const { eventType, title, description, cost, performedBy } = req.body;
+
+    if (!eventType || !title) {
+      res.status(400).json({ error: "eventType va title majburiy" }); return;
+    }
+
+    const VALID_EVENT_TYPES = [
+      "rental_started", "rental_returned", "maintenance_started",
+      "maintenance_completed", "repair", "inspection", "damage", "note", "sold", "transferred"
+    ];
+    if (!VALID_EVENT_TYPES.includes(eventType)) {
+      res.status(400).json({ error: "Noto'g'ri event_type" }); return;
+    }
+
+    const toolResult = await db.$client.query(
+      "SELECT id, shop_id FROM tools WHERE id = $1",
+      [toolId]
+    );
+    if (!toolResult.rows.length) {
+      res.status(404).json({ error: "Asbob topilmadi" }); return;
+    }
+    const tool = toolResult.rows[0];
+
+    if (user.role === "shop_owner" && tool.shop_id !== user.shopId) {
+      res.status(403).json({ error: "Ruxsat yo'q" }); return;
+    }
+
+    const result = await db.$client.query(
+      `INSERT INTO tool_events (tool_id, shop_id, event_type, title, description, actor_id, cost, performed_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       RETURNING *`,
+      [toolId, tool.shop_id, eventType, title, description || null, user.id, cost || null, performedBy || null]
+    );
+
+    res.json({ success: true, event: result.rows[0] });
+  } catch (err: any) {
+    console.error("[Passport] POST /:id/events error:", err);
+    res.status(500).json({ error: "Server xatosi" });
+  }
+});
+
 export { router as shopToolsRouter };
 export default router;
