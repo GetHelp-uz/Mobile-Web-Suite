@@ -83,6 +83,8 @@ export default function ShopTools() {
   const [barcodeTakenInfo, setBarcodeTakenInfo] = useState<string>("");
   const barcodeCheckTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const formBarcodeRef = useRef<SVGSVGElement>(null);
+  const [printAfterCreate, setPrintAfterCreate] = useState(false);
+  const [thermalSize, setThermalSize] = useState<"58mm" | "80mm">("58mm");
 
   useEffect(() => {
     if (!shopId) return;
@@ -111,16 +113,23 @@ export default function ShopTools() {
             body: JSON.stringify({ toolId: data.tool.id }),
           });
         }
+        const shouldPrint = printAfterCreate;
+        const createdTool = data?.tool;
+        const savedSize = thermalSize;
         setCreateOpen(false);
         setShowGPS(false);
         setShowBarcodeSection(false);
         setBarcodeStatus("idle");
+        setPrintAfterCreate(false);
         setForm({ name: "", category: "", description: "", pricePerDay: "", pricePerHour: "", depositAmount: "", gpsDeviceId: "", customBarcode: "" });
         queryClient.invalidateQueries({ queryKey: [`/api/shops/${shopId}/tools`] });
         toast({
           title: "Muvaffaqiyatli",
           description: form.customBarcode ? "Asbob va shtrix kod saqlandi!" : form.gpsDeviceId ? "Asbob qo'shildi va GPS ulandi!" : "Asbob qo'shildi va QR kod yaratildi"
         });
+        if (shouldPrint && createdTool?.qrCode) {
+          await printThermalLabel(createdTool, savedSize);
+        }
       },
       onError: (e: any) => toast({ title: "Xatolik", description: e.message, variant: "destructive" }),
     }
@@ -301,6 +310,65 @@ export default function ShopTools() {
         <p class="foot">GetHelp.uz | ID: ${passportTool.id}</p>
       </div>
       <script>window.onload=()=>window.print()</script>
+    </body></html>`);
+    pw.document.close();
+  };
+
+  const printThermalLabel = async (tool: { id: number; name: string; category?: string; qrCode: string; pricePerDay: number; depositAmount: number }, size: "58mm" | "80mm" = "58mm") => {
+    const tok = localStorage.getItem("gethelp_token") || "";
+    const base = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(`${window.location.origin}/passport/${tool.qrCode}`)}`;
+    let barcodeDataUrl = "";
+    try {
+      const r = await fetch(`${base}/api/tools/${tool.id}/barcode-image`, { headers: { Authorization: `Bearer ${tok}` } });
+      if (r.ok) {
+        const blob = await r.blob();
+        barcodeDataUrl = await new Promise<string>(res => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      }
+    } catch { /* barcode olmasa ham chiqaradi */ }
+
+    const pw = window.open("", "_blank");
+    if (!pw) return;
+    const w = size === "58mm" ? "54mm" : "76mm";
+    const barcodeHtml = barcodeDataUrl
+      ? `<img src="${barcodeDataUrl}" alt="barcode" style="width:100%;max-height:36px;object-fit:contain;margin-top:4px"/>`
+      : `<div style="font-family:monospace;font-size:8px;letter-spacing:1px;word-break:break-all">${tool.qrCode}</div>`;
+
+    pw.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+      <title>${tool.name}</title>
+      <style>
+        @page { size: ${size} auto; margin: 0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Arial Narrow', Arial, sans-serif; background: #fff; width: ${w}; padding: 3mm; }
+        .brand { font-size: 7px; text-align: center; color: #555; letter-spacing: .5px; margin-bottom: 2px; }
+        .name  { font-size: 10px; font-weight: 700; text-align: center; line-height: 1.2; margin-bottom: 1px; }
+        .cat   { font-size: 7px; text-align: center; color: #777; margin-bottom: 3px; }
+        .sep   { border-top: 1px dashed #bbb; margin: 3px 0; }
+        .qrwrap{ display: flex; justify-content: center; margin: 2px 0; }
+        .qrwrap img { width: ${size === "58mm" ? "40mm" : "50mm"}; height: ${size === "58mm" ? "40mm" : "50mm"}; }
+        .barwrap{ text-align: center; }
+        .price { display: flex; justify-content: space-between; font-size: 8px; margin-top: 3px; }
+        .price span { color: #444; }
+        .price b { color: #000; }
+        .foot { font-size: 6px; text-align: center; color: #aaa; margin-top: 3px; }
+      </style></head><body>
+      <div class="brand">GetHelp.uz — Asbob ijarasi</div>
+      <div class="name">${tool.name}</div>
+      ${tool.category ? `<div class="cat">${tool.category}</div>` : ""}
+      <div class="sep"></div>
+      <div class="qrwrap"><img src="${qrUrl}" alt="QR"/></div>
+      <div class="sep"></div>
+      <div class="barwrap">${barcodeHtml}</div>
+      <div class="price">
+        <span>Kunlik: <b>${formatCurrency(tool.pricePerDay)}</b></span>
+        <span>Depozit: <b>${formatCurrency(tool.depositAmount)}</b></span>
+      </div>
+      <div class="foot">ID:${tool.id} | gethelp.uz</div>
+      <script>window.onload=()=>{ window.print(); }</script>
     </body></html>`);
     pw.document.close();
   };
@@ -680,6 +748,51 @@ export default function ShopTools() {
                 </div>
               </div>
             )}
+
+            {/* Termal printer chop etish bo'limi */}
+            <div className={`border-2 rounded-xl p-3 transition-colors ${printAfterCreate ? "border-blue-300 bg-blue-50/50" : "border-dashed border-border"}`}>
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={printAfterCreate}
+                  onChange={e => setPrintAfterCreate(e.target.checked)}
+                  className="w-4 h-4 rounded accent-blue-600"
+                />
+                <Printer className="h-4 w-4 text-blue-500" />
+                <span className="text-sm font-medium">Qo'shgandan keyin termal printer chop etish</span>
+                <span className="ml-auto text-xs text-muted-foreground">(ixtiyoriy)</span>
+              </label>
+
+              {printAfterCreate && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-muted-foreground">
+                    QR kod va shtrix kod yorlig'i printer dialogida ochiladi.
+                  </p>
+                  <div className="flex gap-2 items-center">
+                    <span className="text-xs font-medium text-muted-foreground">Qog'oz kengligi:</span>
+                    <div className="flex gap-1.5">
+                      {(["58mm", "80mm"] as const).map(s => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setThermalSize(s)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${thermalSize === s ? "bg-blue-600 text-white border-blue-600" : "border-border text-muted-foreground hover:border-blue-400"}`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-xs text-muted-foreground ml-1">
+                      {thermalSize === "58mm" ? "— kichik termal" : "— katta termal"}
+                    </span>
+                  </div>
+                  <div className="flex items-start gap-1.5 text-xs text-blue-700 bg-blue-50 rounded-lg p-2 border border-blue-100">
+                    <Printer size={13} className="mt-0.5 flex-shrink-0" />
+                    <span>Saqlash tugmasini bosganingizdan so'ng printer dialogi avtomatik ochiladi</span>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={()=>setCreateOpen(false)}>Bekor</Button>
