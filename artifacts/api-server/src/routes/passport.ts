@@ -35,7 +35,9 @@ router.get("/:qrCode", async (req: Request, res: Response) => {
   try {
     const { qrCode } = req.params;
     const toolResult = await db.$client.query(
-      `SELECT t.*, s.name as shop_name, s.phone as shop_phone, s.address as shop_address
+      `SELECT t.id, t.name, t.description, t.category, t.status, t.qr_code, t.custom_barcode,
+              t.price_per_day, t.deposit_amount, t.image_url, t.created_at, t.shop_id,
+              s.name as shop_name, s.phone as shop_phone, s.address as shop_address
        FROM tools t
        JOIN shops s ON s.id = t.shop_id
        WHERE t.qr_code = $1`,
