@@ -241,32 +241,34 @@ function ClassicTabLayout({ role }: { role: string }) {
             isIOS ? <SymbolView name="chart.bar" tintColor={color} size={24} /> : <Ionicons name="bar-chart-outline" size={22} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="loyalty"
-        options={{
-          title: "Loyallik",
-          href: null,
-          tabBarIcon: ({ color }) =>
-            isIOS ? <SymbolView name="star" tintColor={color} size={24} /> : <Ionicons name="star-outline" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="referral"
-        options={{
-          title: "Referal",
-          href: !isAdmin ? undefined : null,
-          tabBarIcon: ({ color }) =>
-            isIOS ? <SymbolView name="gift" tintColor={color} size={24} /> : <Ionicons name="gift-outline" size={22} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profil",
-          tabBarIcon: ({ color }) =>
-            isIOS ? <SymbolView name="person" tintColor={color} size={24} /> : <Feather name="user" size={22} color={color} />,
-        }}
-      />
+      <Tabs.Screen name="loyalty" options={{ title: "Loyallik", href: null, tabBarIcon: ({ color }) => isIOS ? <SymbolView name="star" tintColor={color} size={24} /> : <Ionicons name="star-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="referral" options={{ title: "Referal", href: !isAdmin ? undefined : null, tabBarIcon: ({ color }) => isIOS ? <SymbolView name="gift" tintColor={color} size={24} /> : <Ionicons name="gift-outline" size={22} color={color} /> }} />
+
+      {/* Barcha yashirin ekranlar — tab barida ko'rinmaydi */}
+      <Tabs.Screen name="favorites" options={{ title: "Sevimlilar", href: null, tabBarIcon: ({ color }) => <Ionicons name="heart-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="subscriptions" options={{ title: "Obunalar", href: null, tabBarIcon: ({ color }) => <Ionicons name="card-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="projects" options={{ title: "Loyihalar", href: null, tabBarIcon: ({ color }) => <Ionicons name="folder-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="calculator" options={{ title: "Kalkulyator", href: null, tabBarIcon: ({ color }) => <Ionicons name="calculator-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="peer-listings" options={{ title: "Peer Ijaralar", href: null, tabBarIcon: ({ color }) => <Ionicons name="swap-horizontal-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="insurance" options={{ title: "Sug'urta", href: null, tabBarIcon: ({ color }) => <Ionicons name="shield-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="b2b" options={{ title: "B2B Portal", href: null, tabBarIcon: ({ color }) => <Ionicons name="business-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="worker-packages" options={{ title: "Usta paketlari", href: null, tabBarIcon: ({ color }) => <Ionicons name="hammer-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="branches" options={{ title: "Filiallar", href: null, tabBarIcon: ({ color }) => <Ionicons name="business-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="gps-tracking" options={{ title: "GPS Monitoring", href: null, tabBarIcon: ({ color }) => <Ionicons name="navigate-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="pricing" options={{ title: "Narxlash", href: null, tabBarIcon: ({ color }) => <Ionicons name="pricetag-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="shop-maintenance" options={{ title: "Ta'mirlash", href: null, tabBarIcon: ({ color }) => <Ionicons name="construct-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="damage-reports" options={{ title: "Zararlar", href: null, tabBarIcon: ({ color }) => <Ionicons name="warning-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="promo-codes" options={{ title: "Promo kodlar", href: null, tabBarIcon: ({ color }) => <Ionicons name="ticket-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="inventory" options={{ title: "Inventarizatsiya", href: null, tabBarIcon: ({ color }) => <Ionicons name="cube-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="shop-ratings" options={{ title: "Baholar", href: null, tabBarIcon: ({ color }) => <Ionicons name="star-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="delivery" options={{ title: "Yetkazib berish", href: null, tabBarIcon: ({ color }) => <Ionicons name="car-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="shop-worker-tasks" options={{ title: "Topshiriqlar", href: null, tabBarIcon: ({ color }) => <Ionicons name="clipboard-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="documents" options={{ title: "Hujjatlar", href: null, tabBarIcon: ({ color }) => <Ionicons name="folder-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="sms-center" options={{ title: "SMS Markaz", href: null, tabBarIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="shop-suppliers" options={{ title: "Ta'minotchilar", href: null, tabBarIcon: ({ color }) => <Ionicons name="storefront-outline" size={22} color={color} /> }} />
+      <Tabs.Screen name="e-sign" options={{ title: "Elektron imzo", href: null, tabBarIcon: ({ color }) => <Ionicons name="document-text-outline" size={22} color={color} /> }} />
+
+      <Tabs.Screen name="profile" options={{ title: "Profil", tabBarIcon: ({ color }) => isIOS ? <SymbolView name="person" tintColor={color} size={24} /> : <Feather name="user" size={22} color={color} /> }} />
     </Tabs>
   );
 }

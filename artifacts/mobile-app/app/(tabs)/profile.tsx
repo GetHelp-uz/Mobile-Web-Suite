@@ -153,58 +153,75 @@ export default function ProfileScreen() {
         <MenuItem icon="shield-checkmark-outline" label="Rol" value={roleLabel} />
       </View>
 
-      {/* Navigation links based on role */}
+      {/* Do'kon egasi menyu */}
       {(user.role === "super_admin" || user.role === "shop_owner") && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Boshqaruv</Text>
-          <MenuItem
-            icon="analytics-outline"
-            label="Dashboard"
-            onPress={() => router.push("/(tabs)")}
-          />
-          <MenuItem
-            icon="construct-outline"
-            label="Asboblar"
-            onPress={() => router.push("/(tabs)/tools")}
-          />
-          <MenuItem
-            icon="document-text-outline"
-            label="Ijaralar"
-            onPress={() => router.push("/(tabs)/rentals")}
-          />
-        </View>
+        <>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Asosiy boshqaruv</Text>
+            <MenuItem icon="analytics-outline" label="Dashboard" onPress={() => router.push("/(tabs)")} />
+            <MenuItem icon="construct-outline" label="Asboblar" onPress={() => router.push("/(tabs)/tools")} />
+            <MenuItem icon="document-text-outline" label="Ijaralar" onPress={() => router.push("/(tabs)/rentals")} />
+            <MenuItem icon="people-outline" label="Mijozlar" onPress={() => router.push("/(tabs)/customers")} />
+          </View>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Do'kon sozlamalari</Text>
+            <MenuItem icon="business-outline" label="Filiallar" onPress={() => router.push("/(tabs)/branches")} />
+            <MenuItem icon="navigate-outline" label="GPS Monitoring" onPress={() => router.push("/(tabs)/gps-tracking")} />
+            <MenuItem icon="pricetag-outline" label="Narxlash" onPress={() => router.push("/(tabs)/pricing")} />
+            <MenuItem icon="car-outline" label="Yetkazib berish" onPress={() => router.push("/(tabs)/delivery")} />
+            <MenuItem icon="storefront-outline" label="Ta'minotchilar" onPress={() => router.push("/(tabs)/shop-suppliers")} />
+          </View>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Operatsiyalar</Text>
+            <MenuItem icon="cube-outline" label="Inventarizatsiya" onPress={() => router.push("/(tabs)/inventory")} />
+            <MenuItem icon="construct-outline" label="Ta'mirlash" onPress={() => router.push("/(tabs)/shop-maintenance")} />
+            <MenuItem icon="warning-outline" label="Zararlar hisoboti" onPress={() => router.push("/(tabs)/damage-reports")} />
+            <MenuItem icon="clipboard-outline" label="Xodimlar topshiriqlari" onPress={() => router.push("/(tabs)/shop-worker-tasks")} />
+          </View>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Marketing</Text>
+            <MenuItem icon="ticket-outline" label="Promo kodlar" onPress={() => router.push("/(tabs)/promo-codes")} />
+            <MenuItem icon="chatbubbles-outline" label="SMS Markaz" onPress={() => router.push("/(tabs)/sms-center")} />
+            <MenuItem icon="star-outline" label="Baholar va sharhlar" onPress={() => router.push("/(tabs)/shop-ratings")} />
+          </View>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Hujjatlar</Text>
+            <MenuItem icon="folder-outline" label="Hujjatlar" onPress={() => router.push("/(tabs)/documents")} />
+          </View>
+        </>
       )}
 
+      {/* Ishchi menyu */}
       {user.role === "worker" && (
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Tezkor havolalar</Text>
-          <MenuItem
-            icon="qr-code-outline"
-            label="QR Skaner"
-            onPress={() => router.push("/(tabs)/scanner")}
-          />
-          <MenuItem
-            icon="list-outline"
-            label="Faol ijaralar"
-            onPress={() => router.push("/(tabs)")}
-          />
+          <MenuItem icon="qr-code-outline" label="QR Skaner" onPress={() => router.push("/(tabs)/scanner")} />
+          <MenuItem icon="list-outline" label="Faol ijaralar" onPress={() => router.push("/(tabs)")} />
+          <MenuItem icon="clipboard-outline" label="Mening topshiriqlarim" onPress={() => router.push("/(tabs)/shop-worker-tasks")} />
         </View>
       )}
 
+      {/* Mijoz menyu */}
       {user.role === "customer" && (
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Tezkor havolalar</Text>
-          <MenuItem
-            icon="cube-outline"
-            label="Asboblar"
-            onPress={() => router.push("/(tabs)")}
-          />
-          <MenuItem
-            icon="receipt-outline"
-            label="Mening ijaralarim"
-            onPress={() => router.push("/(tabs)/my-rentals")}
-          />
-        </View>
+        <>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Mening sahifam</Text>
+            <MenuItem icon="cube-outline" label="Asboblar" onPress={() => router.push("/(tabs)")} />
+            <MenuItem icon="receipt-outline" label="Mening ijaralarim" onPress={() => router.push("/(tabs)/my-rentals")} />
+            <MenuItem icon="heart-outline" label="Sevimlilar" onPress={() => router.push("/(tabs)/favorites")} />
+            <MenuItem icon="folder-outline" label="Loyihalarim" onPress={() => router.push("/(tabs)/projects")} />
+            <MenuItem icon="card-outline" label="Obunalar" onPress={() => router.push("/(tabs)/subscriptions")} />
+          </View>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.textMuted }]}>Qo'shimcha xizmatlar</Text>
+            <MenuItem icon="calculator-outline" label="Loyiha kalkulyator" onPress={() => router.push("/(tabs)/calculator")} />
+            <MenuItem icon="shield-outline" label="Sug'urta" onPress={() => router.push("/(tabs)/insurance")} />
+            <MenuItem icon="swap-horizontal-outline" label="Peer Ijaralar" onPress={() => router.push("/(tabs)/peer-listings")} />
+            <MenuItem icon="business-outline" label="B2B Portal" onPress={() => router.push("/(tabs)/b2b")} />
+            <MenuItem icon="hammer-outline" label="Usta paketlari" onPress={() => router.push("/(tabs)/worker-packages")} />
+            <MenuItem icon="document-text-outline" label="Elektron imzo" onPress={() => router.push("/(tabs)/e-sign")} />
+          </View>
+        </>
       )}
 
       {/* Xavfsizlik sozlamalari */}
