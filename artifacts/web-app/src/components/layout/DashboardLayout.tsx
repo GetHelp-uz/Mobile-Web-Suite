@@ -139,6 +139,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     super_admin: [
       { name: "Boshqaruv paneli", path: "/admin", icon: LayoutDashboard },
       { name: "Foydalanuvchilar", path: "/admin/users", icon: Users },
+      { name: "Do'konlar", path: "/admin/shops", icon: Building2 },
       { name: "Hujjatlar", path: "/admin/documents", icon: FileText },
       { name: "Tarif rejalari", path: "/admin/tariffs", icon: PieChart },
       { name: "Komissiya boshqaruvi", path: "/admin/commissions", icon: DollarSign },

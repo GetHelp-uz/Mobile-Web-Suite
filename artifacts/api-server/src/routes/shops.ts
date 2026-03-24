@@ -122,4 +122,66 @@ router.get("/:id/public", async (req, res) => {
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
 });
 
+// PATCH /api/shops/:id/toggle-active — admin do'konni bloklash/faollashtirish
+router.patch("/:id/toggle-active", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const shopId = Number(req.params.id);
+    const [shop] = await db.select().from(shopsTable).where(eq(shopsTable.id, shopId));
+    if (!shop) { res.status(404).json({ error: "Do'kon topilmadi" }); return; }
+    const [updated] = await db.update(shopsTable)
+      .set({ isActive: !shop.isActive })
+      .where(eq(shopsTable.id, shopId))
+      .returning();
+    res.json({ ok: true, id: updated.id, isActive: updated.isActive });
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
+});
+
+// PATCH /api/shops/:id/commission — admin komissiyani o'zgartirish
+router.patch("/:id/commission", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const shopId = Number(req.params.id);
+    const commission = Number(req.body.commission);
+    if (isNaN(commission) || commission < 0 || commission > 100) {
+      res.status(400).json({ error: "Komissiya 0–100 orasida bo'lishi kerak" }); return;
+    }
+    const [updated] = await db.update(shopsTable)
+      .set({ commission })
+      .where(eq(shopsTable.id, shopId))
+      .returning();
+    if (!updated) { res.status(404).json({ error: "Do'kon topilmadi" }); return; }
+    res.json({ ok: true, id: updated.id, commission: updated.commission });
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
+});
+
+// GET /api/shops/admin/list — admin uchun do'konlar ro'yxati (owner info bilan)
+router.get("/admin/list", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 20);
+    const offset = (page - 1) * limit;
+    const search = req.query.search ? String(req.query.search) : "";
+    const whereClause = search
+      ? sql`WHERE s.name ILIKE ${"%" + search + "%"} OR s.phone ILIKE ${"%" + search + "%"} OR u.name ILIKE ${"%" + search + "%"}`
+      : sql`WHERE 1=1`;
+    const rows = await db.execute(sql`
+      SELECT s.id, s.name, s.address, s.phone, s.region, s.district,
+             s.commission, s.is_active, s.subscription_status, s.subscription_ends_at, s.created_at,
+             u.id as owner_id, u.name as owner_name, u.phone as owner_phone, u.is_active as owner_active,
+             (SELECT COUNT(*) FROM tools t WHERE t.shop_id = s.id) as tools_count,
+             (SELECT COUNT(*) FROM rentals r WHERE r.shop_id = s.id) as rentals_count
+      FROM shops s
+      LEFT JOIN users u ON u.id = s.owner_id
+      ${whereClause}
+      ORDER BY s.created_at DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `);
+    const countRows = await db.execute(sql`
+      SELECT COUNT(*) as total FROM shops s
+      LEFT JOIN users u ON u.id = s.owner_id
+      ${whereClause}
+    `);
+    res.json({ shops: rows.rows, total: Number((countRows.rows[0] as any)?.total || 0), page, limit });
+  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
+});
+
 export default router;

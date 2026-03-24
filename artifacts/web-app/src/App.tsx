@@ -51,6 +51,7 @@ import AdminAppManagement from "@/pages/admin/AdminAppManagement";
 import AdminPlugins from "@/pages/admin/AdminPlugins";
 import AdminAIAssistant from "@/pages/admin/AdminAIAssistant";
 import AdminUsers from "@/pages/admin/AdminUsers";
+import AdminShops from "@/pages/admin/AdminShops";
 import AdminDocuments from "@/pages/admin/AdminDocuments";
 import ShopPaymentSettings from "@/pages/shop/ShopPaymentSettings";
 import ShopDeliverySettings from "@/pages/shop/ShopDeliverySettings";
@@ -264,6 +265,9 @@ function Router() {
       </Route>
       <Route path="/admin/users">
         {() => <ProtectedRoute component={AdminUsers} allowedRoles={['super_admin']} />}
+      </Route>
+      <Route path="/admin/shops">
+        {() => <ProtectedRoute component={AdminShops} allowedRoles={['super_admin']} />}
       </Route>
       <Route path="/admin/documents">
         {() => <ProtectedRoute component={AdminDocuments} allowedRoles={['super_admin']} />}

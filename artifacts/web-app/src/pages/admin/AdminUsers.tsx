@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Users, Search, Phone, User, Shield, Store, Hammer,
   Eye, EyeOff, Lock, KeyRound, Power, PowerOff,
-  ChevronLeft, ChevronRight, Copy, CheckCircle2, RefreshCw, X
+  ChevronLeft, ChevronRight, Copy, CheckCircle2, RefreshCw,
+  X, UserPlus, Mail, AtSign, ChevronDown,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -31,7 +32,7 @@ const ROLE_COLORS: Record<string, string> = {
   customer: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
 };
 
-interface User {
+interface UserItem {
   id: number;
   name: string;
   phone: string;
@@ -47,18 +48,39 @@ interface User {
 
 interface ResetModalState {
   open: boolean;
-  user: User | null;
+  user: UserItem | null;
   newPass: string;
   showPass: boolean;
   loading: boolean;
 }
+
+interface CreateUserForm {
+  name: string;
+  phone: string;
+  email: string;
+  username: string;
+  password: string;
+  role: string;
+  showPass: boolean;
+  loading: boolean;
+}
+
+interface RoleChangeState {
+  userId: number | null;
+  loading: boolean;
+}
+
+const EMPTY_CREATE: CreateUserForm = {
+  name: "", phone: "", email: "", username: "", password: "",
+  role: "customer", showPass: false, loading: false,
+};
 
 export default function AdminUsers() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<UserItem[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -66,8 +88,12 @@ export default function AdminUsers() {
     open: false, user: null, newPass: "", showPass: false, loading: false,
   });
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState<CreateUserForm>(EMPTY_CREATE);
+  const [createdUserInfo, setCreatedUserInfo] = useState<{ name: string; phone: string; generatedPassword?: string } | null>(null);
+  const [roleChange, setRoleChange] = useState<RoleChangeState>({ userId: null, loading: false });
+  const [openRoleDropdown, setOpenRoleDropdown] = useState<number | null>(null);
 
-  // Debounce search
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(t);
@@ -100,7 +126,7 @@ export default function AdminUsers() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  async function handleToggleActive(user: User) {
+  async function handleToggleActive(user: UserItem) {
     try {
       const res = await fetch(`${BASE}/api/users/${user.id}/toggle-active`, {
         method: "PATCH",
@@ -141,6 +167,62 @@ export default function AdminUsers() {
     }
   }
 
+  async function handleCreateUser() {
+    if (createForm.name.trim().length < 2) {
+      toast({ title: "Xatolik", description: "Ism kamida 2 harf bo'lishi kerak", variant: "destructive" }); return;
+    }
+    if (!createForm.phone) {
+      toast({ title: "Xatolik", description: "Telefon raqam kerak", variant: "destructive" }); return;
+    }
+    setCreateForm(f => ({ ...f, loading: true }));
+    try {
+      const body: Record<string, string> = {
+        name: createForm.name.trim(),
+        phone: createForm.phone.trim(),
+        role: createForm.role,
+      };
+      if (createForm.email.trim()) body.email = createForm.email.trim();
+      if (createForm.username.trim()) body.username = createForm.username.trim();
+      if (createForm.password.trim()) body.password = createForm.password.trim();
+
+      const res = await fetch(`${BASE}/api/users/admin-create`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Xatolik");
+      setCreatedUserInfo({ name: data.name, phone: data.phone, generatedPassword: data.generatedPassword });
+      setCreateForm(EMPTY_CREATE);
+      fetchUsers();
+      toast({ title: "Foydalanuvchi yaratildi!", description: `${data.name} muvaffaqiyatli qo'shildi` });
+    } catch (err: any) {
+      toast({ title: "Xatolik", description: err.message, variant: "destructive" });
+    } finally {
+      setCreateForm(f => ({ ...f, loading: false }));
+    }
+  }
+
+  async function handleRoleChange(userId: number, newRole: string) {
+    setRoleChange({ userId, loading: true });
+    setOpenRoleDropdown(null);
+    try {
+      const res = await fetch(`${BASE}/api/users/${userId}/role`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${getToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Xatolik");
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: data.role } : u));
+      toast({ title: "Rol o'zgartirildi", description: `${ROLE_LABELS[newRole]} roli berildi` });
+    } catch (err: any) {
+      toast({ title: "Xatolik", description: err.message, variant: "destructive" });
+    } finally {
+      setRoleChange({ userId: null, loading: false });
+    }
+  }
+
   function copyToClipboard(text: string, userId: number) {
     navigator.clipboard.writeText(text).then(() => {
       setCopiedId(userId);
@@ -160,7 +242,7 @@ export default function AdminUsers() {
 
   return (
     <DashboardLayout>
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-6" onClick={() => openRoleDropdown !== null && setOpenRoleDropdown(null)}>
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -169,13 +251,19 @@ export default function AdminUsers() {
               Foydalanuvchilar boshqaruvi
             </h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Jami {total} ta foydalanuvchi — login, parol va hujjatlarni boshqaring
+              Jami {total} ta foydalanuvchi — login, parol va rollarni boshqaring
             </p>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loading}>
-            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
-            Yangilash
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={fetchUsers} disabled={loading}>
+              <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+              Yangilash
+            </Button>
+            <Button size="sm" onClick={() => { setCreateOpen(true); setCreatedUserInfo(null); }}>
+              <UserPlus size={14} />
+              Yangi foydalanuvchi
+            </Button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -204,7 +292,7 @@ export default function AdminUsers() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
           <Input
             className="pl-9"
-            placeholder="Ism yoki telefon bilan qidiring..."
+            placeholder="Ism, telefon yoki username..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -278,10 +366,30 @@ export default function AdminUsers() {
                           <span className="text-muted-foreground text-xs">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ROLE_COLORS[user.role] || ""}`}>
-                          {ROLE_LABELS[user.role] || user.role}
-                        </span>
+                      <td className="px-4 py-3 relative">
+                        <div className="relative inline-block" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => setOpenRoleDropdown(openRoleDropdown === user.id ? null : user.id)}
+                            disabled={roleChange.loading && roleChange.userId === user.id}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium cursor-pointer hover:opacity-80 transition-opacity ${ROLE_COLORS[user.role] || ""}`}
+                          >
+                            {ROLE_LABELS[user.role] || user.role}
+                            <ChevronDown size={10} />
+                          </button>
+                          {openRoleDropdown === user.id && (
+                            <div className="absolute top-full left-0 mt-1 w-36 bg-popover border border-border rounded-lg shadow-lg z-50 py-1">
+                              {Object.entries(ROLE_LABELS).map(([roleKey, roleLabel]) => (
+                                <button
+                                  key={roleKey}
+                                  onClick={() => handleRoleChange(user.id, roleKey)}
+                                  className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted transition-colors ${user.role === roleKey ? "font-semibold" : ""}`}
+                                >
+                                  {roleLabel}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 text-xs font-medium ${user.isActive ? "text-green-600" : "text-red-500"}`}>
@@ -337,7 +445,181 @@ export default function AdminUsers() {
         </Card>
       </div>
 
-      {/* Reset Password Modal */}
+      {/* ── Create User Modal ─────────────────────────────────────────────────── */}
+      {createOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <Card className="w-full max-w-md p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <UserPlus size={20} className="text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-lg">Yangi foydalanuvchi</h3>
+                  <p className="text-muted-foreground text-sm">Admin tomonidan yaratish</p>
+                </div>
+              </div>
+              <button onClick={() => { setCreateOpen(false); setCreatedUserInfo(null); }} className="text-muted-foreground hover:text-foreground">
+                <X size={18} />
+              </button>
+            </div>
+
+            {createdUserInfo ? (
+              <div className="space-y-4">
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 space-y-2">
+                  <div className="flex items-center gap-2 text-green-700 dark:text-green-400 font-semibold">
+                    <CheckCircle2 size={18} />
+                    Foydalanuvchi muvaffaqiyatli yaratildi!
+                  </div>
+                  <div className="text-sm space-y-1 mt-2">
+                    <div><span className="text-muted-foreground">Ism:</span> <strong>{createdUserInfo.name}</strong></div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Telefon:</span>
+                      <strong className="font-mono">{createdUserInfo.phone}</strong>
+                      <button onClick={() => copyToClipboard(createdUserInfo.phone, -1)} className="text-muted-foreground hover:text-primary">
+                        <Copy size={12} />
+                      </button>
+                    </div>
+                    {createdUserInfo.generatedPassword && (
+                      <div className="flex items-center gap-2">
+                        <span className="text-muted-foreground">Parol:</span>
+                        <strong className="font-mono bg-muted px-2 py-0.5 rounded">{createdUserInfo.generatedPassword}</strong>
+                        <button onClick={() => copyToClipboard(createdUserInfo.generatedPassword!, -2)} className="text-muted-foreground hover:text-primary">
+                          <Copy size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-2">
+                    Bu parolni foydalanuvchiga xavfsiz usulda yuboring!
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1" onClick={() => { setCreatedUserInfo(null); }}>
+                    Yana qo'shish
+                  </Button>
+                  <Button className="flex-1" onClick={() => { setCreateOpen(false); setCreatedUserInfo(null); }}>
+                    Yopish
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-semibold block mb-1.5">To'liq ism *</label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                    <Input
+                      className="pl-9"
+                      placeholder="Ism Familiya"
+                      value={createForm.name}
+                      onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold block mb-1.5">Telefon raqam *</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                    <Input
+                      className="pl-9 font-mono"
+                      placeholder="998901234567"
+                      value={createForm.phone}
+                      onChange={e => setCreateForm(f => ({ ...f, phone: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold block mb-1.5">Username (ixtiyoriy)</label>
+                  <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                    <Input
+                      className="pl-9"
+                      placeholder="username"
+                      value={createForm.username}
+                      onChange={e => setCreateForm(f => ({ ...f, username: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold block mb-1.5">Email (ixtiyoriy)</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                    <Input
+                      className="pl-9"
+                      placeholder="email@example.com"
+                      type="email"
+                      value={createForm.email}
+                      onChange={e => setCreateForm(f => ({ ...f, email: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold block mb-1.5">Rol *</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(ROLE_LABELS).map(([roleKey, roleLabel]) => (
+                      <button
+                        key={roleKey}
+                        onClick={() => setCreateForm(f => ({ ...f, role: roleKey }))}
+                        className={`px-3 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                          createForm.role === roleKey
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:bg-muted"
+                        }`}
+                      >
+                        {roleLabel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-sm font-semibold block mb-1.5">Parol (ixtiyoriy)</label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={15} />
+                    <Input
+                      type={createForm.showPass ? "text" : "password"}
+                      className="pl-9 pr-9"
+                      placeholder="Kiritilmasa avtomatik yaratiladi"
+                      value={createForm.password}
+                      onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      onClick={() => setCreateForm(f => ({ ...f, showPass: !f.showPass }))}
+                    >
+                      {createForm.showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Bo'sh qoldirsangiz "gethelp123" parol avtomatik beriladi
+                  </p>
+                </div>
+
+                <div className="flex gap-3 pt-2">
+                  <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>
+                    Bekor qilish
+                  </Button>
+                  <Button
+                    className="flex-1"
+                    onClick={handleCreateUser}
+                    disabled={createForm.loading}
+                  >
+                    {createForm.loading ? "Yaratilmoqda..." : "Foydalanuvchi yaratish"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* ── Reset Password Modal ──────────────────────────────────────────────── */}
       {resetModal.open && resetModal.user && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <Card className="w-full max-w-md p-6 shadow-2xl">

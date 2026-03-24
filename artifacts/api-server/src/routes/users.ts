@@ -102,6 +102,65 @@ router.patch("/:id/toggle-active", authenticate, requireRole("super_admin"), asy
   }
 });
 
+// ── Admin: yangi foydalanuvchi yaratish ─────────────────────────────────────
+router.post("/admin-create", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const { name, phone: rawPhone, password, role, username, email } = req.body;
+    if (!name || typeof name !== "string" || name.trim().length < 2) {
+      res.status(400).json({ error: "Ism kamida 2 ta harf bo'lishi kerak" }); return;
+    }
+    if (!rawPhone) { res.status(400).json({ error: "Telefon raqam kerak" }); return; }
+    const phoneDigits = String(rawPhone).replace(/\D/g, "");
+    const phone = phoneDigits.startsWith("998") && phoneDigits.length === 12
+      ? phoneDigits : phoneDigits.length === 9 ? `998${phoneDigits}` : phoneDigits;
+    if (phone.length !== 12) { res.status(400).json({ error: "Telefon raqamni to'g'ri kiriting (9 yoki 12 raqam)" }); return; }
+    const pass = password && String(password).length >= 6 ? String(password) : "gethelp123";
+    const allowedRoles = ["super_admin", "shop_owner", "worker", "customer"];
+    const userRole = allowedRoles.includes(role) ? role : "customer";
+    const existing = await db.select().from(usersTable).where(eq(usersTable.phone, phone));
+    if (existing.length > 0) { res.status(400).json({ error: "Bu telefon raqam allaqachon ro'yhatdan o'tgan" }); return; }
+    if (username) {
+      const byUsername = await db.select().from(usersTable).where(eq(usersTable.username, String(username)));
+      if (byUsername.length > 0) { res.status(400).json({ error: "Bu username allaqachon band" }); return; }
+    }
+    const hashed = await bcrypt.hash(pass, 10);
+    const [user] = await db.insert(usersTable).values({
+      name: name.trim(), phone, password: hashed, role: userRole as any,
+      username: username ? String(username).trim() : undefined,
+      email: email ? String(email).trim() : undefined,
+    }).returning();
+    res.status(201).json({
+      id: user.id, name: user.name, phone: user.phone, username: (user as any).username ?? null,
+      email: user.email, role: user.role, isActive: user.isActive, createdAt: user.createdAt,
+      generatedPassword: !password ? pass : undefined,
+    });
+  } catch (err: any) {
+    console.error("[AdminCreate]", err.message);
+    if (err.message?.includes("duplicate") || err.message?.includes("unique")) {
+      res.status(400).json({ error: "Bu telefon yoki username allaqachon ro'yhatdan o'tgan" });
+    } else {
+      res.status(500).json({ error: "Server xatosi. Qayta urining." });
+    }
+  }
+});
+
+// ── Admin: foydalanuvchi rolini o'zgartirish ─────────────────────────────────
+router.patch("/:id/role", authenticate, requireRole("super_admin"), async (req, res) => {
+  try {
+    const userId = Number(req.params.id);
+    const { role } = req.body;
+    const allowedRoles = ["super_admin", "shop_owner", "worker", "customer"];
+    if (!allowedRoles.includes(role)) { res.status(400).json({ error: "Noto'g'ri rol" }); return; }
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+    if (!user) { res.status(404).json({ error: "Foydalanuvchi topilmadi" }); return; }
+    const [updated] = await db.update(usersTable).set({ role: role as any }).where(eq(usersTable.id, userId)).returning();
+    res.json({ ok: true, id: updated.id, role: updated.role });
+  } catch (err: any) {
+    console.error("[RoleChange]", err.message);
+    res.status(500).json({ error: "Server xatosi. Qayta urining." });
+  }
+});
+
 // ── Do'kon telefon orqali qidirish ───────────────────────────────────────────
 router.get("/lookup", authenticate, async (req, res) => {
   try {
