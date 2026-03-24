@@ -255,26 +255,8 @@ router.get("/:id/barcode-image", authenticate, async (req, res) => {
     const tool = result.rows[0];
     if (!tool) { res.status(404).json({ error: "Asbob topilmadi" }); return; }
     const barcodeValue = tool.custom_barcode || `GH${String(tool.id).padStart(6, "0")}`;
-    // Proxy real barcode PNG from barcodeapi.org (Code-128 format)
-    try {
-      const upstream = await fetch(`https://barcodeapi.org/api/128/${encodeURIComponent(barcodeValue)}`, {
-        signal: AbortSignal.timeout(5000),
-      });
-      if (upstream.ok) {
-        const buf = Buffer.from(await upstream.arrayBuffer());
-        const ct = upstream.headers.get("content-type") || "image/png";
-        res.setHeader("Content-Type", ct);
-        res.setHeader("Cache-Control", "public, max-age=86400");
-        res.send(buf);
-        return;
-      }
-    } catch { /* fallback to SVG */ }
-    // Fallback: minimal SVG placeholder with barcode value text
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="60" viewBox="0 0 300 60">
-  <rect width="300" height="60" fill="white"/>
-  <text x="150" y="20" text-anchor="middle" font-family="monospace" font-size="11" fill="#333">Code-128</text>
-  <text x="150" y="50" text-anchor="middle" font-family="monospace" font-size="13" font-weight="bold" fill="#000">${barcodeValue}</text>
-</svg>`;
+    const { generateCode128SVG } = await import("../lib/barcode-svg.js");
+    const svg = generateCode128SVG(barcodeValue, { height: 70, moduleWidth: 2, showText: true });
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.send(svg);
