@@ -49,7 +49,7 @@ router.get("/:qrCode", async (req: Request, res: Response) => {
     const tool = toolResult.rows[0];
 
     const eventsResult = await db.$client.query(
-      `SELECT te.*, u.full_name as actor_name
+      `SELECT te.*, u.name as actor_name
        FROM tool_events te
        LEFT JOIN users u ON u.id = te.actor_id
        WHERE te.tool_id = $1
