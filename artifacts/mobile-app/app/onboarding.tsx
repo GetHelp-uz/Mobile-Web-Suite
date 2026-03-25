@@ -130,6 +130,8 @@ export default function OnboardingScreen() {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
         scrollEventThrottle={16}
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 0 }}
       >
         {SLIDES.map((s) => (
           <View key={s.id} style={[styles.slide, { width }]}>
