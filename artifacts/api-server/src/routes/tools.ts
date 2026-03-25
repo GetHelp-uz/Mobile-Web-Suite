@@ -115,14 +115,13 @@ router.get("/scan/:qrCode", async (req, res) => {
 router.get("/barcode-check/:code", async (req, res) => {
   try {
     const code = decodeURIComponent(req.params.code);
-    // custom_barcode, qr_code yoki barcode orqali qidirish
+    // custom_barcode yoki qr_code orqali qidirish
     const rows = await db.execute(sql`
       SELECT t.*, s.name as shop_name
       FROM tools t
       LEFT JOIN shops s ON s.id = t.shop_id
       WHERE t.custom_barcode = ${code}
          OR t.qr_code = ${code}
-         OR t.barcode = ${code}
       LIMIT 1
     `);
     if (rows.rows.length === 0) {
@@ -139,8 +138,11 @@ router.get("/barcode-check/:code", async (req, res) => {
 // Create tool
 router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
   try {
-    const body = CreateToolBody.parse(req.body);
-    const customBarcode = (req.body as any).customBarcode || null;
+    if (req.body === undefined) {
+      console.error("[POST /api/tools] req.body is undefined. Headers:", req.headers);
+    }
+    const body = CreateToolBody.parse(req.body || {});
+    const customBarcode = (req.body as any)?.customBarcode || null;
 
     // Shtrix kod unique tekshiruvi
     if (customBarcode) {

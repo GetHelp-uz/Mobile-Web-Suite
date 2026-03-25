@@ -290,7 +290,7 @@ export async function customFetch<T = unknown>(
     try {
       const token =
         typeof localStorage !== "undefined"
-          ? localStorage.getItem("tool_rent_token")
+          ? localStorage.getItem("gethelp_token")
           : null;
       if (token) {
         headers.set("authorization", `Bearer ${token}`);

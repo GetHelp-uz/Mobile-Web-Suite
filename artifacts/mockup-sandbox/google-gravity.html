@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Gravity</title>
+    <!-- Matter.js Physics Engine -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            background-color: #fff;
+        }
+
+        /* Container for the visual physics elements */
+        #physics-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Let pointer events pass to UI elements or mouse constraint */
+        }
+
+        /* Fixed Navigation / Top Bar */
+        .top-nav {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .reset-btn {
+            padding: 10px 20px;
+            background: #f8f9fa;
+            border: 1px solid #f8f9fa;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #3c4043;
+            transition: all 0.2s;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+        }
+
+        .reset-btn:hover {
+            box-shadow: 0 1px 1px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1);
+            border: 1px solid #dadce0;
+        }
+
+        /* DOM Elements to be synced with Physics Bodies */
+        .physics-el {
+            position: absolute;
+            pointer-events: auto;
+            transform-origin: center center;
+            will-change: transform;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .google-logo {
+            width: 272px;
+            height: 92px;
+            background-image: url('https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png');
+            background-size: cover;
+            cursor: grab;
+        }
+
+        .search-container {
+            width: 584px;
+            max-width: 90vw;
+            height: 46px;
+            background: #fff;
+            border: 1px solid #dfe1e5;
+            border-radius: 24px;
+            padding: 0 20px;
+            box-shadow: 0 1px 6px rgba(32,33,36,.28);
+            cursor: grab;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-container input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            background: transparent;
+            pointer-events: none; /* Prevent input focus from interfering with drag for now */
+        }
+
+        .btn {
+            background-color: #f8f9fa;
+            border: 1px solid #f8f9fa;
+            border-radius: 4px;
+            color: #3c4043;
+            font-family: arial,sans-serif;
+            font-size: 14px;
+            margin: 11px 4px;
+            padding: 0 16px;
+            line-height: 27px;
+            height: 36px;
+            min-width: 54px;
+            text-align: center;
+            cursor: grab;
+            display: inline-block;
+        }
+
+        .language-links {
+            font-size: 13px;
+            color: #1a0dab;
+            cursor: grab;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+        }
+
+        /* Mouse interactions */
+        .physics-el:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-nav">
+        <button class="reset-btn" id="reset-btn">Reset Gravity</button>
+    </div>
+
+    <!-- Hidden audio element for collisions -->
+    <audio id="bounce-sound" src="https://actions.google.com/sounds/v1/impacts/wood_block_drop.ogg"></audio>
+
+    <div id="physics-container">
+        <!-- These elements will be positioned by JavaScript/Matter.js -->
+        <div id="logo" class="physics-el google-logo"></div>
+        
+        <div id="search" class="physics-el search-container">
+            <input type="text" placeholder="Search Google or type a URL" readonly>
+        </div>
+        
+        <div id="btn1" class="physics-el btn">Google Search</div>
+        
+        <div id="btn2" class="physics-el btn">I'm Feeling Lucky</div>
+        
+        <div id="lang" class="physics-el language-links">
+            Google offered in: <span style="color: blue">Uzbek</span> <span style="color: blue">Russian</span>
+        </div>
+    </div>
+
+    <script>
+        // Matter.js modules
+        const Engine = Matter.Engine,
+              Render = Matter.Render,
+              Runner = Matter.Runner,
+              Bodies = Matter.Bodies,
+              Composite = Matter.Composite,
+              Mouse = Matter.Mouse,
+              MouseConstraint = Matter.MouseConstraint,
+              Events = Matter.Events;
+
+        // Configuration
+        const config = {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            wallThickness: 100
+        };
+
+        let engine, runner, mouseConstraint;
+        let ground, leftWall, rightWall, ceiling;
+        let domBodies = []; // Array to map DOM elements to Matter bodies
+
+        const bounceSound = document.getElementById('bounce-sound');
+
+        // Initial Layout (Center of screen)
+        const uiElementsInfo = [
+            { id: 'logo', yOffset: -120, restituion: 0.6, density: 0.05 },
+            { id: 'search', yOffset: -20, restituion: 0.5, density: 0.04 },
+            { id: 'btn1', yOffset: 45, xOffset: -70, restituion: 0.4, density: 0.03 },
+            { id: 'btn2', yOffset: 45, xOffset: 70, restituion: 0.4, density: 0.03 },
+            { id: 'lang', yOffset: 120, restituion: 0.3, density: 0.02 }
+        ];
+
+        function playSound() {
+            // Clone audio to allow multiple concurrent sounds
+            if(!bounceSound) return;
+            const soundClone = bounceSound.cloneNode();
+            soundClone.volume = Math.random() * 0.2 + 0.1; // random soft volume
+            soundClone.play().catch(e => {}); // catch play errors (browser autoplay policy)
+        }
+
+        function initSimulation() {
+            // Create Engine
+            engine = Engine.create();
+            engine.world.gravity.y = 1; // Standard gravity
+
+            // Create Boundaries
+            updateBoundaries();
+
+            // Create DOM bodies
+            createDOMBodies();
+
+            // Add Mouse Interaction
+            const mouse = Mouse.create(document.body);
+            mouseConstraint = MouseConstraint.create(engine, {
+                mouse: mouse,
+                constraint: {
+                    stiffness: 0.2,
+                    render: { visible: false }
+                }
+            });
+            Composite.add(engine.world, mouseConstraint);
+
+            // Keep the mouse in sync with rendering
+            // mouseConstraint.mouse.element.removeEventListener("mousewheel", mouseConstraint.mouse.mousewheel);
+            // mouseConstraint.mouse.element.removeEventListener("DOMMouseScroll", mouseConstraint.mouse.mousewheel);
+
+            // Collision Sound Event
+            Events.on(engine, 'collisionStart', function(event) {
+                const pairs = event.pairs;
+                for (let i = 0; i < pairs.length; i++) {
+                    const bodyA = pairs[i].bodyA;
+                    const bodyB = pairs[i].bodyB;
+                    
+                    // Only play sound for significant impacts
+                    if (bodyA.speed > 2 || bodyB.speed > 2) {
+                        playSound();
+                    }
+                }
+            });
+
+            // Start Physics Runner
+            runner = Runner.create();
+            Runner.run(runner, engine);
+
+            // Sync DOM elements to Physics bodies on every tick
+            Events.on(engine, 'afterUpdate', syncDOM);
+        }
+
+        function updateBoundaries() {
+            config.width = window.innerWidth;
+            config.height = window.innerHeight;
+
+            if (ground) Composite.remove(engine.world, [ground, leftWall, rightWall, ceiling]);
+
+            const wt = config.wallThickness;
+            ground = Bodies.rectangle(config.width / 2, config.height + wt / 2, config.width, wt, { isStatic: true, restitution: 0.5 });
+            leftWall = Bodies.rectangle(-wt / 2, config.height / 2, wt, config.height * 2, { isStatic: true, restitution: 0.5 });
+            rightWall = Bodies.rectangle(config.width + wt / 2, config.height / 2, wt, config.height * 2, { isStatic: true, restitution: 0.5 });
+            ceiling = Bodies.rectangle(config.width / 2, -config.height - wt / 2, config.width * 3, wt, { isStatic: true, restitution: 0.5 }); // High ceiling so things don't escape too easily
+
+            Composite.add(engine.world, [ground, leftWall, rightWall, ceiling]);
+        }
+
+        function createDOMBodies() {
+            // Clear existing
+            domBodies.forEach(db => {
+                Composite.remove(engine.world, db.body);
+            });
+            domBodies = [];
+
+            const centerX = config.width / 2;
+            const centerY = config.height / 2;
+
+            uiElementsInfo.forEach(info => {
+                const el = document.getElementById(info.id);
+                const rect = el.getBoundingClientRect();
+                
+                // Define body starting position
+                // Wait for styles to apply to get correct dimensions, or set defaults
+                const w = rect.width || 100;
+                const h = rect.height || 40;
+                
+                const x = centerX + (info.xOffset || 0);
+                const y = centerY + info.yOffset;
+
+                // Create the Matter.js body
+                const body = Bodies.rectangle(x, y, w, h, {
+                    restitution: info.restituion,
+                    density: info.density,
+                    friction: 0.3,
+                    frictionAir: 0.01
+                });
+
+                Composite.add(engine.world, body);
+
+                // Start DOM element at center before gravity takes over visually
+                el.style.left = (x - w/2) + 'px';
+                el.style.top = (y - h/2) + 'px';
+
+                domBodies.push({
+                    el: el,
+                    body: body,
+                    width: w,
+                    height: h
+                });
+            });
+        }
+
+        function syncDOM() {
+            domBodies.forEach(db => {
+                const x = db.body.position.x - db.width / 2;
+                const y = db.body.position.y - db.height / 2;
+                const angle = db.body.angle;
+
+                // Apply transforms
+                db.el.style.transform = `translate(${x}px, ${y}px) rotate(${angle}rad)`;
+                // We use transform translate instead of top/left for better performance (GPU acceleration)
+                db.el.style.left = '0px'; 
+                db.el.style.top = '0px';
+            });
+        }
+
+        function resetGravity() {
+            const centerX = config.width / 2;
+            const centerY = config.height / 2;
+
+            domBodies.forEach((db, i) => {
+                const info = uiElementsInfo[i];
+                const x = centerX + (info.xOffset || 0);
+                const y = centerY + info.yOffset - Math.random() * 50; // Add slight drop randomness
+                
+                Matter.Body.setPosition(db.body, { x: x, y: y });
+                Matter.Body.setAngle(db.body, (Math.random() - 0.5) * 0.2); // slight tilt
+                Matter.Body.setVelocity(db.body, { x: 0, y: 0 });
+                Matter.Body.setAngularVelocity(db.body, 0);
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            // Allow time for CSS to calc widths before creating bodies
+            setTimeout(initSimulation, 100);
+        });
+
+        // Handle resize
+        window.addEventListener('resize', () => {
+            updateBoundaries();
+        });
+
+        // Reset button listener
+        document.getElementById('reset-btn').addEventListener('click', resetGravity);
+
+    </script>
+</body>
+</html>
