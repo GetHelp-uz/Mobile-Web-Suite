@@ -220,6 +220,10 @@ export default function ShopTools() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!shopId) {
+      toast({ title: "Xatolik", description: "Do'kon aniqlanmadi. Sahifani yangilang.", variant: "destructive" });
+      return;
+    }
     if (!form.name || !form.category || !form.pricePerDay || !form.depositAmount) {
       toast({ title: "Xatolik", description: "Majburiy maydonlarni to'ldiring", variant: "destructive" });
       return;

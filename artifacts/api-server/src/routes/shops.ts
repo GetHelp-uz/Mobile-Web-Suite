@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, shopsTable, usersTable } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { db, shopsTable, usersTable, toolsTable } from "@workspace/db";
+import { and, eq, sql } from "drizzle-orm";
 import { authenticate, requireRole, generateToken } from "../lib/auth.js";
 import { CreateShopBody, UpdateShopBody } from "@workspace/api-zod";
 
@@ -87,6 +87,35 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
     });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
+  }
+});
+
+router.get("/:shopId/tools", authenticate, async (req, res) => {
+  try {
+    const shopId = Number(req.params.shopId);
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 50;
+    const offset = (page - 1) * limit;
+    const status = req.query.status as string | undefined;
+
+    let conditions: any[] = [eq(toolsTable.shopId, shopId)];
+    if (status) conditions.push(eq(toolsTable.status, status as any));
+
+    const tools = await db.select().from(toolsTable).where(and(...conditions)).limit(limit).offset(offset);
+    const countResult = await db.select({ count: sql<number>`count(*)` }).from(toolsTable).where(and(...conditions));
+    const total = Number(countResult[0].count);
+
+    const shopRows = await db.select().from(shopsTable).where(eq(shopsTable.id, shopId)).limit(1);
+    const shopName = shopRows[0]?.name || "";
+
+    res.json({
+      tools: tools.map((t: any) => ({ ...t, shopName })),
+      total,
+      page,
+      limit,
+    });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
