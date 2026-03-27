@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { db, shopsTable } from "@workspace/db";
+import { db, shopsTable, usersTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
-import { authenticate, requireRole } from "../lib/auth.js";
+import { authenticate, requireRole, generateToken } from "../lib/auth.js";
 import { CreateShopBody, UpdateShopBody } from "@workspace/api-zod";
 
 const router = Router();
@@ -19,6 +19,20 @@ router.get("/", authenticate, async (req, res) => {
     res.json({ shops, total, page, limit });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
+  }
+});
+
+router.get("/my", authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const [shop] = await db.select().from(shopsTable).where(eq(shopsTable.ownerId, user.userId));
+    if (!shop) {
+      res.status(404).json({ error: "Do'kon topilmadi" });
+      return;
+    }
+    res.json({ shop });
+  } catch (err: any) {
+    console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi.' });
   }
 });
 
@@ -43,7 +57,34 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
       ownerId: body.ownerId,
       commission: body.commission ?? 10,
     }).returning();
-    res.status(201).json({ shop });
+
+    // Do'kon egasining shop_id maydonini yangilash
+    await db.update(usersTable)
+      .set({ shopId: shop.id })
+      .where(eq(usersTable.id, body.ownerId));
+
+    // Yangilangan foydalanuvchi ma'lumotlarini olish
+    const [updatedUser] = await db.select().from(usersTable).where(eq(usersTable.id, body.ownerId));
+
+    // Yangi token va foydalanuvchi ma'lumotlarini qaytarish
+    const newToken = generateToken(body.ownerId, user.role);
+    res.status(201).json({
+      shop,
+      token: newToken,
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        phone: updatedUser.phone,
+        username: updatedUser.username ?? null,
+        email: updatedUser.email ?? null,
+        role: updatedUser.role,
+        shopId: updatedUser.shopId ?? null,
+        region: updatedUser.region ?? null,
+        district: updatedUser.district ?? null,
+        isActive: updatedUser.isActive,
+        createdAt: updatedUser.createdAt,
+      },
+    });
   } catch (err: any) {
     console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
   }

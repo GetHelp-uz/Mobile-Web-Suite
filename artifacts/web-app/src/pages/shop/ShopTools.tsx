@@ -51,7 +51,33 @@ function BarcodeImg({ value, svgRef }: { value: string; svgRef: React.RefObject<
 
 export default function ShopTools() {
   const { user } = useAuth();
-  const shopId = user?.shopId || 0;
+  const [resolvedShopId, setResolvedShopId] = useState<number>(user?.shopId || 0);
+  const shopId = resolvedShopId;
+
+  useEffect(() => {
+    if (user?.shopId) {
+      setResolvedShopId(user.shopId);
+      return;
+    }
+    const token = localStorage.getItem("gethelp_token") || "";
+    const baseUrl = (import.meta.env.BASE_URL || "").replace(/\/$/, "");
+    fetch(`${baseUrl}/api/shops/my`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(r => r.ok ? r.json() : null).then(d => {
+      if (d?.shop?.id) {
+        setResolvedShopId(d.shop.id);
+        const storedUser = localStorage.getItem("gethelp_user");
+        if (storedUser) {
+          try {
+            const parsed = JSON.parse(storedUser);
+            parsed.shopId = d.shop.id;
+            localStorage.setItem("gethelp_user", JSON.stringify(parsed));
+          } catch {}
+        }
+      }
+    }).catch(() => {});
+  }, [user?.shopId]);
+
   const { data, isLoading } = useListShopTools(shopId);
   const queryClient = useQueryClient();
   const { toast } = useToast();
