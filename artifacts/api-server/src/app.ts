@@ -99,7 +99,25 @@ app.use(hpp({
 
 // ─── BODY SIZE LIMIT: DoS hujumidan himoya ───────────────────────────────────
 app.use(express.json({ limit: "5mb" }));
+app.use(express.text({ type: "text/plain", limit: "5mb" }));
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+
+// ─── TEXT/PLAIN JSON BODY QAYTA ISHLASH ──────────────────────────────────────
+// Ba'zi proxy/CORS holatlarda Content-Type text/plain bo'lib keladi,
+// lekin body JSON matn bo'lishi mumkin — uni parse qilamiz.
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  if (typeof req.body === "string") {
+    const trimmed = req.body.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        req.body = JSON.parse(trimmed);
+      } catch {
+        // JSON emas — o'zgartirmaymiz
+      }
+    }
+  }
+  next();
+});
 
 // ─── REQUEST ID: Har bir so'rovga noyob ID ───────────────────────────────────
 app.use((req: Request, res: Response, next: NextFunction) => {
