@@ -24,9 +24,14 @@ router.get("/", authenticate, async (req, res) => {
 
 router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (req, res) => {
   try {
-    const body = CreateShopBody.parse(req.body);
-    // Do'kon egasi faqat o'zi uchun do'kon yarata oladi
     const user = (req as any).user;
+    // shop_owner uchun ownerId avtomatik to'ldiriladi
+    const rawBody = { ...req.body };
+    if (user.role === "shop_owner" && !rawBody.ownerId) {
+      rawBody.ownerId = user.userId;
+    }
+    const body = CreateShopBody.parse(rawBody);
+    // Do'kon egasi faqat o'zi uchun do'kon yarata oladi
     if (user.role === "shop_owner" && body.ownerId !== user.userId) {
       res.status(403).json({ error: "Faqat o'z hisobingiz uchun do'kon yarata olasiz" });
       return;

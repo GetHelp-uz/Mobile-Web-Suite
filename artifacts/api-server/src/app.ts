@@ -67,6 +67,10 @@ const ALLOWED_ORIGINS = [
 
 function isAllowedOrigin(origin: string): boolean {
   if (ALLOWED_ORIGINS.includes(origin)) return true;
+  // Replit domenlarini qo'llab-quvvatlash
+  if (/^https?:\/\/[a-zA-Z0-9-]+(\.pike)?\.replit\.dev(:\d+)?$/.test(origin)) return true;
+  if (/^https?:\/\/[a-zA-Z0-9-]+\.repl\.co(:\d+)?$/.test(origin)) return true;
+  if (/^https?:\/\/[a-zA-Z0-9-]+\.replit\.app(:\d+)?$/.test(origin)) return true;
   return false;
 }
 
