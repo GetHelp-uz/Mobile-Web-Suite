@@ -142,6 +142,21 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
       console.error("[POST /api/tools] req.body is undefined. Headers:", req.headers);
     }
     const body = CreateToolBody.parse(req.body || {});
+    const user = (req as any).user;
+
+    // Validate shopId for non-admins
+    if (user.role !== "super_admin") {
+      if (!user.shopId || body.shopId !== user.shopId) {
+        res.status(403).json({ error: "Siz faqat o'zingizning do'koningizga asbob qo'sha olasiz." });
+        return;
+      }
+    }
+
+    if (!body.shopId || body.shopId === 0) {
+      res.status(400).json({ error: "Do'kon ID-si noto'g'ri. Iltimos, sahifani yangilab qayta urining." });
+      return;
+    }
+
     const customBarcode = body.customBarcode || null;
 
     // Shtrix kod unique tekshiruvi

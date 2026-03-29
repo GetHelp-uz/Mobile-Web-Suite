@@ -220,7 +220,7 @@ export default function ShopTools() {
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!shopId) {
+    if (!shopId || shopId === 0) {
       toast({ title: "Xatolik", description: "Do'kon aniqlanmadi. Sahifani yangilang.", variant: "destructive" });
       return;
     }
