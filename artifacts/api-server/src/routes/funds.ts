@@ -397,7 +397,7 @@ router.post("/:id/invest", authenticate, async (req, res) => {
       return;
     }
 
-    const fund = fundResult.rows[0] as FundRow;
+    const fund = fundResult.rows[0] as unknown as FundRow;
 
     if (fund.status !== "active") {
       res.status(400).json({ error: "Bu fond hozir investitsiya qabul qilmayapti" });
@@ -491,7 +491,7 @@ router.post("/:id/distribute", authenticate, requireRole("super_admin"), async (
       return;
     }
 
-    const fund = fundResult.rows[0] as FundRow;
+    const fund = fundResult.rows[0] as unknown as FundRow;
 
     if (fund.status !== "active" && fund.status !== "closed") {
       res.status(400).json({ error: "Bu fond uchun daromad ulashish mumkin emas" });
@@ -519,7 +519,7 @@ router.post("/:id/distribute", authenticate, requireRole("super_admin"), async (
       await client.query("BEGIN");
 
       for (const invRow of investors.rows) {
-        const inv = invRow as InvestmentRow;
+        const inv = invRow as unknown as InvestmentRow;
         const monthlyEarning = inv.amount * monthlyRate;
 
         const walletRes = await client.query(
@@ -594,7 +594,7 @@ router.post("/:id/return", authenticate, requireRole("super_admin"), async (req,
       return;
     }
 
-    const fund = fundResult.rows[0] as FundRow;
+    const fund = fundResult.rows[0] as unknown as FundRow;
 
     const investors = await db.execute(sql`
       SELECT * FROM user_investments
@@ -609,7 +609,7 @@ router.post("/:id/return", authenticate, requireRole("super_admin"), async (req,
       await client.query("BEGIN");
 
       for (const invRow of investors.rows) {
-        const inv = invRow as InvestmentRow;
+        const inv = invRow as unknown as InvestmentRow;
 
         const walletRes = await client.query(
           "SELECT * FROM wallets WHERE user_id = $1 LIMIT 1",
