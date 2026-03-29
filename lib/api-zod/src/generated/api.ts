@@ -299,6 +299,8 @@ export const CreateToolBody = zod.object({
   shopId: zod.number(),
   pricePerDay: zod.number(),
   depositAmount: zod.number(),
+  pricePerHour: zod.number().optional(),
+  customBarcode: zod.string().optional(),
   imageUrl: zod.string().optional(),
 });
 
@@ -337,6 +339,8 @@ export const UpdateToolBody = zod.object({
   category: zod.string().optional(),
   pricePerDay: zod.number().optional(),
   depositAmount: zod.number().optional(),
+  pricePerHour: zod.number().optional(),
+  customBarcode: zod.string().optional(),
   status: zod.enum(["available", "rented", "maintenance"]).optional(),
   imageUrl: zod.string().optional(),
 });

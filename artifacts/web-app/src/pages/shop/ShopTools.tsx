@@ -240,7 +240,8 @@ export default function ShopTools() {
         description: form.description || undefined,
         pricePerDay: Number(form.pricePerDay),
         depositAmount: Number(form.depositAmount),
-        ...(form.customBarcode ? { customBarcode: form.customBarcode } as any : {}),
+        ...(form.pricePerHour ? { pricePerHour: Number(form.pricePerHour) } : {}),
+        ...(form.customBarcode ? { customBarcode: form.customBarcode } : {}),
       }
     });
   };

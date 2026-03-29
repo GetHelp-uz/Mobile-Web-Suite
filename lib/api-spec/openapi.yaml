@@ -987,6 +987,10 @@ components:
           type: number
         depositAmount:
           type: number
+        pricePerHour:
+          type: number
+        customBarcode:
+          type: string
         imageUrl:
           type: string
       required:
@@ -1009,6 +1013,10 @@ components:
           type: number
         depositAmount:
           type: number
+        pricePerHour:
+          type: number
+        customBarcode:
+          type: string
         status:
           type: string
           enum: [available, rented, maintenance]

@@ -13,6 +13,8 @@ export interface UpdateToolRequest {
   category?: string;
   pricePerDay?: number;
   depositAmount?: number;
+  pricePerHour?: number;
+  customBarcode?: string;
   status?: UpdateToolRequestStatus;
   imageUrl?: string;
 }

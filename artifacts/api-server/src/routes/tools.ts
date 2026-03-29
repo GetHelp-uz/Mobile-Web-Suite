@@ -142,7 +142,7 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
       console.error("[POST /api/tools] req.body is undefined. Headers:", req.headers);
     }
     const body = CreateToolBody.parse(req.body || {});
-    const customBarcode = (req.body as any)?.customBarcode || null;
+    const customBarcode = body.customBarcode || null;
 
     // Shtrix kod unique tekshiruvi
     if (customBarcode) {
@@ -156,6 +156,10 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
 
     const tempId = Date.now();
     const qrCode = generateQrCode(tempId, body.shopId);
+    
+    // We will initially insert the user provided barcode, or we'll update it right after with the generated ID
+    const initialBarcode = customBarcode || undefined;
+
     const [tool] = await db.insert(toolsTable).values({
       name: body.name,
       description: body.description,
@@ -163,7 +167,9 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
       shopId: body.shopId,
       pricePerDay: body.pricePerDay,
       depositAmount: body.depositAmount,
+      pricePerHour: body.pricePerHour,
       imageUrl: body.imageUrl,
+      customBarcode: initialBarcode,
       qrCode,
     }).returning();
 
@@ -203,7 +209,7 @@ router.get("/:id", async (req, res) => {
 router.patch("/:id", authenticate, requireRole("super_admin", "shop_owner", "worker"), async (req, res) => {
   try {
     const body = UpdateToolBody.parse(req.body);
-    const customBarcode = (req.body as any).customBarcode;
+    const customBarcode = body.customBarcode;
     const toolId = Number(req.params.id);
     const [tool] = await db.update(toolsTable).set(body as any).where(eq(toolsTable.id, toolId)).returning();
     if (!tool) {

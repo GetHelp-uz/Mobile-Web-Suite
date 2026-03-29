@@ -12,8 +12,10 @@ export const toolsTable = pgTable("tools", {
   shopId: integer("shop_id").notNull(),
   pricePerDay: real("price_per_day").notNull(),
   depositAmount: real("deposit_amount").notNull(),
+  pricePerHour: real("price_per_hour"),
   status: toolStatusEnum("status").notNull().default("available"),
   qrCode: text("qr_code").notNull(),
+  customBarcode: text("custom_barcode"),
   imageUrl: text("image_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

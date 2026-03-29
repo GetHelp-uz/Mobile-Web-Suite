@@ -13,5 +13,7 @@ export interface CreateToolRequest {
   shopId: number;
   pricePerDay: number;
   depositAmount: number;
+  pricePerHour?: number;
+  customBarcode?: string;
   imageUrl?: string;
 }

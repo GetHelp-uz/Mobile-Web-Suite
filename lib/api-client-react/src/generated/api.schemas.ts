@@ -28,7 +28,6 @@ export interface RegisterRequest {
   email?: string;
   password: string;
   role: RegisterRequestRole;
-  region?: string;
 }
 
 export interface LoginRequest {
@@ -161,6 +160,8 @@ export interface CreateToolRequest {
   shopId: number;
   pricePerDay: number;
   depositAmount: number;
+  pricePerHour?: number;
+  customBarcode?: string;
   imageUrl?: string;
 }
 
@@ -179,6 +180,8 @@ export interface UpdateToolRequest {
   category?: string;
   pricePerDay?: number;
   depositAmount?: number;
+  pricePerHour?: number;
+  customBarcode?: string;
   status?: UpdateToolRequestStatus;
   imageUrl?: string;
 }
