@@ -85,7 +85,7 @@ export default function CustomerDashboard() {
       {/* Greeting */}
       <div className="mb-8">
         <h1 className="text-4xl font-display font-bold mb-1">
-          {greeting}, {user?.fullName?.split(" ")[0] || "Foydalanuvchi"}! 👋
+          {greeting}, {user?.name?.split(" ")[0] || "Foydalanuvchi"}! 👋
         </h1>
         <p className="text-muted-foreground text-lg">Bugun nima ijaraga olmoqchisiz?</p>
       </div>

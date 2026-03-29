@@ -27,6 +27,7 @@ export interface RegisterRequest {
   phone: string;
   email?: string;
   password: string;
+  region?: string;
   role: RegisterRequestRole;
 }
 
