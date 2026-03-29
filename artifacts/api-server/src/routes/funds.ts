@@ -52,12 +52,12 @@ function isFundStatus(v: string): v is FundStatus {
 // ─── Hamyon olish yoki yaratish ───────────────────────────────────────────────
 async function getOrCreateWallet(userId: number): Promise<WalletRow> {
   const existing = await db.execute(sql`SELECT * FROM wallets WHERE user_id = ${userId} LIMIT 1`);
-  if (existing.rows.length) return existing.rows[0] as WalletRow;
+  if (existing.rows.length) return existing.rows[0] as unknown as WalletRow;
   const created = await db.execute(sql`
     INSERT INTO wallets (user_id, balance, escrow_balance) VALUES (${userId}, 0, 0)
     RETURNING *
   `);
-  return created.rows[0] as WalletRow;
+  return created.rows[0] as unknown as WalletRow;
 }
 
 // ─── GET /api/funds — barcha faol fondlar (autentifikatsiya kerak) ────────────
@@ -155,7 +155,7 @@ router.get("/my", authenticate, async (req, res) => {
       ORDER BY ui.invested_at DESC
     `);
 
-    const typedInvestments = investments.rows as InvestmentRow[];
+    const typedInvestments = investments.rows as unknown as InvestmentRow[];
     const totalInvested = typedInvestments.reduce(
       (sum: number, inv: InvestmentRow) => sum + Number(inv.amount),
       0
@@ -209,7 +209,7 @@ router.get("/:id", authenticate, async (req, res) => {
       return;
     }
 
-    const fund = fundResult.rows[0] as FundRow;
+    const fund = fundResult.rows[0] as unknown as FundRow;
 
     // Agar admin bo'lsa, investorlar ro'yxatini qaytaradi
     let investors: Record<string, unknown>[] = [];
