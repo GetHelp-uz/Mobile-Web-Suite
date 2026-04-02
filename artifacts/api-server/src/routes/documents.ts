@@ -1,25 +1,20 @@
 import { Router } from "express";
 import multer from "multer";
 import path from "path";
-import crypto from "crypto";
 import fs from "fs";
 import { db } from "@workspace/db";
 import { sql } from "drizzle-orm";
 import { authenticate, requireRole } from "../lib/auth.js";
+import { uploadToSpaces } from "../lib/s3.js";
 
 const router = Router();
 
+// Keep uploads dir for legacy/fallback
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = crypto.randomBytes(16).toString("hex");
-    cb(null, `${name}${ext}`);
-  },
-});
+// Use memory storage — files go to DigitalOcean Spaces
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -36,23 +31,39 @@ const upload = multer({
 router.post("/upload", authenticate, upload.single("file"), async (req, res) => {
   try {
     const user = (req as any).user;
+    const userId = user.userId || user.id;
     if (!req.file) { res.status(400).json({ error: "Fayl yuborilmadi" }); return; }
 
     const { rentalId, bookingId, documentType } = req.body;
-    const fileUrl = `/api/documents/file/${req.file.filename}`;
+    
+    // Upload to DigitalOcean Spaces
+    let fileUrl: string;
+    try {
+      fileUrl = await uploadToSpaces(req.file.buffer, req.file.originalname, "documents");
+    } catch (uploadErr: any) {
+      console.error('[Documents] S3 upload failed, falling back to local:', uploadErr.message);
+      // Fallback: save locally if S3 fails
+      const ext = path.extname(req.file.originalname);
+      const fname = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+      const fpath = path.join(uploadsDir, fname);
+      fs.writeFileSync(fpath, req.file.buffer);
+      fileUrl = `/api/documents/file/${fname}`;
+    }
 
     const r = await db.execute(sql`
       INSERT INTO customer_documents (user_id, rental_id, booking_id, document_type, file_url, original_name, status)
-      VALUES (${user.userId}, ${rentalId ? Number(rentalId) : null}, ${bookingId ? Number(bookingId) : null},
+      VALUES (${userId}, ${rentalId ? Number(rentalId) : null}, ${bookingId ? Number(bookingId) : null},
               ${documentType || "passport"}, ${fileUrl}, ${req.file.originalname}, 'pending')
       RETURNING *
     `);
 
-    await db.execute(sql`
-      INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details)
-      VALUES (${user.userId}, 'document_upload', 'customer_documents', ${(r.rows[0] as any).id},
-              ${JSON.stringify({ documentType, fileName: req.file.originalname })}::jsonb)
-    `);
+    try {
+      await db.execute(sql`
+        INSERT INTO audit_logs (user_id, action, entity_type, entity_id, details)
+        VALUES (${userId}, 'document_upload', 'customer_documents', ${(r.rows[0] as any).id},
+                ${JSON.stringify({ documentType, fileName: req.file.originalname })}::jsonb)
+      `);
+    } catch { /* audit_logs jadval yo'q bo'lsa ham davom etamiz */ }
 
     res.json({ success: true, document: r.rows[0] });
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }

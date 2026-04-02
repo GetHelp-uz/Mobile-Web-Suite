@@ -49,6 +49,7 @@ import passportRouter from "./passport.js";
 import hardwareRouter from "./hardware.js";
 import fundsRouter from "./funds.js";
 import biometricPaymentRouter from "./biometric-payment.js";
+import uploadRouter from "./upload.js";
 
 const router: IRouter = Router();
 
@@ -102,5 +103,6 @@ router.use("/passport", passportRouter);
 router.use("/hardware", hardwareRouter);
 router.use("/funds", fundsRouter);
 router.use("/biometric-payment", biometricPaymentRouter);
+router.use("/upload", uploadRouter);
 
 export default router;

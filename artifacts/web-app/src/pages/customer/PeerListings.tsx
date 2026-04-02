@@ -27,6 +27,9 @@ export default function PeerListingsPage() {
   const [showRentForm, setShowRentForm] = useState<any>(null);
   const [form, setForm] = useState({ title: "", description: "", category: "", dailyPrice: "", depositAmount: "", condition: "good", region: "", address: "", minDays: "1", maxDays: "30" });
   const [rentForm, setRentForm] = useState({ startDate: "", endDate: "", notes: "" });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -44,9 +47,28 @@ export default function PeerListingsPage() {
 
   const addListing = async () => {
     if (!form.title || !form.dailyPrice) { toast({ title: "Sarlavha va narx majburiy", variant: "destructive" }); return; }
-    const res = await fetch(`${base}/api/peer-listings`, { method: "POST", headers: h, body: JSON.stringify({ ...form, dailyPrice: Number(form.dailyPrice), depositAmount: Number(form.depositAmount || 0), minDays: Number(form.minDays), maxDays: Number(form.maxDays) }) });
+    
+    setUploading(true);
+    let images: string[] = [];
+    
+    // Rasm yuklash
+    if (imageFile) {
+      try {
+        const fd = new FormData();
+        fd.append("file", imageFile);
+        fd.append("folder", "listings");
+        const uploadRes = await fetch(`${base}/api/upload/image`, { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("gethelp_token") || ""}` }, body: fd });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.url) {
+          images = [uploadData.url];
+        }
+      } catch (e) { console.error('Image upload failed:', e); }
+    }
+    
+    const res = await fetch(`${base}/api/peer-listings`, { method: "POST", headers: h, body: JSON.stringify({ ...form, dailyPrice: Number(form.dailyPrice), depositAmount: Number(form.depositAmount || 0), minDays: Number(form.minDays), maxDays: Number(form.maxDays), images: images.length > 0 ? images : undefined }) });
     const d = await res.json();
-    if (res.ok) { toast({ title: "E'lon qo'shildi!" }); setShowAddForm(false); load(); }
+    setUploading(false);
+    if (res.ok) { toast({ title: "E'lon qo'shildi!" }); setShowAddForm(false); setImageFile(null); setImagePreview(null); load(); }
     else toast({ title: d.error || "Xato", variant: "destructive" });
   };
 
@@ -118,6 +140,14 @@ export default function PeerListingsPage() {
                             <p className="text-xs text-gray-400">UZS/kun</p>
                           </div>
                         </div>
+                        {/* Rasm */}
+                        {(() => {
+                          let imgs: string[] = [];
+                          try { imgs = typeof l.images === 'string' ? JSON.parse(l.images) : (l.images || []); } catch {}
+                          return imgs.length > 0 ? (
+                            <img src={imgs[0]} alt={l.title} className="w-full h-36 object-cover rounded-lg mb-3" />
+                          ) : null;
+                        })()}
                         {l.description && <p className="text-sm text-gray-500 mb-3 line-clamp-2">{l.description}</p>}
                         <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
                           {l.region && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{l.region}</span>}
@@ -229,9 +259,30 @@ export default function PeerListingsPage() {
                     <textarea className="w-full border rounded-lg px-3 py-2 text-sm h-16 resize-none" placeholder="Asbob haqida qo'shimcha ma'lumot..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} />
                   </div>
                 </div>
+                {/* Rasm yuklash */}
+                <div className="col-span-2">
+                  <label className="text-xs font-medium mb-1 block">E'lon rasmi</label>
+                  <div className="border-2 border-dashed rounded-lg p-3 text-center">
+                    {imagePreview ? (
+                      <div className="relative">
+                        <img src={imagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                        <button type="button" onClick={() => { setImageFile(null); setImagePreview(null); }}
+                          className="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center">
+                          <X className="h-3 w-3 text-white" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer flex flex-col items-center gap-1 py-3 text-gray-400 hover:text-orange-500 transition-colors">
+                        <Plus className="w-6 h-6" />
+                        <span className="text-xs">Rasm yuklash (JPG, PNG)</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setImageFile(f); setImagePreview(URL.createObjectURL(f)); } }} />
+                      </label>
+                    )}
+                  </div>
+                </div>
                 <div className="flex gap-2 pt-2">
-                  <Button className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={addListing}>E'lon Qo'shish</Button>
-                  <Button variant="outline" className="flex-1" onClick={() => setShowAddForm(false)}>Bekor</Button>
+                  <Button className="flex-1 bg-orange-500 hover:bg-orange-600" onClick={addListing} disabled={uploading}>{uploading ? "Yuklanmoqda..." : "E'lon Qo'shish"}</Button>
+                  <Button variant="outline" className="flex-1" onClick={() => { setShowAddForm(false); setImageFile(null); setImagePreview(null); }}>Bekor</Button>
                 </div>
               </CardContent>
             </Card>

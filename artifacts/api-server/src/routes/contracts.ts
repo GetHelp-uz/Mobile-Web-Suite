@@ -23,10 +23,42 @@ function fmtDate(d: any) {
   return `${dt.getDate().toString().padStart(2, "0")}.${(dt.getMonth() + 1).toString().padStart(2, "0")}.${dt.getFullYear()}`;
 }
 
+// Kontraktni mavjud bo'lmasa yaratadigan yordamchi funksiya
+async function ensureContract(rentalId: number): Promise<string> {
+  const existing = await db.execute(sql`SELECT contract_number FROM contracts WHERE rental_id = ${rentalId} LIMIT 1`);
+  if (existing.rows.length > 0) {
+    return (existing.rows[0] as any).contract_number;
+  }
+  
+  // Rental ma'lumotlarini olish
+  const rental = await db.execute(sql`SELECT customer_id, shop_id FROM rentals WHERE id = ${rentalId} LIMIT 1`);
+  if (!rental.rows.length) throw new Error("Ijara topilmadi");
+  const ren = rental.rows[0] as any;
+  
+  const num = generateContractNumber();
+  try {
+    await db.execute(sql`
+      INSERT INTO contracts (rental_id, contract_number, customer_id, shop_id, content)
+      VALUES (${rentalId}, ${num}, ${ren.customer_id}, ${ren.shop_id}, ${num})
+    `);
+  } catch (e: any) {
+    // Agar allaqachon mavjud bo'lsa (race condition), mavjudini olamiz
+    if (e.message?.includes("unique") || e.message?.includes("duplicate")) {
+      const ex = await db.execute(sql`SELECT contract_number FROM contracts WHERE rental_id = ${rentalId} LIMIT 1`);
+      if (ex.rows.length) return (ex.rows[0] as any).contract_number;
+    }
+    throw e;
+  }
+  return num;
+}
+
 // GET /api/contracts/:rentalId/pdf — PDF yuklab olish
 router.get("/:rentalId/pdf", authenticate, async (req, res) => {
   try {
     const rentalId = Number(req.params.rentalId);
+
+    // Avval contract mavjudligini ta'minlaymiz
+    await ensureContract(rentalId);
 
     // Ijara + barcha ma'lumotlar
     const rentalRow = await db.execute(sql`
@@ -116,14 +148,14 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
 
     let rowY = doc.y;
     rowY = drawRow("Uskuna nomi", r.tool_name, rowY);
-    rowY = drawRow("Kategoriya", r.tool_category, rowY, true);
+    rowY = drawRow("Kategoriya", r.tool_category || "—", rowY, true);
     rowY = drawRow("Uskuna ID / QR kod", r.tool_qr || `#${r.tool_id}`, rowY);
     rowY = drawRow("Ijara boshlanishi", fmtDate(r.start_date || r.started_at), rowY, true);
     rowY = drawRow("Ijara tugashi (muddat)", fmtDate(r.end_date || r.due_date), rowY);
     rowY = drawRow("Kunlik ijara narxi", fmt(Number(r.price_per_day || 0)), rowY, true);
     rowY = drawRow("Depozit (garov puli)", fmt(Number(r.deposit_amount || r.tool_deposit || 0)), rowY);
     rowY = drawRow("To'lov usuli", (r.payment_method || "naqd").toUpperCase(), rowY, true);
-    rowY = drawRow("Jami to'lov", fmt(Number(r.total_price || r.rental_price || 0)), rowY);
+    rowY = drawRow("Jami to'lov", fmt(Number(r.total_price || r.total_amount || r.rental_price || 0)), rowY);
     doc.moveTo(55, rowY).lineTo(540, rowY).strokeColor("#e2e8f0").stroke();
 
     doc.y = rowY + 16;
@@ -223,7 +255,7 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
         const imgBuf = Buffer.from(r.customer_sig.split(",")[1], "base64");
         doc.image(imgBuf, 330, signBoxY + 50, { width: 120, height: 32 });
       } catch { doc.fillColor("#22c55e").fontSize(9).text("RAQAMLI IMZOLANGAN", 330, signBoxY + 55); }
-    } else if (r.contract_signed) {
+    } else if (r.contract_signed || r.signed_at) {
       doc.fillColor("#22c55e").fontSize(9).text("RAQAMLI IMZOLANGAN", 330, signBoxY + 60);
     } else {
       doc.fillColor("#94a3b8").fontSize(9).text("Imzo: ___________________", 330, signBoxY + 60);
@@ -246,7 +278,8 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
 
     doc.end();
   } catch (err: any) {
-    if (!res.headersSent) console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
+    console.error('[Contracts] PDF error:', err.message, err.stack);
+    if (!res.headersSent) res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
   }
 });
 
@@ -280,36 +313,31 @@ router.get("/:rentalId/info", authenticate, async (req, res) => {
     if (!row.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
     const r = row.rows[0] as any;
 
-    // Authorization: super_admin can access all; shop_owner/worker must own the shop; customer must own the rental
+    // Authorization check
+    const userId = user.userId || user.id;
     if (user.role === "super_admin") {
       // full access
     } else if (user.role === "shop_owner" || user.role === "worker") {
       if (r.shop_id !== user.shopId) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
     } else if (user.role === "customer") {
-      if (r.customer_id !== user.id) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+      if (r.customer_id !== userId) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
     } else {
       res.status(403).json({ error: "Ruxsat yo'q" }); return;
     }
 
     // Shartnoma yo'q bo'lsa — yaratamiz
-    if (!r.contract_number) {
-      const num = generateContractNumber();
-      try {
-        await db.execute(sql`
-          INSERT INTO contracts (rental_id, contract_number, customer_id, shop_id, content)
-          VALUES (${rentalId}, ${num}, ${r.customer_id}, ${r.shop_id}, ${num})
-        `);
-      } catch { /* agar mavjud bo'lsa e'tiborsiz */ }
-      r.contract_number = num;
+    let contractNumber = r.contract_number;
+    if (!contractNumber) {
+      contractNumber = await ensureContract(rentalId);
     }
 
     const days = r.days || 1;
-    const total = (r.total_amount || r.price_per_day * days || 0);
+    const total = (r.total_amount || r.rental_price || r.price_per_day * days || 0);
 
     res.json({
-      contractNumber: r.contract_number,
+      contractNumber,
       rentalId: r.id,
-      signed: !!r.contract_signed,
+      signed: !!(r.contract_signed || r.contract_signed_at),
       signedAt: r.contract_signed_at,
       customerSignature: r.customer_signature || null,
       startDate: r.started_at || r.created_at,
@@ -340,7 +368,7 @@ router.get("/:rentalId/info", authenticate, async (req, res) => {
       },
     });
   } catch (err: any) {
-    console.error("[Contracts] GET /:rentalId/info error:", err);
+    console.error("[Contracts] GET /:rentalId/info error:", err.message, err.stack);
     res.status(500).json({ error: "Server xatosi" });
   }
 });
@@ -352,27 +380,8 @@ router.get("/rental/:rentalId", authenticate, async (req, res) => {
     let contract = await db.execute(sql`SELECT * FROM contracts WHERE rental_id = ${rentalId} LIMIT 1`);
 
     if (!contract.rows.length) {
-      const rental = await db.execute(sql`
-        SELECT r.*, t.name as tool_name, t.price_per_day, t.description as tool_desc,
-               u.name as customer_name, u.phone as customer_phone,
-               s.name as shop_name, s.address as shop_address, s.phone as shop_phone,
-               w.name as worker_name
-        FROM rentals r
-        LEFT JOIN tools t ON t.id = r.tool_id
-        LEFT JOIN users u ON u.id = r.customer_id
-        LEFT JOIN shops s ON s.id = r.shop_id
-        LEFT JOIN users w ON w.id = r.worker_id
-        WHERE r.id = ${rentalId} LIMIT 1
-      `);
-      if (!rental.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
-      const ren = rental.rows[0] as any;
-      const num = generateContractNumber();
-      const ins = await db.execute(sql`
-        INSERT INTO contracts (rental_id, contract_number, customer_id, shop_id, content)
-        VALUES (${rentalId}, ${num}, ${ren.customer_id}, ${ren.shop_id}, ${num})
-        RETURNING *
-      `);
-      contract = ins;
+      const num = await ensureContract(rentalId);
+      contract = await db.execute(sql`SELECT * FROM contracts WHERE rental_id = ${rentalId} LIMIT 1`);
     }
     res.json({ contract: contract.rows[0] });
   } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
@@ -385,11 +394,31 @@ router.post("/:rentalId/sign", authenticate, async (req, res) => {
     if (!agreed) { res.status(400).json({ error: "Shartlarga rozilik talab etiladi" }); return; }
     const user = (req as any).user;
     const ip = req.ip || req.socket.remoteAddress || "";
+    const rentalId = Number(req.params.rentalId);
 
-    await db.execute(sql`
-      UPDATE rentals SET contract_signed = TRUE, contract_signed_at = NOW()
-      WHERE id = ${Number(req.params.rentalId)}
-    `);
+    // Avval contract mavjudligini ta'minlaymiz
+    await ensureContract(rentalId);
+
+    // Rentalni contract_signed qilish
+    try {
+      await db.execute(sql`
+        UPDATE rentals SET contract_signed = TRUE, contract_signed_at = NOW()
+        WHERE id = ${rentalId}
+      `);
+    } catch (colErr: any) {
+      // Agar contract_signed col mavjud bo'lmasa, qo'shib qayta urinib ko'ramiz
+      console.warn('[Contracts] contract_signed column may not exist, trying to add:', colErr.message);
+      try {
+        await db.execute(sql`ALTER TABLE rentals ADD COLUMN IF NOT EXISTS contract_signed BOOLEAN DEFAULT FALSE`);
+        await db.execute(sql`ALTER TABLE rentals ADD COLUMN IF NOT EXISTS contract_signed_at TIMESTAMP`);
+        await db.execute(sql`
+          UPDATE rentals SET contract_signed = TRUE, contract_signed_at = NOW()
+          WHERE id = ${rentalId}
+        `);
+      } catch (e2: any) {
+        console.error('[Contracts] Could not update rentals:', e2.message);
+      }
+    }
 
     // Imzo ma'lumotini kontrakt jadvaliga saqlash
     if (signatureData) {
@@ -398,12 +427,21 @@ router.post("/:rentalId/sign", authenticate, async (req, res) => {
           signed_at = NOW(),
           signature_data = ${signatureData},
           signature_ip = ${ip}
-        WHERE rental_id = ${Number(req.params.rentalId)}
+        WHERE rental_id = ${rentalId}
+      `);
+    } else {
+      // Imzo ma'lumoti bo'lmasa ham signed_at qo'yamiz
+      await db.execute(sql`
+        UPDATE contracts SET signed_at = NOW(), signature_ip = ${ip}
+        WHERE rental_id = ${rentalId}
       `);
     }
 
     res.json({ success: true, message: "Shartnoma raqamli imzolandi", signedAt: new Date().toISOString() });
-  } catch (err: any) { console.error('[Route Error]', err.message); res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' }); }
+  } catch (err: any) {
+    console.error('[Contracts] Sign error:', err.message, err.stack);
+    res.status(500).json({ error: 'Server xatosi yuz berdi. Qayta urining.' });
+  }
 });
 
 // GET /api/contracts/rental/:rentalId/esign — imzo holatini tekshirish

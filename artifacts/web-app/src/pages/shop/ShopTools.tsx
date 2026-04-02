@@ -111,6 +111,9 @@ export default function ShopTools() {
   const formBarcodeRef = useRef<SVGSVGElement>(null);
   const [printAfterCreate, setPrintAfterCreate] = useState(false);
   const [thermalSize, setThermalSize] = useState<"58mm" | "80mm">("58mm");
+  const [toolImageFile, setToolImageFile] = useState<File | null>(null);
+  const [toolImagePreview, setToolImagePreview] = useState<string | null>(null);
+  const [imageUploading, setImageUploading] = useState(false);
 
   useEffect(() => {
     if (!shopId) return;
@@ -218,7 +221,7 @@ export default function ShopTools() {
     }
   }, [form.customBarcode]);
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!shopId || shopId === 0) {
       toast({ title: "Xatolik", description: "Do'kon aniqlanmadi. Sahifani yangilang.", variant: "destructive" });
@@ -232,6 +235,24 @@ export default function ShopTools() {
       toast({ title: "Shtrix kod band", description: barcodeTakenInfo, variant: "destructive" });
       return;
     }
+
+    // Rasm yuklash
+    let imageUrl: string | undefined;
+    if (toolImageFile) {
+      setImageUploading(true);
+      try {
+        const fd = new FormData();
+        fd.append("file", toolImageFile);
+        fd.append("folder", "tools");
+        const uploadRes = await fetch(`${baseUrl}/api/upload/image`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
+        const uploadData = await uploadRes.json();
+        if (uploadRes.ok && uploadData.url) {
+          imageUrl = uploadData.url;
+        }
+      } catch (e) { console.error('Image upload failed:', e); }
+      setImageUploading(false);
+    }
+
     createTool.mutate({
       data: {
         shopId,
@@ -242,6 +263,7 @@ export default function ShopTools() {
         depositAmount: Number(form.depositAmount),
         ...(form.pricePerHour ? { pricePerHour: Number(form.pricePerHour) } : {}),
         ...(form.customBarcode ? { customBarcode: form.customBarcode } : {}),
+        ...(imageUrl ? { imageUrl } : {}),
       }
     });
   };
@@ -629,6 +651,26 @@ export default function ShopTools() {
                 <label className="text-sm font-semibold mb-1.5 block">Depozit *</label>
                 <Input type="number" placeholder="200000" value={form.depositAmount} onChange={e=>setForm(f=>({...f,depositAmount:e.target.value}))} required min="0"/>
               </div>
+            </div>
+
+            {/* Rasm yuklash */}
+            <div className="border-2 border-dashed rounded-xl p-3">
+              <label className="text-sm font-semibold mb-1.5 block">Asbob rasmi (ixtiyoriy)</label>
+              {toolImagePreview ? (
+                <div className="relative">
+                  <img src={toolImagePreview} alt="Preview" className="w-full h-32 object-cover rounded-lg" />
+                  <button type="button" onClick={() => { setToolImageFile(null); setToolImagePreview(null); }}
+                    className="absolute top-1 right-1 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center">
+                    <X size={12} className="text-white" />
+                  </button>
+                </div>
+              ) : (
+                <label className="cursor-pointer flex flex-col items-center gap-1 py-4 text-muted-foreground hover:text-primary transition-colors">
+                  <Camera size={20} />
+                  <span className="text-xs">Rasm yuklash (JPG, PNG)</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) { setToolImageFile(f); setToolImagePreview(URL.createObjectURL(f)); } }} />
+                </label>
+              )}
             </div>
 
             {/* Shtrix / QR kod bo'limi */}

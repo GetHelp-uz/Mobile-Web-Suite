@@ -26,8 +26,8 @@ app.use(
         scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-        imgSrc: ["'self'", "data:", "https:", "blob:"],
-        connectSrc: ["'self'"],
+        imgSrc: ["'self'", "data:", "https:", "blob:", "https://gethelp-img.fra1.cdn.digitaloceanspaces.com", "https://gethelp-img.fra1.digitaloceanspaces.com"],
+        connectSrc: ["'self'", "https://gethelp-img.fra1.cdn.digitaloceanspaces.com", "https://gethelp-img.fra1.digitaloceanspaces.com"],
         frameSrc: ["'none'"],
         objectSrc: ["'none'"],
         upgradeInsecureRequests: null,
@@ -42,7 +42,7 @@ app.use(
     xFrameOptions: { action: "deny" },
     xContentTypeOptions: true,
     xDnsPrefetchControl: { allow: false },
-    crossOriginResourcePolicy: { policy: "same-site" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     permittedCrossDomainPolicies: { permittedPolicies: "none" },
   })
 );

@@ -55,31 +55,53 @@ router.post("/", authenticate, async (req, res) => {
     const toolId = Number(body.toolId);
     const customerId = Number(body.customerId);
     const paymentMethod = body.paymentMethod || "cash";
+    
     if (!toolId || !customerId || !body.dueDate) {
       res.status(400).json({ error: "toolId, customerId va dueDate majburiy" });
       return;
     }
+    
     const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.id, toolId));
     if (!tool) {
-      res.status(404).json({ error: "Tool not found" });
+      res.status(404).json({ error: "Asbob topilmadi" });
       return;
     }
     if (tool.status !== "available") {
       res.status(400).json({ error: "Asbob hozirda mavjud emas (ijarada yoki ta'mirda)" });
       return;
     }
-    const rentalDays = body.rentalDays ? Number(body.rentalDays) : 1;
-    const totalAmount = tool.pricePerDay * rentalDays + tool.depositAmount;
+
+    // dueDate ni to'g'ri parse qilish
+    let dueDate: Date;
+    try {
+      dueDate = new Date(body.dueDate);
+      if (isNaN(dueDate.getTime())) throw new Error("Invalid date");
+    } catch {
+      res.status(400).json({ error: "dueDate noto'g'ri format" });
+      return;
+    }
+
+    // Kunlar sonini hisoblash
+    const now = new Date();
+    const diffMs = dueDate.getTime() - now.getTime();
+    const rentalDays = body.rentalDays ? Number(body.rentalDays) : Math.max(1, Math.ceil(diffMs / 86400000));
+    
+    const rentalPrice = tool.pricePerDay * rentalDays;
+    const depositAmount = tool.depositAmount;
+    const totalAmount = rentalPrice + depositAmount;
+    
+    const userId = (req as any).user.userId || (req as any).user.id;
+    
     const [rental] = await db.insert(rentalsTable).values({
       toolId,
       customerId,
       shopId: tool.shopId,
-      workerId: (req as any).user.userId,
-      rentalPrice: tool.pricePerDay * rentalDays,
-      depositAmount: tool.depositAmount,
+      workerId: userId,
+      rentalPrice,
+      depositAmount,
       totalAmount,
       paymentMethod: paymentMethod as any,
-      dueDate: new Date(body.dueDate),
+      dueDate,
       status: "active",
       verificationType: body.verificationType || null,
       idFrontUrl: body.idFrontUrl || null,
@@ -88,7 +110,7 @@ router.post("/", authenticate, async (req, res) => {
       verificationStatus: body.verificationType === "passport" ? "pending" : "approved",
     } as any).returning();
 
-    await db.update(toolsTable).set({ status: "rented" }).where(eq(toolsTable.id, body.toolId));
+    await db.update(toolsTable).set({ status: "rented" }).where(eq(toolsTable.id, toolId));
 
     // Tool passport: rental_started event
     addToolEvent({
@@ -97,72 +119,85 @@ router.post("/", authenticate, async (req, res) => {
       eventType: "rental_started",
       title: "Ijara boshlandi",
       rentalId: rental.id,
-      actorId: (req as any).user?.id,
+      actorId: userId,
     }).catch(() => {});
 
     // Create payment record
-    await db.insert(paymentsTable).values({
-      rentalId: rental.id,
-      amount: totalAmount,
-      method: body.paymentMethod as any,
-      status: "completed",
-      type: "rental",
-    });
-
-    // ─── Avtomatik komissiya hisoblash va do'kon hamyoniga o'tkazish ──────────
     try {
-      // Platform komissiyasini olish
+      await db.insert(paymentsTable).values({
+        rentalId: rental.id,
+        amount: totalAmount,
+        method: paymentMethod as any,
+        status: "completed",
+        type: "rental",
+      });
+    } catch (payErr: any) {
+      console.error("[Payment] Xatolik:", payErr.message);
+    }
+
+    // ─── Avtomatik komissiya hisoblash ──────────────────────────────────────
+    try {
       const settingRow = await db.execute(sql`SELECT value FROM platform_settings WHERE key = 'auto_commission_enabled'`);
-      const autoCommission = (settingRow.rows[0] as any)?.value === "true";
+      const autoCommission = settingRow.rows.length > 0 && (settingRow.rows[0] as any)?.value === "true";
 
       if (autoCommission && body.verificationType !== "passport") {
-        // Do'konning komissiya foizini olish
         const shopRow = await db.execute(sql`SELECT commission, owner_id FROM shops WHERE id = ${tool.shopId} LIMIT 1`);
         const shop = shopRow.rows[0] as any;
-        const commissionRate = shop?.commission || 10;
-        const rentalAmount = tool.pricePerDay * rentalDays;
-        const commissionAmount = Math.round(rentalAmount * commissionRate / 100);
-        const shopAmount = rentalAmount - commissionAmount;
-        const ownerId = shop?.owner_id;
+        if (shop?.owner_id) {
+          const commissionRate = shop.commission || 10;
+          const commissionAmount = Math.round(rentalPrice * commissionRate / 100);
+          const shopAmount = rentalPrice - commissionAmount;
+          const ownerId = shop.owner_id;
 
-        if (ownerId) {
-          // Do'kon egasi hamyonini yaratish yoki topish
           await db.execute(sql`
             INSERT INTO wallets (user_id, balance, escrow_balance)
             VALUES (${ownerId}, 0, 0)
             ON CONFLICT (user_id) DO NOTHING
           `);
 
-          // Do'kon egasi hamyoniga ijara summasini komissiyasiz o'tkazish
           const walletRow = await db.execute(sql`SELECT * FROM wallets WHERE user_id = ${ownerId} LIMIT 1`);
           const ownerWallet = walletRow.rows[0] as any;
 
-          await db.execute(sql`
-            UPDATE wallets SET balance = balance + ${shopAmount}, updated_at = NOW()
-            WHERE user_id = ${ownerId}
-          `);
+          if (ownerWallet) {
+            await db.execute(sql`
+              UPDATE wallets SET balance = balance + ${shopAmount}, updated_at = NOW()
+              WHERE user_id = ${ownerId}
+            `);
 
-          await db.execute(sql`
-            INSERT INTO wallet_transactions (wallet_id, user_id, rental_id, amount, type, provider, status, description, balance_before, balance_after)
-            VALUES (
-              ${ownerWallet.id}, ${ownerId}, ${rental.id},
-              ${shopAmount}, 'payment', 'system', 'completed',
-              ${`Ijara #${rental.id} to'lovi (${commissionRate}% komissiya ayirildi)`},
-              ${ownerWallet.balance}, ${ownerWallet.balance + shopAmount}
-            )
-          `);
+            await db.execute(sql`
+              INSERT INTO wallet_transactions (wallet_id, user_id, rental_id, amount, type, provider, status, description, balance_before, balance_after)
+              VALUES (
+                ${ownerWallet.id}, ${ownerId}, ${rental.id},
+                ${shopAmount}, 'payment', 'system', 'completed',
+                ${`Ijara #${rental.id} to'lovi (${commissionRate}% komissiya ayirildi)`},
+                ${ownerWallet.balance}, ${ownerWallet.balance + shopAmount}
+              )
+            `);
 
-          // Komissiya logini saqlash
-          await db.execute(sql`
-            INSERT INTO commission_logs (rental_id, shop_id, total_amount, commission_rate, commission_amount, shop_amount)
-            VALUES (${rental.id}, ${tool.shopId}, ${rentalAmount}, ${commissionRate}, ${commissionAmount}, ${shopAmount})
-          `);
+            try {
+              await db.execute(sql`
+                INSERT INTO commission_logs (rental_id, shop_id, total_amount, commission_rate, commission_amount, shop_amount)
+                VALUES (${rental.id}, ${tool.shopId}, ${rentalPrice}, ${commissionRate}, ${commissionAmount}, ${shopAmount})
+              `);
+            } catch { /* commission_logs jadval mavjud bo'lmasligi mumkin */ }
+          }
         }
       }
     } catch (commErr: any) {
-      console.error("[Commission] Xatolik:", commErr.message);
+      console.error("[Commission] Xatolik (e'tiborsiz):", commErr.message);
     }
-    // ─────────────────────────────────────────────────────────────────────────
+    // ───────────────────────────────────────────────────────────────────────
+
+    // Shartnomani avtomatik yaratish
+    try {
+      const contractNum = `TR-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, "0")}${String(new Date().getDate()).padStart(2, "0")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      await db.execute(sql`
+        INSERT INTO contracts (rental_id, contract_number, customer_id, shop_id, content)
+        VALUES (${rental.id}, ${contractNum}, ${customerId}, ${tool.shopId}, ${contractNum})
+      `);
+    } catch (contractErr: any) {
+      console.error("[Contract] Auto-create error (e'tiborsiz):", contractErr.message);
+    }
 
     const enriched = await enrichRental(rental);
     res.status(201).json(enriched);
@@ -170,7 +205,8 @@ router.post("/", authenticate, async (req, res) => {
     // Bildirishnomalar (javobdan keyin)
     sendRentalStartNotifications(rental.id).catch(() => {});
   } catch (err: any) {
-    console.error('[Route Error]', err.message); res.status(400).json({ error: "Noto'g'ri so'rov. Qayta urining." });
+    console.error('[Route Error] POST /rentals:', err.message, err.stack);
+    res.status(500).json({ error: "Ijara yaratib bo'lmadi: " + err.message });
   }
 });
 
