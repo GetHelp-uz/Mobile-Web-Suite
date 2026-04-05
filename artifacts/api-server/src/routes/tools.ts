@@ -144,11 +144,18 @@ router.post("/", authenticate, requireRole("super_admin", "shop_owner"), async (
     const body = CreateToolBody.parse(req.body || {});
     const user = (req as any).user;
 
-    // Validate shopId for non-admins
+    // Resolve shopId from database (JWT token doesn't contain shopId)
+    let userShopId: number | null = null;
     if (user.role !== "super_admin") {
-      if (!user.shopId || body.shopId !== user.shopId) {
-        res.status(403).json({ error: "Siz faqat o'zingizning do'koningizga asbob qo'sha olasiz." });
+      const userResult = await db.execute(sql`SELECT shop_id FROM users WHERE id = ${user.userId} LIMIT 1`);
+      userShopId = (userResult.rows[0] as any)?.shop_id ?? null;
+      if (!userShopId) {
+        res.status(403).json({ error: "Sizning hisobingizga do'kon biriktirilmagan. Iltimos, avval do'kon yarating." });
         return;
+      }
+      if (body.shopId !== userShopId) {
+        // Auto-correct shopId to user's actual shop
+        (body as any).shopId = userShopId;
       }
     }
 
