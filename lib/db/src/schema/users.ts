@@ -19,6 +19,7 @@ export const usersTable = pgTable("users", {
   homeLat: text("home_lat"),
   homeLng: text("home_lng"),
   preferredLang: text("preferred_lang").default("uz"),
+  passportId: text("passport_id"),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
