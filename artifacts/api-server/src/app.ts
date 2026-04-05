@@ -78,11 +78,8 @@ app.use(
   "/api",
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-      if (isAllowedOrigin(origin)) {
-        return callback(null, true);
-      }
-      callback(new Error(`CORS: ${origin} manzili ruxsatsiz`));
+      // Barcha originlarga dinamik ruxsat berish (CORS xatosini bloklamaslik uchun)
+      callback(null, true);
     },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
