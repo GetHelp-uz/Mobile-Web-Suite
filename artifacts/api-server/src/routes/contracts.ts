@@ -318,9 +318,9 @@ router.get("/:rentalId/info", authenticate, async (req, res) => {
     if (user.role === "super_admin") {
       // full access
     } else if (user.role === "shop_owner" || user.role === "worker") {
-      if (r.shop_id !== user.shopId) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+      if (Number(r.shop_id) !== Number(user.shopId)) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
     } else if (user.role === "customer") {
-      if (r.customer_id !== userId) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
+      if (Number(r.customer_id) !== Number(userId)) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
     } else {
       res.status(403).json({ error: "Ruxsat yo'q" }); return;
     }

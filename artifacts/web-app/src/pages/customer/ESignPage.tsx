@@ -11,11 +11,7 @@ import {
   RotateCcw, Shield, Clock, Save, CreditCard,
 } from "lucide-react";
 
-type Rental = {
-  id: number; status: string; started_at: string; due_date: string;
-  rental_price: number; deposit_amount: number; contract_signed: boolean;
-  contract_signed_at: string | null; tool_name: string; shop_name: string;
-};
+type Rental = any;
 
 type ESignStatus = {
   signed: boolean; signedAt: string | null; hasSignature: boolean; ip: string | null;
@@ -181,8 +177,8 @@ export default function ESignPage() {
     return <DashboardLayout><div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-muted animate-pulse" />)}</div></DashboardLayout>;
   }
 
-  const unsignedRentals = rentals.filter(r => !r.contract_signed && r.status === "active");
-  const signedRentals = rentals.filter(r => r.contract_signed);
+  const unsignedRentals = rentals.filter((r: any) => !r.contractSigned && r.status === "active");
+  const signedRentals = rentals.filter((r: any) => r.contractSigned);
 
   return (
     <DashboardLayout>
@@ -251,18 +247,30 @@ export default function ESignPage() {
                       <FileText size={18} className="text-orange-600" />
                     </div>
                     <div>
-                      <p className="font-semibold">{rental.tool_name}</p>
-                      <p className="text-sm text-muted-foreground">{rental.shop_name}</p>
+                      <p className="font-semibold">{rental.toolName}</p>
+                      <p className="text-sm text-muted-foreground">{rental.shopName}</p>
                       <p className="text-xs text-muted-foreground">
-                        Muddati: {new Date(rental.due_date).toLocaleDateString("uz-UZ")}
+                        Muddati: {rental.dueDate ? new Date(rental.dueDate).toLocaleDateString("uz-UZ") : "—"}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button asChild variant="outline" size="sm" className="gap-1">
-                      <a href={`/api/contracts/${rental.id}/pdf`} target="_blank" rel="noopener noreferrer">
-                        <Download size={14} /> PDF
-                      </a>
+                    <Button variant="outline" size="sm" className="gap-1" onClick={async () => {
+                      try {
+                        const res = await fetch(`${baseUrl}/api/contracts/${rental.id}/pdf`, { headers: h });
+                        if (!res.ok) throw new Error("Yuklab bo'lmadi");
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `shartnoma_${rental.id}.pdf`;
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (e) {
+                        toast({ title: "Xatolik", description: "PDF yuklab bo'lmadi", variant: "destructive" });
+                      }
+                    }}>
+                      <Download size={14} /> PDF
                     </Button>
                     <Button size="sm" className="gap-1" onClick={() => openSignDialog(rental)}>
                       <PenLine size={14} /> Imzolash
@@ -299,8 +307,8 @@ export default function ESignPage() {
                         <CheckCircle size={18} className="text-green-600" />
                       </div>
                       <div>
-                        <p className="font-semibold">{rental.tool_name}</p>
-                        <p className="text-sm text-muted-foreground">{rental.shop_name}</p>
+                        <p className="font-semibold">{rental.toolName}</p>
+                        <p className="text-sm text-muted-foreground">{rental.shopName}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <Badge variant="success" className="text-xs bg-green-100 text-green-700">
                             <CheckCircle size={10} className="mr-1" /> Imzolangan
@@ -310,19 +318,31 @@ export default function ESignPage() {
                               <PenLine size={10} /> Raqamli imzo
                             </Badge>
                           )}
-                          {rental.contract_signed_at && (
+                          {rental.contractSignedAt && (
                             <span className="text-xs text-muted-foreground">
                               <Clock size={10} className="inline mr-1" />
-                              {new Date(rental.contract_signed_at).toLocaleDateString("uz-UZ")}
+                              {new Date(rental.contractSignedAt).toLocaleDateString("uz-UZ")}
                             </span>
                           )}
                         </div>
                       </div>
                     </div>
-                    <Button asChild variant="outline" size="sm" className="gap-1">
-                      <a href={`/api/contracts/${rental.id}/pdf`} target="_blank" rel="noopener noreferrer">
-                        <Download size={14} /> PDF yuklab olish
-                      </a>
+                    <Button variant="outline" size="sm" className="gap-1" onClick={async () => {
+                      try {
+                        const res = await fetch(`${baseUrl}/api/contracts/${rental.id}/pdf`, { headers: h });
+                        if (!res.ok) throw new Error("Yuklab bo'lmadi");
+                        const blob = await res.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = `shartnoma_${rental.id}.pdf`;
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                      } catch (e) {
+                        toast({ title: "Xatolik", description: "PDF yuklab bo'lmadi", variant: "destructive" });
+                      }
+                    }}>
+                      <Download size={14} /> PDF yuklab olish
                     </Button>
                   </CardContent>
                 </Card>
@@ -344,8 +364,8 @@ export default function ESignPage() {
           {signDialog && (
             <div className="space-y-4 py-2">
               <div className="p-3 rounded-xl bg-secondary">
-                <p className="font-semibold">{signDialog.tool_name}</p>
-                <p className="text-sm text-muted-foreground">{signDialog.shop_name}</p>
+                <p className="font-semibold">{(signDialog as any)?.toolName}</p>
+                <p className="text-sm text-muted-foreground">{(signDialog as any)?.shopName}</p>
               </div>
 
               {/* Imzo maydoni */}

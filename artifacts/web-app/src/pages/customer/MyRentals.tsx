@@ -199,11 +199,25 @@ export default function MyRentals() {
                         size="sm"
                         variant="outline"
                         className="gap-1.5"
-                        asChild
+                        onClick={async () => {
+                          try {
+                            const res = await fetch(`${baseUrl}/api/contracts/${rental.id}/pdf`, { headers: h });
+                            if (!res.ok) throw new Error("Yuklab bo'lmadi");
+                            const blob = await res.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = `shartnoma_${rental.id}.pdf`;
+                            document.body.appendChild(a);
+                            a.click();
+                            a.remove();
+                            window.URL.revokeObjectURL(url);
+                          } catch (e) {
+                            toast({ title: "Xatolik", description: "PDF yuklab bo'lmadi", variant: "destructive" });
+                          }
+                        }}
                       >
-                        <a href={`${baseUrl}/api/contracts/${rental.id}/pdf`} target="_blank" rel="noopener noreferrer">
-                          <Download size={14} /> Shartnoma PDF
-                        </a>
+                        <Download size={14} /> Shartnoma PDF
                       </Button>
                     )}
 

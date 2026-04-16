@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { db, rentalsTable, toolsTable, usersTable, paymentsTable } from "@workspace/db";
+import { db, rentalsTable, toolsTable, usersTable, paymentsTable, shopsTable } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
 import { authenticate } from "../lib/auth.js";
 import { CreateRentalBody, ReturnRentalBody, StartRentalByQrBody, ReturnRentalByQrBody } from "@workspace/api-zod";
@@ -11,10 +11,12 @@ const router = Router();
 async function enrichRental(r: any) {
   const [tool] = await db.select({ name: toolsTable.name }).from(toolsTable).where(eq(toolsTable.id, r.toolId));
   const [customer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, r.customerId));
+  const [shop] = await db.select({ name: shopsTable.name }).from(shopsTable).where(eq(shopsTable.id, r.shopId));
   return {
     ...r,
     toolName: tool?.name || "",
     customerName: customer?.name || "",
+    shopName: shop?.name || "",
   };
 }
 

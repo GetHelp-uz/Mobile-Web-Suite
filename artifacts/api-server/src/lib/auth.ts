@@ -13,7 +13,7 @@ if (!JWT_SECRET || JWT_SECRET.length < 32) {
 // ─── Token yaratish ──────────────────────────────────────────────────────────
 export function generateToken(userId: number, role: string): string {
   return jwt.sign({ userId, role, iat: Math.floor(Date.now() / 1000) }, JWT_SECRET!, {
-    expiresIn: "24h",
+    expiresIn: "60d",
     issuer: "gethelp-uz",
     audience: "gethelp-app",
   });

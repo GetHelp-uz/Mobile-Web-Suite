@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, timestamp, real, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, timestamp, real, pgEnum, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -26,6 +26,8 @@ export const rentalsTable = pgTable("rentals", {
   idBackUrl: text("id_back_url"),
   selfieUrl: text("selfie_url"),
   verificationStatus: text("verification_status").default("pending"),
+  contractSigned: boolean("contract_signed").default(false),
+  contractSignedAt: timestamp("contract_signed_at"),
 });
 
 export const insertRentalSchema = createInsertSchema(rentalsTable).omit({ id: true, startedAt: true });
