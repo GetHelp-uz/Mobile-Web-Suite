@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { db, toolsTable, shopsTable } from "@workspace/db";
-import { eq, sql, and, inArray } from "drizzle-orm";
+import { eq, sql, and, inArray, or, ilike, gte, lte, asc, desc } from "drizzle-orm";
 import { authenticate, requireRole } from "../lib/auth.js";
 import { CreateToolBody, UpdateToolBody } from "@workspace/api-zod";
 import crypto from "crypto";
@@ -52,6 +52,10 @@ router.get("/", async (req, res) => {
     const shopId = req.query.shopId ? Number(req.query.shopId) : undefined;
     const category = req.query.category as string | undefined;
     const region = req.query.region as string | undefined;
+    const search = (req.query.search as string | undefined)?.trim();
+    const minPrice = req.query.minPrice ? Number(req.query.minPrice) : undefined;
+    const maxPrice = req.query.maxPrice ? Number(req.query.maxPrice) : undefined;
+    const sortBy = req.query.sortBy as string | undefined;
 
     // If region filter requested, get shop IDs for that region first
     let regionShopIds: number[] | undefined;
@@ -73,15 +77,47 @@ router.get("/", async (req, res) => {
     if (shopId) conditions.push(eq(toolsTable.shopId, shopId));
     if (category) conditions.push(eq(toolsTable.category, category));
     if (regionShopIds) conditions.push(inArray(toolsTable.shopId, regionShopIds));
+    if (search) {
+      conditions.push(
+        or(
+          ilike(toolsTable.name, `%${search}%`),
+          ilike(toolsTable.category, `%${search}%`),
+          ilike(toolsTable.description, `%${search}%`),
+        ),
+      );
+    }
+    if (minPrice !== undefined && !Number.isNaN(minPrice)) {
+      conditions.push(gte(toolsTable.pricePerDay, minPrice));
+    }
+    if (maxPrice !== undefined && !Number.isNaN(maxPrice)) {
+      conditions.push(lte(toolsTable.pricePerDay, maxPrice));
+    }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
-    const tools = await db.select().from(toolsTable).where(whereClause).limit(limit).offset(offset);
+    const orderBy =
+      sortBy === "price_desc"
+        ? [desc(toolsTable.pricePerDay), asc(toolsTable.id)]
+        : sortBy === "price_asc"
+          ? [asc(toolsTable.pricePerDay), asc(toolsTable.id)]
+          : sortBy === "rating"
+            ? [desc(toolsTable.id)]
+            : [asc(toolsTable.name), asc(toolsTable.id)];
+    const tools = await db
+      .select()
+      .from(toolsTable)
+      .where(whereClause)
+      .orderBy(...orderBy)
+      .limit(limit)
+      .offset(offset);
     const countResult = await db.select({ count: sql<number>`count(*)` }).from(toolsTable).where(whereClause);
     const total = Number(countResult[0].count);
 
     const uniqueShopIds = [...new Set(tools.map((t: any) => t.shopId))];
     const shops = uniqueShopIds.length > 0
-      ? await db.select({ id: shopsTable.id, name: shopsTable.name, region: shopsTable.region }).from(shopsTable)
+      ? await db
+          .select({ id: shopsTable.id, name: shopsTable.name, region: shopsTable.region })
+          .from(shopsTable)
+          .where(inArray(shopsTable.id, uniqueShopIds))
       : [];
     const shopMap = Object.fromEntries(shops.map((s: any) => [s.id, s.name]));
 

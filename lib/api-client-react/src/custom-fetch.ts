@@ -94,7 +94,7 @@ function getStringField(value: unknown, key: string): string | undefined {
 }
 
 function truncate(text: string, maxLength = 300): string {
-  return text.length > maxLength ? `${text.slice(0, maxLength - 1)}…` : text;
+  return text.length > maxLength ? `${text.slice(0, maxLength - 3)}...` : text;
 }
 
 function buildErrorMessage(response: Response, data: unknown): string {
@@ -112,7 +112,7 @@ function buildErrorMessage(response: Response, data: unknown): string {
     getStringField(data, "error_description") ??
     getStringField(data, "error");
 
-  if (title && detail) return `${prefix}: ${title} — ${detail}`;
+  if (title && detail) return `${prefix}: ${title} - ${detail}`;
   if (detail) return `${prefix}: ${detail}`;
   if (message) return `${prefix}: ${message}`;
   if (title) return `${prefix}: ${title}`;
@@ -296,7 +296,7 @@ export async function customFetch<T = unknown>(
         headers.set("authorization", `Bearer ${token}`);
       }
     } catch {
-      // localStorage unavailable (e.g. SSR or React Native) — skip silently
+      // localStorage unavailable (e.g. SSR or React Native) - skip silently
     }
   }
 

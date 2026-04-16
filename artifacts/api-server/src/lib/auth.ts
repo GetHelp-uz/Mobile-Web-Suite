@@ -130,18 +130,61 @@ export async function isTokenRevoked(token: string): Promise<boolean> {
 }
 
 // ─── Middleware: Token tekshirish (revocation bilan) ─────────────────────────
-export function authenticate(req: Request, res: Response, next: NextFunction) {
+export async function authenticate(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith("Bearer ")) {
     res.status(401).json({ error: "Avtorizatsiya talab qilinadi" });
     return;
   }
+
   const token = authHeader.slice(7);
+
   try {
     const payload = verifyToken(token);
-    (req as any).user = payload;
+
+    const revoked = await isTokenRevoked(token);
+    if (revoked) {
+      res
+        .status(401)
+        .json({ error: "Token bekor qilingan. Qayta kiring.", code: "TOKEN_REVOKED" });
+      return;
+    }
+
+    const userResult = await db.execute(sql`
+      SELECT id, role, shop_id, is_active
+      FROM users
+      WHERE id = ${payload.userId}
+      LIMIT 1
+    `);
+    const userRow = userResult.rows[0] as
+      | { id: number; role: string; shop_id?: number | null; is_active?: boolean }
+      | undefined;
+
+    if (!userRow) {
+      res.status(401).json({ error: "Foydalanuvchi topilmadi", code: "USER_NOT_FOUND" });
+      return;
+    }
+
+    if (!userRow.is_active) {
+      res
+        .status(403)
+        .json({ error: "Hisob faol emas. Administratorga murojaat qiling.", code: "ACCOUNT_DISABLED" });
+      return;
+    }
+
+    (req as any).user = {
+      ...payload,
+      id: userRow.id,
+      userId: userRow.id,
+      role: userRow.role || payload.role,
+      shopId: userRow.shop_id ?? null,
+      isActive: Boolean(userRow.is_active),
+    };
     (req as any).rawToken = token;
-    // Token revocation async tekshiruvi (performance uchun faqat muhim yo'llarda)
     next();
   } catch (err: any) {
     if (err.name === "TokenExpiredError") {
@@ -154,15 +197,7 @@ export function authenticate(req: Request, res: Response, next: NextFunction) {
 
 // ─── Muhim marshrut uchun revocation tekshiruvi ──────────────────────────────
 export function authenticateStrict(req: Request, res: Response, next: NextFunction) {
-  authenticate(req, res, async () => {
-    const token = (req as any).rawToken;
-    const revoked = await isTokenRevoked(token);
-    if (revoked) {
-      res.status(401).json({ error: "Token bekor qilingan. Qayta kiring.", code: "TOKEN_REVOKED" });
-      return;
-    }
-    next();
-  });
+  authenticate(req, res, next);
 }
 
 // ─── Rol tekshirish ──────────────────────────────────────────────────────────

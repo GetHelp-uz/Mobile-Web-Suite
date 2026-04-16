@@ -8,7 +8,7 @@ import path from "path";
 import crypto from "crypto";
 import router from "./routes/index.js";
 import { sendOverdueSmsAlerts } from "./lib/sms.js";
-import { ensurePassportTables } from "./lib/passport.js";
+import { ensureRuntimeSchema } from "./lib/bootstrap.js";
 
 const app: Express = express();
 const isDev = process.env.NODE_ENV === "development";
@@ -60,6 +60,10 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 const ALLOWED_ORIGINS = [
   process.env.WEB_APP_URL,
   process.env.APP_URL,
+  ...(process.env.CORS_ALLOWED_ORIGINS || "")
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean),
   "http://localhost:5000",
   "http://localhost:3000",
   "http://localhost:5173",
@@ -78,8 +82,12 @@ app.use(
   "/api",
   cors({
     origin: (origin, callback) => {
-      // Barcha originlarga dinamik ruxsat berish (CORS xatosini bloklamaslik uchun)
-      callback(null, true);
+      if (!origin || isAllowedOrigin(origin)) {
+        callback(null, true);
+        return;
+      }
+
+      callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
@@ -413,7 +421,9 @@ setInterval(() => {
   if (isDev) console.log("[Security] Shubhali IP ro'yxati tozalandi");
 }, 60 * 60 * 1000);
 
-ensurePassportTables().catch((e: any) => console.error("[Startup] ensurePassportTables:", e.message));
+ensureRuntimeSchema().catch((e: any) =>
+  console.error("[Startup] ensureRuntimeSchema:", e.message),
+);
 startOverdueCron();
 
 export default app;

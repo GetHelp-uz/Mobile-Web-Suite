@@ -7,6 +7,17 @@ import PDFDocument from "pdfkit";
 
 const router = Router();
 
+function canAccessRental(user: any, rental: any): boolean {
+  if (user.role === "super_admin") return true;
+  if (user.role === "customer") {
+    return Number(rental.customer_id ?? rental.customerId) === Number(user.userId);
+  }
+  if (user.role === "shop_owner" || user.role === "worker") {
+    return Number(rental.shop_id ?? rental.shopId) === Number(user.shopId);
+  }
+  return false;
+}
+
 function generateContractNumber(): string {
   const date = new Date();
   const y = date.getFullYear();
@@ -56,6 +67,7 @@ async function ensureContract(rentalId: number): Promise<string> {
 router.get("/:rentalId/pdf", authenticate, async (req, res) => {
   try {
     const rentalId = Number(req.params.rentalId);
+    const user = (req as any).user;
 
     // Avval contract mavjudligini ta'minlaymiz
     await ensureContract(rentalId);
@@ -81,6 +93,7 @@ router.get("/:rentalId/pdf", authenticate, async (req, res) => {
     `);
     if (!rentalRow.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
     const r = rentalRow.rows[0] as any;
+    if (!canAccessRental(user, r)) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
 
     // Shartnoma raqami
     const contractNum = r.contract_number || generateContractNumber();
@@ -314,14 +327,7 @@ router.get("/:rentalId/info", authenticate, async (req, res) => {
     const r = row.rows[0] as any;
 
     // Authorization check
-    const userId = user.userId || user.id;
-    if (user.role === "super_admin") {
-      // full access
-    } else if (user.role === "shop_owner" || user.role === "worker") {
-      if (Number(r.shop_id) !== Number(user.shopId)) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
-    } else if (user.role === "customer") {
-      if (Number(r.customer_id) !== Number(userId)) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
-    } else {
+    if (!canAccessRental(user, r)) {
       res.status(403).json({ error: "Ruxsat yo'q" }); return;
     }
 
@@ -377,6 +383,15 @@ router.get("/:rentalId/info", authenticate, async (req, res) => {
 router.get("/rental/:rentalId", authenticate, async (req, res) => {
   try {
     const rentalId = Number(req.params.rentalId);
+    const user = (req as any).user;
+    const rental = await db.execute(sql`
+      SELECT customer_id, shop_id
+      FROM rentals
+      WHERE id = ${rentalId}
+      LIMIT 1
+    `);
+    if (!rental.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
+    if (!canAccessRental(user, rental.rows[0])) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
     let contract = await db.execute(sql`SELECT * FROM contracts WHERE rental_id = ${rentalId} LIMIT 1`);
 
     if (!contract.rows.length) {
@@ -395,6 +410,14 @@ router.post("/:rentalId/sign", authenticate, async (req, res) => {
     const user = (req as any).user;
     const ip = req.ip || req.socket.remoteAddress || "";
     const rentalId = Number(req.params.rentalId);
+    const rental = await db.execute(sql`
+      SELECT customer_id, shop_id
+      FROM rentals
+      WHERE id = ${rentalId}
+      LIMIT 1
+    `);
+    if (!rental.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
+    if (!canAccessRental(user, rental.rows[0])) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
 
     // Avval contract mavjudligini ta'minlaymiz
     await ensureContract(rentalId);
@@ -447,10 +470,20 @@ router.post("/:rentalId/sign", authenticate, async (req, res) => {
 // GET /api/contracts/rental/:rentalId/esign — imzo holatini tekshirish
 router.get("/rental/:rentalId/esign", authenticate, async (req, res) => {
   try {
+    const user = (req as any).user;
+    const rentalId = Number(req.params.rentalId);
+    const rental = await db.execute(sql`
+      SELECT customer_id, shop_id
+      FROM rentals
+      WHERE id = ${rentalId}
+      LIMIT 1
+    `);
+    if (!rental.rows.length) { res.status(404).json({ error: "Ijara topilmadi" }); return; }
+    if (!canAccessRental(user, rental.rows[0])) { res.status(403).json({ error: "Ruxsat yo'q" }); return; }
     const row = await db.execute(sql`
       SELECT signed_at, signature_ip,
              CASE WHEN signature_data IS NOT NULL THEN true ELSE false END as has_signature
-      FROM contracts WHERE rental_id = ${Number(req.params.rentalId)} LIMIT 1
+      FROM contracts WHERE rental_id = ${rentalId} LIMIT 1
     `);
     if (!row.rows.length) { res.json({ signed: false }); return; }
     const r = row.rows[0] as any;

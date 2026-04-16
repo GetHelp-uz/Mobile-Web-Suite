@@ -1,7 +1,13 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const _domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
-export const BASE_URL = _domain.startsWith("http") ? `${_domain}/api` : `https://${_domain}/api`;
+const normalizedDomain = _domain.trim().replace(/\/+$/, "");
+export const API_ORIGIN = normalizedDomain
+  ? normalizedDomain.startsWith("http")
+    ? normalizedDomain
+    : `https://${normalizedDomain}`
+  : "http://localhost:8080";
+export const BASE_URL = `${API_ORIGIN}/api`;
 
 export type UserRole = "super_admin" | "shop_owner" | "worker" | "customer";
 

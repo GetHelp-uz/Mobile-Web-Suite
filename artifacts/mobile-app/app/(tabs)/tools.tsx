@@ -25,12 +25,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/context/AuthContext";
-import { api, Tool } from "@/lib/api";
+import { api, Tool, API_ORIGIN } from "@/lib/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-const BASE_URL = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-  : "http://localhost:8080";
 
 const CATEGORIES = ["Drel", "Bolgarka", "Shurpayor", "Perforator", "Arra", "O'lchov", "Payvandlash", "Silliqlash", "Kompressor", "Narvon", "Boshqa"];
 const FILTER_CATEGORIES = ["Barchasi", ...CATEGORIES];
@@ -271,7 +267,7 @@ function EditToolModal({ tool, visible, onClose }: { tool: Tool | null; visible:
   const updateTool = useMutation({
     mutationFn: async () => {
       const token = await AsyncStorage.getItem("gethelp_token");
-      const r = await fetch(`${BASE_URL}/api/tools/${tool!.id}`, {
+      const r = await fetch(`${API_ORIGIN}/api/tools/${tool!.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
@@ -296,7 +292,7 @@ function EditToolModal({ tool, visible, onClose }: { tool: Tool | null; visible:
   const deleteTool = useMutation({
     mutationFn: async () => {
       const token = await AsyncStorage.getItem("gethelp_token");
-      const r = await fetch(`${BASE_URL}/api/tools/${tool!.id}`, {
+      const r = await fetch(`${API_ORIGIN}/api/tools/${tool!.id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -428,7 +424,7 @@ function QRModal({ tool, visible, onClose }: { tool: Tool | null; visible: boole
   React.useEffect(() => {
     if (tool && visible) {
       AsyncStorage.getItem("gethelp_token").then(token => {
-        fetch(`${BASE_URL}/api/tools/${tool.id}/qr`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_ORIGIN}/api/tools/${tool.id}/qr`, { headers: { Authorization: `Bearer ${token}` } })
           .then(r => r.json())
           .then(d => setQrData(d.qrCode || tool.qrCode))
           .catch(() => setQrData(tool.qrCode));

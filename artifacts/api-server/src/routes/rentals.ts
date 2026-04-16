@@ -20,6 +20,41 @@ async function enrichRental(r: any) {
   };
 }
 
+function getActor(req: any) {
+  return req.user as {
+    userId: number;
+    id: number;
+    role: string;
+    shopId?: number | null;
+  };
+}
+
+function requireShopScope(
+  user: { role: string; shopId?: number | null },
+  res: any,
+) {
+  if (user.role === "super_admin") return undefined;
+  if (user.role === "shop_owner" || user.role === "worker") {
+    if (!user.shopId) {
+      res.status(403).json({ error: "Hisobingizga do'kon biriktirilmagan" });
+      return null;
+    }
+    return Number(user.shopId);
+  }
+  return undefined;
+}
+
+function canAccessRental(user: { role: string; userId: number; shopId?: number | null }, rental: any) {
+  if (user.role === "super_admin") return true;
+  if (user.role === "customer") {
+    return Number(rental.customerId ?? rental.customer_id) === Number(user.userId);
+  }
+  if (user.role === "shop_owner" || user.role === "worker") {
+    return Number(rental.shopId ?? rental.shop_id) === Number(user.shopId);
+  }
+  return false;
+}
+
 // List all rentals
 router.get("/", authenticate, async (req, res) => {
   try {
@@ -29,14 +64,19 @@ router.get("/", authenticate, async (req, res) => {
     const status = req.query.status as string | undefined;
     const customerId = req.query.customerId ? Number(req.query.customerId) : undefined;
     const shopId = req.query.shopId ? Number(req.query.shopId) : undefined;
-    const user = (req as any).user;
+    const user = getActor(req as any);
 
     let conditions: any[] = [];
     if (status) conditions.push(eq(rentalsTable.status, status as any));
     if (customerId) conditions.push(eq(rentalsTable.customerId, customerId));
     if (shopId) conditions.push(eq(rentalsTable.shopId, shopId));
-    // Customers only see their own rentals
-    if (user.role === "customer") conditions.push(eq(rentalsTable.customerId, user.userId));
+    if (user.role === "customer") {
+      conditions.push(eq(rentalsTable.customerId, user.userId));
+    } else if (user.role === "shop_owner" || user.role === "worker") {
+      const scopedShopId = requireShopScope(user, res);
+      if (scopedShopId == null) return;
+      conditions.push(eq(rentalsTable.shopId, scopedShopId));
+    }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const rentals = await db.select().from(rentalsTable).where(whereClause).limit(limit).offset(offset);
@@ -57,7 +97,8 @@ router.post("/", authenticate, async (req, res) => {
     const toolId = Number(body.toolId);
     const customerId = Number(body.customerId);
     const paymentMethod = body.paymentMethod || "cash";
-    
+    const user = getActor(req as any);
+
     if (!toolId || !customerId || !body.dueDate) {
       res.status(400).json({ error: "toolId, customerId va dueDate majburiy" });
       return;
@@ -70,6 +111,16 @@ router.post("/", authenticate, async (req, res) => {
     }
     if (tool.status !== "available") {
       res.status(400).json({ error: "Asbob hozirda mavjud emas (ijarada yoki ta'mirda)" });
+      return;
+    }
+
+    if (user.role === "customer" && customerId !== user.userId) {
+      res.status(403).json({ error: "Mijoz faqat o'z nomiga ijara yaratishi mumkin" });
+      return;
+    }
+
+    if ((user.role === "shop_owner" || user.role === "worker") && Number(tool.shopId) !== Number(user.shopId)) {
+      res.status(403).json({ error: "Faqat o'z do'koningiz asboblari uchun ijara yaratishingiz mumkin" });
       return;
     }
 
@@ -92,7 +143,7 @@ router.post("/", authenticate, async (req, res) => {
     const depositAmount = tool.depositAmount;
     const totalAmount = rentalPrice + depositAmount;
     
-    const userId = (req as any).user.userId || (req as any).user.id;
+    const userId = user.userId || user.id;
     
     const [rental] = await db.insert(rentalsTable).values({
       toolId,
@@ -216,9 +267,18 @@ router.post("/", authenticate, async (req, res) => {
 router.post("/start-by-qr", authenticate, async (req, res) => {
   try {
     const body = StartRentalByQrBody.parse(req.body);
+    const user = getActor(req as any);
+    if (!["super_admin", "shop_owner", "worker"].includes(user.role)) {
+      res.status(403).json({ error: "Bu amal uchun ruxsat yo'q" });
+      return;
+    }
     const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.qrCode, body.qrCode));
     if (!tool) {
       res.status(404).json({ error: "Tool not found for this QR code" });
+      return;
+    }
+    if ((user.role === "shop_owner" || user.role === "worker") && Number(tool.shopId) !== Number(user.shopId)) {
+      res.status(403).json({ error: "Faqat o'z do'koningiz asboblari uchun bu amalni bajarishingiz mumkin" });
       return;
     }
     if (tool.status !== "available") {
@@ -230,7 +290,7 @@ router.post("/start-by-qr", authenticate, async (req, res) => {
       toolId: tool.id,
       customerId: body.customerId,
       shopId: tool.shopId,
-      workerId: (req as any).user.userId,
+      workerId: user.userId,
       rentalPrice: tool.pricePerDay,
       depositAmount: tool.depositAmount,
       totalAmount,
@@ -263,9 +323,18 @@ router.post("/start-by-qr", authenticate, async (req, res) => {
 router.post("/return-by-qr", authenticate, async (req, res) => {
   try {
     const body = ReturnRentalByQrBody.parse(req.body);
+    const user = getActor(req as any);
+    if (!["super_admin", "shop_owner", "worker"].includes(user.role)) {
+      res.status(403).json({ error: "Bu amal uchun ruxsat yo'q" });
+      return;
+    }
     const [tool] = await db.select().from(toolsTable).where(eq(toolsTable.qrCode, body.qrCode));
     if (!tool) {
       res.status(404).json({ error: "Tool not found for this QR code" });
+      return;
+    }
+    if ((user.role === "shop_owner" || user.role === "worker") && Number(tool.shopId) !== Number(user.shopId)) {
+      res.status(403).json({ error: "Faqat o'z do'koningiz asboblari uchun bu amalni bajarishingiz mumkin" });
       return;
     }
     const [activeRental] = await db.select().from(rentalsTable)
@@ -317,9 +386,14 @@ router.post("/return-by-qr", authenticate, async (req, res) => {
 // Get rental by ID
 router.get("/:id", authenticate, async (req, res) => {
   try {
+    const user = getActor(req as any);
     const [rental] = await db.select().from(rentalsTable).where(eq(rentalsTable.id, Number(req.params.id)));
     if (!rental) {
       res.status(404).json({ error: "Rental not found" });
+      return;
+    }
+    if (!canAccessRental(user, rental)) {
+      res.status(403).json({ error: "Ruxsat yo'q" });
       return;
     }
     const enriched = await enrichRental(rental);
@@ -332,7 +406,7 @@ router.get("/:id", authenticate, async (req, res) => {
 // ─── Do'kon egasi qaytarishni tasdiqlash + depozitni mijozga qaytarish ────────
 router.post("/:id/confirm-return", authenticate, async (req, res) => {
   try {
-    const user = (req as any).user;
+    const user = getActor(req as any);
     const rentalId = Number(req.params.id);
 
     const [rental] = await db.select().from(rentalsTable).where(eq(rentalsTable.id, rentalId));
@@ -343,8 +417,13 @@ router.post("/:id/confirm-return", authenticate, async (req, res) => {
 
     // Faqat do'kon egasi yoki super_admin tasdiqlashi mumkin
     if (user.role !== "super_admin") {
-      const shopCheck = await db.execute(sql`SELECT id FROM shops WHERE id = ${rental.shopId} AND owner_id = ${user.userId} LIMIT 1`);
-      if (!shopCheck.rows.length && user.role !== "super_admin") {
+      const shopCheck = await db.execute(sql`
+        SELECT id
+        FROM shops
+        WHERE id = ${rental.shopId} AND owner_id = ${user.userId}
+        LIMIT 1
+      `);
+      if (!shopCheck.rows.length) {
         res.status(403).json({ error: "Faqat do'kon egasi tasdiqlashi mumkin" });
         return;
       }
@@ -412,10 +491,19 @@ router.post("/:id/confirm-return", authenticate, async (req, res) => {
 // Return rental by ID
 router.post("/:id/return", authenticate, async (req, res) => {
   try {
+    const user = getActor(req as any);
+    if (!["super_admin", "shop_owner", "worker"].includes(user.role)) {
+      res.status(403).json({ error: "Bu amal uchun ruxsat yo'q" });
+      return;
+    }
     const body = ReturnRentalBody.parse(req.body);
     const [rental] = await db.select().from(rentalsTable).where(eq(rentalsTable.id, Number(req.params.id)));
     if (!rental) {
       res.status(404).json({ error: "Rental not found" });
+      return;
+    }
+    if (!canAccessRental(user, rental)) {
+      res.status(403).json({ error: "Ruxsat yo'q" });
       return;
     }
     if (rental.status !== "active") {
@@ -442,7 +530,7 @@ router.post("/:id/return", authenticate, async (req, res) => {
       eventType: "rental_returned",
       title: "Ijara yakunlandi",
       rentalId: rental.id,
-      actorId: (req as any).user?.id,
+      actorId: user.id,
       description: body.damageNote || undefined,
     }).catch(() => {});
 

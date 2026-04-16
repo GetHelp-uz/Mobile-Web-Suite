@@ -2,7 +2,7 @@ import { pgTable, text, serial, integer, timestamp, real, pgEnum, boolean } from
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const rentalStatusEnum = pgEnum("rental_status", ["active", "returned", "overdue"]);
+export const rentalStatusEnum = pgEnum("rental_status", ["active", "returned", "overdue", "completed"]);
 export const paymentMethodEnum = pgEnum("payment_method", ["click", "payme", "paynet", "cash"]);
 
 export const rentalsTable = pgTable("rentals", {

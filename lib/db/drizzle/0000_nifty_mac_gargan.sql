@@ -2,7 +2,7 @@ CREATE TYPE "public"."user_role" AS ENUM('super_admin', 'shop_owner', 'worker', 
 CREATE TYPE "public"."subscription_status" AS ENUM('active', 'expired', 'trial');--> statement-breakpoint
 CREATE TYPE "public"."tool_status" AS ENUM('available', 'rented', 'maintenance');--> statement-breakpoint
 CREATE TYPE "public"."payment_method" AS ENUM('click', 'payme', 'paynet', 'cash');--> statement-breakpoint
-CREATE TYPE "public"."rental_status" AS ENUM('active', 'returned', 'overdue');--> statement-breakpoint
+CREATE TYPE "public"."rental_status" AS ENUM('active', 'returned', 'overdue', 'completed');--> statement-breakpoint
 CREATE TYPE "public"."payment_method2" AS ENUM('click', 'payme', 'paynet', 'cash');--> statement-breakpoint
 CREATE TYPE "public"."payment_status" AS ENUM('pending', 'completed', 'failed', 'refunded');--> statement-breakpoint
 CREATE TYPE "public"."payment_type" AS ENUM('rental', 'deposit', 'deposit_refund', 'damage_deduction');--> statement-breakpoint
@@ -82,7 +82,9 @@ CREATE TABLE "rentals" (
 	"id_front_url" text,
 	"id_back_url" text,
 	"selfie_url" text,
-	"verification_status" text DEFAULT 'pending'
+	"verification_status" text DEFAULT 'pending',
+	"contract_signed" boolean DEFAULT false,
+	"contract_signed_at" timestamp
 );
 --> statement-breakpoint
 CREATE TABLE "payments" (
