@@ -127,6 +127,119 @@ async function ensureCoreTables() {
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       UNIQUE(shop_id, provider)
     );
+
+    ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS referral_code TEXT,
+      ADD COLUMN IF NOT EXISTS referred_by INTEGER REFERENCES users(id) ON DELETE SET NULL;
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_users_referral_code_unique ON users(referral_code);
+
+    UPDATE users
+    SET referral_code = CONCAT('GH', LPAD(id::text, 6, '0'))
+    WHERE referral_code IS NULL OR referral_code = '';
+
+    ALTER TABLE tools
+      ADD COLUMN IF NOT EXISTS stock_count INTEGER NOT NULL DEFAULT 1;
+
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'general',
+      related_id INTEGER,
+      related_type TEXT,
+      sound_type TEXT DEFAULT 'general',
+      is_read BOOLEAN NOT NULL DEFAULT FALSE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_notifications_user_created
+      ON notifications(user_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS projects (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      customer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+      description TEXT,
+      location TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      total_amount REAL NOT NULL DEFAULT 0,
+      completed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_projects_customer_created
+      ON projects(customer_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_projects_shop_created
+      ON projects(shop_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS project_rentals (
+      id SERIAL PRIMARY KEY,
+      project_id INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+      rental_id INTEGER NOT NULL REFERENCES rentals(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      UNIQUE(project_id, rental_id)
+    );
+
+    ALTER TABLE subscription_plans
+      ADD COLUMN IF NOT EXISTS duration_days INTEGER NOT NULL DEFAULT 30;
+
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      plan_id INTEGER NOT NULL REFERENCES subscription_plans(id) ON DELETE RESTRICT,
+      shop_id INTEGER REFERENCES shops(id) ON DELETE SET NULL,
+      status TEXT NOT NULL DEFAULT 'active',
+      starts_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      expires_at TIMESTAMPTZ NOT NULL,
+      auto_renew BOOLEAN NOT NULL DEFAULT FALSE,
+      payment_method TEXT NOT NULL DEFAULT 'wallet',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_user_created
+      ON subscriptions(user_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS referral_rewards (
+      id SERIAL PRIMARY KEY,
+      referrer_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      referred_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount REAL NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      paid_at TIMESTAMPTZ,
+      UNIQUE(referrer_id, referred_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_referral_rewards_referrer_created
+      ON referral_rewards(referrer_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS worker_tasks (
+      id SERIAL PRIMARY KEY,
+      shop_id INTEGER NOT NULL REFERENCES shops(id) ON DELETE CASCADE,
+      worker_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      assigned_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      priority TEXT NOT NULL DEFAULT 'normal',
+      status TEXT NOT NULL DEFAULT 'pending',
+      due_date TIMESTAMPTZ,
+      completed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS damage_reports (
+      id SERIAL PRIMARY KEY,
+      rental_id INTEGER REFERENCES rentals(id) ON DELETE SET NULL,
+      tool_id INTEGER REFERENCES tools(id) ON DELETE SET NULL,
+      customer_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      shop_id INTEGER REFERENCES shops(id) ON DELETE CASCADE,
+      description TEXT NOT NULL,
+      photo_url TEXT,
+      severity TEXT NOT NULL DEFAULT 'minor',
+      estimated_cost REAL NOT NULL DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'open',
+      resolved_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `);
 }
 
