@@ -74,8 +74,12 @@ export default function ToolDetails() {
           setLocation("/my-rentals");
         }
       },
-      onError: () => {
-        toast({ title: "Xatolik", description: "Ijara yaratib bo'lmadi", variant: "destructive" });
+      onError: (error: any) => {
+        const serverMessage =
+          error?.body?.error ||
+          error?.message ||
+          "Ijara yaratib bo'lmadi";
+        toast({ title: "Xatolik", description: serverMessage, variant: "destructive" });
       }
     }
   });
